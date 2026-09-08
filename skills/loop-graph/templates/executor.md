@@ -146,6 +146,18 @@ require a short structured answer, not a transcript. A returned claim says where
 it is not evidence. **You** verify and record it — a subagent's "done" does not count,
 and two readers disagreeing is itself the finding.
 
+## Scout findings (read-on-reference only)
+
+{{SCOUT_WIRING|When your ledger slice contains `blocked-on: findings#<brief-id>`, that
+signals the answer to a research question was dispatched to a scout node off the critical
+path. Read `findings/<brief-id>.md` **only when you reach that pointer** — never scan the
+findings directory every round. Consume the Answer + Comparison (≤30 seconds); Notes are
+for supervisor audit. The finding is advisory: you decide and record your rationale in the
+ledger. Once consumed, move `findings/<brief-id>.md` to `archive/findings-<brief-id>.md`
+and remove the pointer from the ledger. Findings stay O(active briefs). If the brief is
+still `Status: blocked` or `Status: partial`, register the gap and move to the next item.
+Scout findings protocol: see `docs/scout-lifecycle.md`.}}
+
 ## Method guards
 
 - Pilot before bulk/cohort work; expand only after the smallest real slice is clean.
@@ -182,12 +194,50 @@ C — <only if distinct>
 Reply with: A / B / C
 ```
 
+## Status updates (optional machine-readable sidecar)
+
+{{STATUS_WIRING|After closing each round, update `status.json` with current progress.
+This is a local-only machine-readable file for monitoring/CI; never send data externally.
+
+```bash
+# Update status.json after round
+cat > status.json <<EOF
+{
+  "version": "1.0",
+  "runId": "{{RUN_ID}}",
+  "updatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "status": "running",
+  "phase": "executing",
+  "progress": {
+    "completedRounds": ${ROUND_COUNT},
+    "currentItem": "${CURRENT_ITEM_ID}"
+  },
+  "nodes": {
+    "executor": {
+      "lastHeartbeat": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+      "currentRound": ${ROUND_COUNT},
+      "status": "active"
+    }
+  }
+}
+EOF
+```
+
+Update fields: `updatedAt`, `status` (running/paused/completed/failed), `phase`
+(executing/blocked/converging), `progress.completedRounds`, `progress.currentItem`,
+`nodes.executor.lastHeartbeat/currentRound/status`. Atomic write: write to temp, then
+rename. Schema: `docs/observability/status-schema.md`.}}
+
 ## Ending the run
 
 Reaching the goal is a state you must **write down**, not just achieve. Both timers stop
 on a terminal ledger status and on nothing else, so a goal met but never recorded leaves
 both nodes firing forever against finished work. Check this before taking a new slice,
 not after.
+
+{{STATUS_TERMINAL|When setting terminal ledger status, update `status.json` with final
+state: `status: "completed"/"failed"/"cancelled"`, `phase: "done"`, and
+`nodes.executor.status: "stopped"`.}}
 
 - `exit-ready` — every North Star row green with recorded evidence, no gap row blocking.
   Record the closing evidence, set it, stop your timer; the supervisor does one final

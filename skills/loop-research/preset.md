@@ -107,6 +107,26 @@ defaults.
 - In `supervisor.md`, independently compare the proposed winner with the strongest
   rejected candidate and rerun or inspect the decisive evidence before accepting it.
 
+## Scout integration (auto-emitted by compiler)
+
+**loop-research always includes Scout on the hot path.** The compiler auto-generates:
+
+- `findings/` directory (empty at compile time)
+- Scout brief template for each predefined research question
+- Executor template includes findings consumption protocol
+- Supervisor template includes Scout dispatch triggers and audit protocol
+
+**Typical briefs** for loop-research:
+- Candidate library/framework compatibility checks
+- API version comparison
+- Performance baseline establishment
+- License/maintenance verification
+
+**Dispatch**: Proactive (supervisor dispatches before executor reaches decision point) or
+reactive (executor blocks on `blocked-on: findings#<brief-id>`).
+
+Scout lifecycle: see [`../loop-graph/docs/scout-lifecycle.md`](../loop-graph/docs/scout-lifecycle.md)
+
 ## Slug
 
 Use `research` unless the decision topic is clearer
