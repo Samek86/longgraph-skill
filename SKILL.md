@@ -1,6 +1,6 @@
 ---
 name: longgraph
-description: Route and author durable long-horizon loop-graph runs. Use for multi-round work needing durable state, gated milestones, owner boundaries, host switching, or independent audit. Route code cleanup to /loop-converge, feature requirements to /loop-deliver, and evidence-backed solution comparison to /loop-research; use loop-graph directly only for a custom run shape. For a self-contained task, recommend the host's ordinary task or goal directly. Do not execute or resume generated runtime node files.
+description: Route and author durable long-horizon loop-graph runs. Use for multi-round work needing durable state, gated milestones, owner boundaries, host switching, or independent audit. Route code cleanup to /loop-converge, feature requirements to /loop-deliver, and evidence-backed solution comparison to /loop-research; use loop-graph directly only for a custom run shape. For a self-contained task, recommend the host's ordinary task or goal directly. Do not execute or resume generated runtime node files. (Enhanced fork with observability, secret-scrubbing, and trilingual docs.)
 ---
 
 # longgraph — route to the right durable run
