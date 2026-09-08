@@ -29,7 +29,8 @@ This is an **enhanced fork** of [levi-qiao/longgraph-skill](https://github.com/l
 ### 🎯 Added Features
 
 - **📚 Trilingual Documentation**: Complete READMEs in English, Japanese, and Korean
-- **📊 Observability**: Machine-readable status sidecar (`.longgraph/<run>/status.json`)
+- **📊 Deep status.json Wiring**: Live run artifacts emit machine-readable progress (`status.json`) — nodes update phase, rounds, heartbeats automatically; helper script + CI validation included
+- **🔍 Scout Auto-Brief Lifecycle**: Scout node on preset hot path — compiler auto-emits Scout brief + findings protocol for off-critical-path research (loop-research / loop-deliver / loop-converge)
 - **🔒 Secret Scrubbing**: Local script to scan for secrets before committing
 - **✅ CI Validation**: Automated structure and link validation via GitHub Actions
 

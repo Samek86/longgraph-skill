@@ -133,6 +133,26 @@ round in this run must itself remove code. Other knobs stay at the loop-graph de
 - In `supervisor.md`, audit whether each workset was the largest safe related family and
   whether a fire cap was mistaken for an end-of-run condition.
 
+## Scout integration (conditionally emitted by compiler)
+
+**loop-converge conditionally includes Scout** when runtime verification is needed.
+
+**Triggers for Scout emission**:
+- Runtime observability probes required (e.g. checking if code is actually dead via logs)
+- Plugin/reflection/generated path usage unclear from static analysis
+- Public API usage needs verification before deletion
+- Compatibility matrix needs concrete evidence
+
+The compiler auto-generates Scout infrastructure when these triggers are detected.
+
+**Typical briefs** for loop-converge:
+- Runtime observability window verification (is this code path actually unused?)
+- Plugin/reflection usage checks
+- Public API caller verification
+- Generated code path analysis
+
+Scout lifecycle: see [`../loop-graph/docs/scout-lifecycle.md`](../loop-graph/docs/scout-lifecycle.md)
+
 ## Detector hints (compile into `ops.md` only)
 
 Prefer detectors already present in the repo. Typical: JS/TS — knip,

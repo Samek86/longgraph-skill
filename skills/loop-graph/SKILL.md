@@ -169,8 +169,17 @@ Decide from context what you reasonably can and state the assumption; anything g
 
 **Step 2 — Generate** a fresh `.longgraph/<YYYY-MM-DD-slug>/` from `templates/`:
 
-- Always: `executor.md`, `ledger.md`, `directives.md`, `ops.md`, and `archive/`.
+- Always: `executor.md`, `ledger.md`, `directives.md`, `ops.md`, `status.json`, and `archive/`.
   Add `supervisor.md` only when chosen.
+- **Scout infrastructure** (conditionally): When a preset needs off-critical-path research
+  (always for loop-research, conditionally for loop-deliver/loop-converge), auto-emit:
+  `findings/` directory (empty), Scout brief(s) in `ops.md` or directives, and fill
+  executor/supervisor `{{SCOUT_WIRING}}` placeholders with consumption/audit protocols.
+  See [`docs/scout-lifecycle.md`](docs/scout-lifecycle.md) for the full lifecycle.
+- **status.json**: Always generate initial `status.json` from template with `status:
+  "initializing"`, `phase: "setup"`, and placeholder metadata. Fill executor/supervisor
+  `{{STATUS_WIRING}}` placeholders with update instructions (when to update, which
+  fields, atomic write pattern). Schema: [`docs/observability/status-schema.md`](docs/observability/status-schema.md).
 - Replace every placeholder and delete guidance comments. Keep paths inside the run directory.
 - Keep host launch prompts to a pointer plus the host primitive. Put behavior in `executor.md`/`supervisor.md`, never duplicate it in the handoff prompt. Two things matter in every launch prompt: **read-and-follow, never an authoring verb** ("set up", "create", "author", "plan" read as permission to build something, and a fresh node answers by creating a second run) — and **"do not load any skill"**, because a host that matches skills by name or path can inject the authoring skill before the node opens its own file.
 - **Owner-facing paste is a `/loop` line on every host that has `/loop`.** Shape:

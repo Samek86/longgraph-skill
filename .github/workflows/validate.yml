@@ -134,6 +134,86 @@ jobs:
           
           echo "::endgroup::"
       
+      - name: Check status.json wiring
+        run: |
+          echo "::group::Checking status.json wiring"
+          
+          # Check status.json template exists
+          if [ ! -f "skills/loop-graph/templates/status.json" ]; then
+            echo "❌ Missing: skills/loop-graph/templates/status.json"
+            exit 1
+          fi
+          echo "✅ Found status.json template"
+          
+          # Check executor template mentions status updates
+          if ! grep -q "STATUS_WIRING\|status\.json" skills/loop-graph/templates/executor.md; then
+            echo "❌ Executor template missing status.json wiring instructions"
+            exit 1
+          fi
+          echo "✅ Executor template includes status.json wiring"
+          
+          # Check supervisor template mentions status updates
+          if ! grep -q "STATUS_WIRING\|status\.json" skills/loop-graph/templates/supervisor.md; then
+            echo "❌ Supervisor template missing status.json wiring instructions"
+            exit 1
+          fi
+          echo "✅ Supervisor template includes status.json wiring"
+          
+          # Check helper script exists and is executable
+          if [ ! -f "scripts/update-status.sh" ]; then
+            echo "❌ Missing: scripts/update-status.sh"
+            exit 1
+          fi
+          
+          if [ ! -x "scripts/update-status.sh" ]; then
+            echo "❌ Script not executable: scripts/update-status.sh"
+            exit 1
+          fi
+          
+          # Test help output
+          if ! ./scripts/update-status.sh --help > /dev/null; then
+            echo "❌ Script --help failed"
+            exit 1
+          fi
+          
+          echo "✅ Status update helper script is valid"
+          
+          echo "::endgroup::"
+      
+      - name: Check Scout lifecycle documentation
+        run: |
+          echo "::group::Checking Scout lifecycle docs"
+          
+          # Check Scout lifecycle doc exists
+          if [ ! -f "skills/loop-graph/docs/scout-lifecycle.md" ]; then
+            echo "❌ Missing: skills/loop-graph/docs/scout-lifecycle.md"
+            exit 1
+          fi
+          echo "✅ Found Scout lifecycle documentation"
+          
+          # Check Scout brief template exists
+          if [ ! -f "skills/loop-graph/templates/scout-brief.md" ]; then
+            echo "❌ Missing: skills/loop-graph/templates/scout-brief.md"
+            exit 1
+          fi
+          echo "✅ Found Scout brief template"
+          
+          # Check executor template mentions Scout
+          if ! grep -q "SCOUT_WIRING\|Scout findings" skills/loop-graph/templates/executor.md; then
+            echo "❌ Executor template missing Scout consumption instructions"
+            exit 1
+          fi
+          echo "✅ Executor template includes Scout consumption protocol"
+          
+          # Check supervisor template mentions Scout
+          if ! grep -q "SCOUT_AUDIT\|Scout findings" skills/loop-graph/templates/supervisor.md; then
+            echo "❌ Supervisor template missing Scout audit instructions"
+            exit 1
+          fi
+          echo "✅ Supervisor template includes Scout audit protocol"
+          
+          echo "::endgroup::"
+      
       - name: Check secret scrubbing script
         run: |
           echo "::group::Checking secret scrubbing script"
@@ -195,4 +275,6 @@ jobs:
           echo "  • Observability documentation"
           echo "  • Secret scrubbing script"
           echo "  • Fork attribution"
+          echo "  • status.json wiring in templates"
+          echo "  • Scout lifecycle documentation and templates"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

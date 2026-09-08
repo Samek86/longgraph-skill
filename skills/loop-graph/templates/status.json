@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "runId": "{{RUN_ID}}",
+  "createdAt": "{{CREATED_AT}}",
+  "updatedAt": "{{CREATED_AT}}",
+  "status": "initializing",
+  "phase": "setup",
+  "progress": {
+    "completedRounds": 0,
+    "totalItems": 0,
+    "completedItems": 0,
+    "blockedItems": 0,
+    "currentItem": null
+  },
+  "nodes": {
+    "executor": {
+      "lastHeartbeat": "{{CREATED_AT}}",
+      "currentRound": 0,
+      "status": "idle"
+    },
+    "supervisor": {
+      "lastHeartbeat": null,
+      "lastReview": null,
+      "status": "idle"
+    }
+  },
+  "metadata": {
+    "host": "{{HOST}}",
+    "goal": "{{GOAL_SUMMARY}}",
+    "owner": "{{OWNER}}",
+    "tags": []
+  }
+}

@@ -81,6 +81,27 @@ is a per-fire backstop, never a run cap. Other knobs stay at the loop-graph defa
 - In `supervisor.md`, independently follow the strongest changed consumer path before
   accepting a slice or milestone.
 
+## Scout integration (conditionally emitted by compiler)
+
+**loop-deliver conditionally includes Scout** when the compiler detects investigation needs.
+
+**Triggers for Scout emission**:
+- External API compatibility checks required
+- Library/framework version compatibility unclear
+- Performance baseline needs establishment before implementation
+- Migration path needs verification
+
+The compiler auto-generates Scout infrastructure (findings directory, brief templates,
+consumption/audit protocols) when these triggers are detected.
+
+**Typical briefs** for loop-deliver:
+- API backward compatibility verification
+- Library feature availability checks
+- Performance regression risk assessment
+- Migration safety verification
+
+Scout lifecycle: see [`../loop-graph/docs/scout-lifecycle.md`](../loop-graph/docs/scout-lifecycle.md)
+
 ## Slug
 
 Use `deliver` unless a narrower requirement slug is clearer

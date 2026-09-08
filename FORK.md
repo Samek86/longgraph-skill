@@ -16,21 +16,33 @@ This fork preserves the original MIT license and upstream copyright while adding
 - Full Japanese (`README.ja.md`) and Korean (`README.ko.md`) translations alongside the original English README
 - Cross-linked at the top of each README for easy navigation
 
-### 2. **Observability**
+### 2. **Observability — Deep status.json Wiring**
 - Machine-readable run status sidecar (`.longgraph/<run>/status.json`)
-- Schema and integration documentation in `docs/observability/`
-- Optional but documented for production monitoring
+- **Compiler auto-generates** initial status.json for every new run
+- **Templates instruct nodes** how/when to update fields (phase, progress, heartbeats, terminal state)
+- Helper script (`scripts/update-status.sh`) for manual status field updates
+- Schema and integration documentation in `docs/observability/status-schema.md`
+- Live run artifacts emit real-time progress (not docs-only)
 
-### 3. **Secret Scrubbing**
+### 3. **Scout on Preset Hot Path — Auto-Brief Lifecycle**
+- **Scout node becomes first-class** for focused presets (loop-research, loop-deliver, loop-converge)
+- **Compiler auto-emits** Scout brief + findings directory when preset needs off-critical-path research
+- Full lifecycle documentation (`skills/loop-graph/docs/scout-lifecycle.md`)
+- Templates include Scout consumption (executor) and audit (supervisor) protocols
+- Read-on-reference findings protocol (O(active briefs), not O(total briefs))
+
+### 4. **Secret Scrubbing**
 - Local secret-scanning script (`scripts/scrub-longgraph-secrets.sh`)
 - Scans `.longgraph/` for common secret patterns before sharing or committing
 - Fail-closed design with no network calls
 
-### 4. **CI Validation**
+### 5. **CI Validation**
 - GitHub Actions workflow validating:
   - SKILL.md frontmatter presence
   - README cross-linking (EN/JA/KO)
-  - Basic template structure checks
+  - Template structure checks
+  - status.json wiring presence in templates
+  - Scout lifecycle documentation completeness
 - Runs on every PR to catch regressions early
 
 ## Compatibility with Upstream

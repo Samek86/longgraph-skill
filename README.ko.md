@@ -29,7 +29,8 @@
 ### 🎯 추가 기능
 
 - **📚 다국어 문서화**: 영어, 일본어, 한국어로 된 완전한 README
-- **📊 관찰 가능성**: 머신 리더블 상태 사이드카(`.longgraph/<run>/status.json`)
+- **📊 깊은 status.json 연결**: 실시간 실행 아티팩트가 머신 리더블 진행 상황(`status.json`)을 방출 — 노드가 자동으로 페이즈, 라운드, 하트비트를 업데이트; 헬퍼 스크립트 + CI 검증 포함
+- **🔍 Scout 자동 브리프 라이프사이클**: 프리셋 핫 패스의 Scout 노드 — 컴파일러가 크리티컬 패스 외부 조사를 위해 Scout 브리프 + findings 프로토콜을 자동 생성 (loop-research / loop-deliver / loop-converge)
 - **🔒 비밀 스크럽**: 커밋 전에 비밀 정보를 스캔하는 로컬 스크립트
 - **✅ CI 검증**: GitHub Actions를 통한 자동 구조 및 링크 검증
 

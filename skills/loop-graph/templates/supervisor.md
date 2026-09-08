@@ -78,6 +78,13 @@ status, stop your own timer.
   asks. Equally, verify every owner-only blocker on the critical path actually reached
   the owner as a decision card. A run that silently works around the thing it needs will
   do so forever — surface those asks yourself, every tick, until they are answered.
+- {{SCOUT_AUDIT|**Scout findings audit.** When the executor consumed a finding and
+  recorded a decision, independently verify: scout answered the actual brief (didn't
+  drift), sources cited and versions recorded, comparison used same test conditions, and
+  executor's decision matches the recorded rationale. If audit fails, append a correction
+  directive. If the executor hits `blocked-on: findings#<brief-id>` but the scout hasn't
+  yet delivered, do not stall — wait one tick; if still missing on your next tick,
+  dispatch or escalate. Scout dispatch: see `docs/scout-lifecycle.md`.}}
 
 ## Directive packet
 
@@ -121,12 +128,29 @@ reference round/GAP in the message. Never push unless explicitly authorized.
 Decide everything outside {{OWNER_DECISION_ITEMS}}. For a real owner-only call, use
 the executor's A/B/C decision-card format. No reply means safe no-change.
 
+## Status updates (optional machine-readable sidecar)
+
+{{STATUS_WIRING|After each tick, update `status.json` with supervisor heartbeat and review
+timestamp. This is a local-only file for monitoring; never send data externally.
+
+```bash
+# Merge supervisor heartbeat into status.json
+jq '.updatedAt = $now | .nodes.supervisor.lastHeartbeat = $now | .nodes.supervisor.lastReview = $now | .nodes.supervisor.status = "active"' \
+  --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  status.json > status.json.tmp && mv status.json.tmp status.json
+```
+
+Update after routine audit; set `nodes.supervisor.status: "stopped"` at terminal state.}}
+
 ## Stop
 
 {{RED_LINES}}
 
 At `closed`/`exit-ready` after final audit, or a genuinely escalated dead stop, stop your
 timer. Ordinary idleness, `pending-audit`, or one failed check is not terminal.
+
+{{STATUS_TERMINAL|When stopping your timer at terminal state, update `status.json` with
+`nodes.supervisor.status: "stopped"`.}}
 
 Output one line: tick | audited rounds | verdict | commit | directive | owner decision |
 stop.
