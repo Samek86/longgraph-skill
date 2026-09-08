@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "longgraph",
-  "displayName": "longgraph",
-  "description": "Long-horizon agent skill: durable loop-graph runs (executor + clean-context supervisor), verified gates, owner A/B/C cards. Works with Claude Code, Codex, Cursor, and Grok Build. Invoke /longgraph, /loop-converge, /loop-deliver, or /loop-research.",
+  "displayName": "longgraph (enhanced fork)",
+  "description": "Long-horizon agent skill: durable loop-graph runs (executor + clean-context supervisor), verified gates, owner A/B/C cards. Enhanced fork with observability, secret-scrubbing, trilingual docs. Works with Claude Code, Codex, Cursor, and Grok Build. Invoke /longgraph, /loop-converge, /loop-deliver, or /loop-research.",
   "author": {
-    "name": "levi-qiao",
-    "url": "https://github.com/levi-qiao"
+    "name": "Samek86 (fork of levi-qiao/longgraph-skill)",
+    "url": "https://github.com/Samek86"
   },
-  "homepage": "https://github.com/levi-qiao/longgraph-skill",
-  "repository": "https://github.com/levi-qiao/longgraph-skill",
+  "homepage": "https://github.com/Samek86/longgraph-skill",
+  "repository": "https://github.com/Samek86/longgraph-skill",
   "license": "MIT",
   "keywords": [
     "longgraph",
@@ -22,6 +22,9 @@
     "claude-code-skill",
     "agent-skill",
     "orchestration",
-    "agents"
+    "agents",
+    "observability",
+    "security",
+    "multilingual"
   ]
 }

@@ -16,11 +16,27 @@ Design once → compile a durable loop-graph → verify all the way to done.
 ![Hosts: Claude Code · Cursor · Codex · Grok Build](https://img.shields.io/badge/Hosts-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20Grok%20Build-111827?style=flat-square)
 ![Type: agent skill · prompt library](https://img.shields.io/badge/Type-agent%20skill%20·%20prompt%20library-0EA5E9?style=flat-square)
 
-English · [简体中文](README.zh-CN.md)
+English · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md)
 
 </div>
 
 <img alt="Executor and clean-context supervisor loops running side by side" src="assets/graph.png" width="100%" />
+
+## 📌 About This Fork
+
+This is an **enhanced fork** of [levi-qiao/longgraph-skill](https://github.com/levi-qiao/longgraph-skill), maintained by [Samek86](https://github.com/Samek86).
+
+### 🎯 Added Features
+
+- **📚 Trilingual Documentation**: Complete READMEs in English, Japanese, and Korean
+- **📊 Observability**: Machine-readable status sidecar (`.longgraph/<run>/status.json`)
+- **🔒 Secret Scrubbing**: Local script to scan for secrets before committing
+- **✅ CI Validation**: Automated structure and link validation via GitHub Actions
+
+> **Upstream Compatibility**: All enhancements are additive. The core loop-graph design remains unchanged.
+> See [FORK.md](FORK.md) for details.
+
+---
 
 **longgraph** (`longgraph-skill`) is a curated **agent skill** and cross-host
 **prompt library** for **long-running / long-horizon** agent work — multi-hour
@@ -240,6 +256,34 @@ comprehensive.
 
 Contributions are welcome. Start with [the contribution guide](CONTRIBUTING.md).
 
+## 🔒 Security and Privacy
+
+This fork includes additional security tooling:
+
+```bash
+# Scan .longgraph directory before committing
+./scripts/scrub-longgraph-secrets.sh
+
+# Scan a specific run
+./scripts/scrub-longgraph-secrets.sh .longgraph/2026-09-08-auth-migration
+
+# Dry run to see what would be scanned
+./scripts/scrub-longgraph-secrets.sh --dry-run
+```
+
+See [FORK.md](FORK.md) for details.
+
+## 📊 Observability
+
+To track run status:
+
+```bash
+# Check status of all runs
+find .longgraph -name status.json -exec jq . {} \;
+```
+
+See [docs/observability/status-schema.md](docs/observability/status-schema.md) for schema and integration details.
+
 ## Credits
 
 The loop-graph skill grew from real runs and community input. A
@@ -249,6 +293,10 @@ records how the method was hardened into this library. Special thanks to
 `migrate-blob-storage` example and the discussions that sharpened milestone
 gates and the node/edge vocabulary.
 
+Fork enhancements are maintained by [Samek86](https://github.com/Samek86).
+
 ## License
 
 [MIT](LICENSE) © 2026 [levi-qiao](https://github.com/levi-qiao)
+
+Fork enhancements © 2026 [Samek86](https://github.com/Samek86)

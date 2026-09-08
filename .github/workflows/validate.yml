@@ -1,0 +1,198 @@
+name: Validate longgraph-skill
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate READMEs, SKILLs, and Templates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Check trilingual READMEs exist
+        run: |
+          echo "::group::Checking README files"
+          
+          for readme in README.md README.ja.md README.ko.md; do
+            if [ ! -f "$readme" ]; then
+              echo "❌ Missing: $readme"
+              exit 1
+            else
+              echo "✅ Found: $readme"
+            fi
+          done
+          
+          echo "::endgroup::"
+      
+      - name: Verify README cross-links
+        run: |
+          echo "::group::Verifying README cross-links"
+          
+          # Check that each README links to the other two
+          if ! grep -q "日本語" README.md || ! grep -q "한국어" README.md; then
+            echo "❌ README.md missing Japanese or Korean links"
+            exit 1
+          fi
+          echo "✅ README.md has cross-links"
+          
+          if ! grep -q "English" README.ja.md || ! grep -q "한국어" README.ja.md; then
+            echo "❌ README.ja.md missing English or Korean links"
+            exit 1
+          fi
+          echo "✅ README.ja.md has cross-links"
+          
+          if ! grep -q "English" README.ko.md || ! grep -q "日本語" README.ko.md; then
+            echo "❌ README.ko.md missing English or Japanese links"
+            exit 1
+          fi
+          echo "✅ README.ko.md has cross-links"
+          
+          echo "::endgroup::"
+      
+      - name: Check SKILL.md frontmatter
+        run: |
+          echo "::group::Checking SKILL.md frontmatter"
+          
+          SKILLS=(
+            "SKILL.md"
+            "skills/loop-graph/SKILL.md"
+            "skills/loop-converge/SKILL.md"
+            "skills/loop-deliver/SKILL.md"
+            "skills/loop-research/SKILL.md"
+          )
+          
+          for skill in "${SKILLS[@]}"; do
+            if [ ! -f "$skill" ]; then
+              echo "⚠️  Skipping: $skill (not found)"
+              continue
+            fi
+            
+            # Check for frontmatter delimiters
+            if ! head -n 1 "$skill" | grep -q "^---$"; then
+              echo "❌ Missing frontmatter start in: $skill"
+              exit 1
+            fi
+            
+            # Check for name and description fields
+            if ! grep -q "^name:" "$skill"; then
+              echo "❌ Missing 'name:' field in: $skill"
+              exit 1
+            fi
+            
+            if ! grep -q "^description:" "$skill"; then
+              echo "❌ Missing 'description:' field in: $skill"
+              exit 1
+            fi
+            
+            echo "✅ Valid frontmatter: $skill"
+          done
+          
+          echo "::endgroup::"
+      
+      - name: Check template structure
+        run: |
+          echo "::group::Checking template structure"
+          
+          TEMPLATES=(
+            "skills/loop-graph/templates/executor.md"
+            "skills/loop-graph/templates/supervisor.md"
+            "skills/loop-graph/templates/ledger.md"
+            "skills/loop-graph/templates/directives.md"
+          )
+          
+          for template in "${TEMPLATES[@]}"; do
+            if [ ! -f "$template" ]; then
+              echo "⚠️  Template not found: $template"
+              continue
+            fi
+            
+            # Check for placeholder format
+            if ! grep -q "{{[A-Z_]*}}" "$template"; then
+              echo "⚠️  No placeholders found in: $template (may be intentional)"
+            else
+              echo "✅ Contains placeholders: $template"
+            fi
+          done
+          
+          echo "::endgroup::"
+      
+      - name: Verify docs/observability exists
+        run: |
+          echo "::group::Checking observability docs"
+          
+          if [ ! -f "docs/observability/status-schema.md" ]; then
+            echo "❌ Missing: docs/observability/status-schema.md"
+            exit 1
+          fi
+          echo "✅ Found observability documentation"
+          
+          echo "::endgroup::"
+      
+      - name: Check secret scrubbing script
+        run: |
+          echo "::group::Checking secret scrubbing script"
+          
+          if [ ! -f "scripts/scrub-longgraph-secrets.sh" ]; then
+            echo "❌ Missing: scripts/scrub-longgraph-secrets.sh"
+            exit 1
+          fi
+          
+          if [ ! -x "scripts/scrub-longgraph-secrets.sh" ]; then
+            echo "❌ Script not executable: scripts/scrub-longgraph-secrets.sh"
+            exit 1
+          fi
+          
+          # Test help output
+          if ! ./scripts/scrub-longgraph-secrets.sh --help > /dev/null; then
+            echo "❌ Script --help failed"
+            exit 1
+          fi
+          
+          echo "✅ Secret scrubbing script is valid"
+          
+          echo "::endgroup::"
+      
+      - name: Check FORK.md attribution
+        run: |
+          echo "::group::Checking fork attribution"
+          
+          if [ ! -f "FORK.md" ]; then
+            echo "❌ Missing: FORK.md"
+            exit 1
+          fi
+          
+          # Verify upstream attribution
+          if ! grep -q "levi-qiao/longgraph-skill" FORK.md; then
+            echo "❌ FORK.md missing upstream attribution"
+            exit 1
+          fi
+          
+          # Verify MIT license reference
+          if ! grep -q "MIT" FORK.md; then
+            echo "❌ FORK.md missing MIT license reference"
+            exit 1
+          fi
+          
+          echo "✅ Fork attribution is valid"
+          
+          echo "::endgroup::"
+      
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ All validation checks passed!"
+          echo ""
+          echo "Validated:"
+          echo "  • Trilingual READMEs (EN/JA/KO) with cross-links"
+          echo "  • SKILL.md frontmatter in core skills"
+          echo "  • Template structure integrity"
+          echo "  • Observability documentation"
+          echo "  • Secret scrubbing script"
+          echo "  • Fork attribution"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -1,15 +1,15 @@
 {
   "name": "longgraph-skill",
-  "description": "longgraph — long-horizon agent skill (Claude Code / Codex / Cursor / Grok Build): durable loop-graph runs with verified gates.",
+  "description": "longgraph — long-horizon agent skill (Claude Code / Codex / Cursor / Grok Build): durable loop-graph runs with verified gates. Enhanced fork with observability, secret-scrubbing, and trilingual docs.",
   "owner": {
-    "name": "levi-qiao",
-    "url": "https://github.com/levi-qiao"
+    "name": "Samek86",
+    "url": "https://github.com/Samek86"
   },
   "plugins": [
     {
       "name": "longgraph",
       "source": "./",
-      "description": "Author durable loop-graph runs for code convergence, requirement delivery, or evidence-led solution selection."
+      "description": "Author durable loop-graph runs for code convergence, requirement delivery, or evidence-led solution selection. Enhanced with observability and security tooling."
     }
   ]
 }
