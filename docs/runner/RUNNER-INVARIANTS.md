@@ -1,4 +1,4 @@
-# Runner invariants (Phase ≤1a)
+# Runner invariants (Phase ≤1b)
 
 A* rules the runner must not break, plus the CI list that proves them.
 Tune numbers (intervals, caps, retries). Do not change the shape.
@@ -60,7 +60,8 @@ directory. Engine code lives under `runner/`, never under `skills/`.
 
 **A14 — Host isolation of writes.** MockHost (and later hosts) enforce
 A1–A3 at the write gate: supervisor cannot write the ledger; executor
-cannot write directives; scout cannot write either.
+cannot write directives; scout cannot write either. PromptOnlyHost emits
+paste text only and must not write ledger or directives.
 
 **A15 — Absolute red lines stay red lines.** No secrets in run files, no
 push from the runner, no treating examples as golden SoT.
@@ -70,7 +71,7 @@ compile. They never execute their output. The runner never reloads them.
 
 ---
 
-## D — CI list (Phase ≤1a only)
+## D — CI list (Phase ≤1b)
 
 Exact test names. Do not add the banned aliases
 `test_golden_next_item_*` or `test_default_fail_until_gate`.
@@ -91,5 +92,6 @@ Exact test names. Do not add the banned aliases
 | 12 | `test_status_completed_implies_ledger_terminal` | A10 |
 | 13 | `test_smoke_before_new_item` | A7 |
 | 14 | `test_max_rounds_budget` | A9 |
+| 15 | `test_prompt_only_emits_dual_loop_text` | Phase 1b PromptOnlyHost dual `/loop` emit, no wake verbs |
 
-Phase 1b+ tests do not belong in this PR.
+Phase 1c+ tests do not belong in this PR.

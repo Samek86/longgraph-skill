@@ -280,7 +280,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   runner:
-    name: Runner Phase 0/1a tests
+    name: Runner Phase 0–1b tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

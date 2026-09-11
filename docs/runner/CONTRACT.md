@@ -1,4 +1,4 @@
-# Runner CONTRACT (Phase 0 / 1a)
+# Runner CONTRACT (Phase 0 / 1a / 1b)
 
 Field names, close semantics, and fixture authorship for the runner.
 Skill templates keep their human headings; the runner parses the fields

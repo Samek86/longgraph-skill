@@ -1,7 +1,7 @@
-# EXPANSION-PLAN-v3.3 — Phase 0 / 1a extract
+# EXPANSION-PLAN-v3.3 — Phase 0 / 1a / 1b extract
 
 Faithful summary of the SHIPPABLE plan for the longgraph runner, limited to
-what Phase 0 and Phase 1a may ship. Later phases (1b–1d, Phase 2, web UI,
+what Phase 0, Phase 1a, and Phase 1b may ship. Later phases (1c–1d, Phase 2, web UI,
 dynamic topology, prompt auto-edit, token-cost telemetry) are **out of scope**.
 
 See [`AUTHORITY.md`](AUTHORITY.md) for precedence.
@@ -120,6 +120,27 @@ Phase 1a ships **MockHost only**: no model.
 The runner runs [`gates`](../../runner/longgraph/gates.py) **after** the
 executor. Close **ignores** `NodeResult.ok`.
 
+---
+
+## Phase 1b — PromptOnlyHost
+
+A second `Host` implementation next to MockHost. No model. No peer-wakeup
+API. Does **not** write `ledger.md` or `directives.md` as part of emit.
+
+Emit exactly two paste blocks (placeholders `EXEC_INTERVAL`, `SUP_INTERVAL`,
+`RUN_DIR` are substitutable from constructor / ctx):
+
+```
+/loop {{EXEC_INTERVAL}} Execute the existing runtime node at {{RUN_DIR}}/executor.md. Do not load any skill.
+/loop {{SUP_INTERVAL}} Execute the existing runtime node at {{RUN_DIR}}/supervisor.md. Do not load any skill.
+```
+
+Return the dual-loop text via `NodeResult.message` and `emit_dual_loop(...)`.
+No wake / notify / dispatch verbs in the emitted text.
+
+Keep MockHost behavior untouched. Phase 1c GrokBotDualTimerHost and Phase 1d
+ApiHost are out of scope.
+
 ### Ops knobs
 
 Parse from `ops.md`:
@@ -138,7 +159,7 @@ Parse from `ops.md`:
 
 ---
 
-## Merge-gate tests (exact names — Phase ≤1a only)
+## Merge-gate tests (exact names — Phase ≤1b)
 
 1. `test_golden_parse`
 2. `test_mock_roundtrip_add_tests`
@@ -154,6 +175,7 @@ Parse from `ops.md`:
 12. `test_status_completed_implies_ledger_terminal`
 13. `test_smoke_before_new_item`
 14. `test_max_rounds_budget`
+15. `test_prompt_only_emits_dual_loop_text` (Phase 1b)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
@@ -161,7 +183,8 @@ Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
 ## Done when (this extract)
 
-- All 14 tests green in CI or local pytest, documented on the PR.
-- PR title like: `feat(runner): Phase 0 contracts + Phase 1a MockHost MVP`.
+- All Phase ≤1a tests plus `test_prompt_only_emits_dual_loop_text` green
+  in CI or local pytest, documented on the PR.
+- PR title like: `feat(runner): Phase 1b PromptOnlyHost`.
 - PR body lists test results and notes **DO NOT MERGE** without owner ack.
 - Do **not** merge from the agent. Open a PR only.

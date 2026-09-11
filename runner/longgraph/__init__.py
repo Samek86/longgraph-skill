@@ -5,7 +5,7 @@ import LangGraph on the public surface.
 """
 
 from .gates import GateResult, GateRunner
-from .hosts import Host, MockHost, NodeResult, WriteDenied
+from .hosts import Host, MockHost, NodeResult, PromptOnlyHost, WriteDenied
 from .nodes import CrashBeforeClose, Runner, StatusContractError
 from .retry import RetryKey
 from .state import RunState, parse_run
@@ -17,6 +17,7 @@ __all__ = [
     "Host",
     "MockHost",
     "NodeResult",
+    "PromptOnlyHost",
     "RetryKey",
     "RunState",
     "Runner",

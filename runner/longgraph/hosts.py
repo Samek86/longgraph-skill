@@ -1,4 +1,4 @@
-"""Host surface. MockHost is deterministic and has no model."""
+"""Host surface. MockHost and PromptOnlyHost are deterministic and have no model."""
 
 from __future__ import annotations
 
@@ -128,3 +128,81 @@ class MockHost(Host):
         body = f"# Findings: {ident}\n\n**Status**: complete\n"
         self.writer.write("scout", dest, body)
         return NodeResult(ok=True, message="mock scout", writes=[str(dest)])
+
+
+_EXEC_PASTE = (
+    "/loop {{EXEC_INTERVAL}} Execute the existing runtime node at "
+    "{{RUN_DIR}}/executor.md. Do not load any skill."
+)
+_SUP_PASTE = (
+    "/loop {{SUP_INTERVAL}} Execute the existing runtime node at "
+    "{{RUN_DIR}}/supervisor.md. Do not load any skill."
+)
+
+_DEFAULT_EXEC_INTERVAL = "10m"
+_DEFAULT_SUP_INTERVAL = "30m"
+_DEFAULT_RUN_DIR = ".longgraph/run"
+
+
+def _ctx_value(ctx: dict[str, Any] | None, *keys: str) -> str | None:
+    if not ctx:
+        return None
+    for key in keys:
+        value = ctx.get(key)
+        if value is not None and value != "":
+            return str(value).rstrip("/")
+    return None
+
+
+class PromptOnlyHost(Host):
+    """No-model host: emit two /loop paste blocks. Never writes edges."""
+
+    def __init__(
+        self,
+        exec_interval: str = _DEFAULT_EXEC_INTERVAL,
+        sup_interval: str = _DEFAULT_SUP_INTERVAL,
+        run_dir: str | Path | None = None,
+    ):
+        self.exec_interval = exec_interval
+        self.sup_interval = sup_interval
+        self.run_dir = str(run_dir).rstrip("/") if run_dir is not None else None
+
+    def emit_dual_loop(
+        self,
+        ctx: dict[str, Any] | None = None,
+        *,
+        exec_interval: str | None = None,
+        sup_interval: str | None = None,
+        run_dir: str | Path | None = None,
+    ) -> str:
+        """Return the two paste blocks after placeholder substitution."""
+        interval_e = (
+            exec_interval
+            or _ctx_value(ctx, "EXEC_INTERVAL", "exec_interval")
+            or self.exec_interval
+            or _DEFAULT_EXEC_INTERVAL
+        )
+        interval_s = (
+            sup_interval
+            or _ctx_value(ctx, "SUP_INTERVAL", "sup_interval")
+            or self.sup_interval
+            or _DEFAULT_SUP_INTERVAL
+        )
+        dest = (
+            (str(run_dir).rstrip("/") if run_dir is not None else None)
+            or _ctx_value(ctx, "RUN_DIR", "run_dir")
+            or self.run_dir
+            or _DEFAULT_RUN_DIR
+        )
+        executor = (
+            _EXEC_PASTE.replace("{{EXEC_INTERVAL}}", interval_e).replace("{{RUN_DIR}}", dest)
+        )
+        supervisor = (
+            _SUP_PASTE.replace("{{SUP_INTERVAL}}", interval_s).replace("{{RUN_DIR}}", dest)
+        )
+        return f"{executor}\n{supervisor}"
+
+    def invoke(self, node: str, prompt: str, ctx: dict[str, Any]) -> NodeResult:
+        # Emit only. Never call a model and never write ledger/directives.
+        _ = (node, prompt)
+        return NodeResult(ok=True, message=self.emit_dual_loop(ctx), writes=[])
