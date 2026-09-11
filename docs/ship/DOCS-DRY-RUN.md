@@ -120,7 +120,7 @@ longgraph run --host mock: pass (rc=0, fail-closed, no close)
 committed fixtures unchanged: pass
 pass/fail: pass
 time: 0.5s CLI (venv create + pip extra); harness UTC 2026-09-11T23:33:14Z
-SHA: (this PR tip — replace with `git rev-parse HEAD` after the evidence commit)
+SHA: 90cfcaebf5b7533afa0c08ae2cbd08a9336f44c9
 operator: CI/harness (not an external human)
 notes: Coding model for this agent is grok-4.6. Started from main@f313ed3 (H2).
        This agent image lacked ensurepip (`python -m venv` failed); the
