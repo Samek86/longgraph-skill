@@ -1,4 +1,4 @@
-# Runner CONTRACT (Phase 0 / 1a / 1b)
+# Runner CONTRACT (Phase 0 / 1a / 1b / 1c)
 
 Field names, close semantics, and fixture authorship for the runner.
 Skill templates keep their human headings; the runner parses the fields
@@ -93,6 +93,11 @@ Runner-parsed knobs (line form `key: value`, or the Build / test alias):
 Missing knobs: `max_rounds` / `max_retries` default to a high backstop
 (100 / 3) so fixtures without them still parse; tests that care set them
 explicitly.
+
+The Timers table is ambient, not an edge. On first fire each node writes
+**only its own** Timer ID cell (`pending` → real ID). The peer row is
+untouched. GrokBotDualTimerHost is the product dual-timer path; it must
+not reference `longgraph-dev-continue`.
 
 ---
 

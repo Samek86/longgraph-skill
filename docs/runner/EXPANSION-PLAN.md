@@ -1,8 +1,9 @@
-# EXPANSION-PLAN-v3.3 — Phase 0 / 1a / 1b extract
+# EXPANSION-PLAN-v3.3 — Phase 0 / 1a / 1b / 1c extract
 
 Faithful summary of the SHIPPABLE plan for the longgraph runner, limited to
-what Phase 0, Phase 1a, and Phase 1b may ship. Later phases (1c–1d, Phase 2, web UI,
-dynamic topology, prompt auto-edit, token-cost telemetry) are **out of scope**.
+what Phase 0, Phase 1a, Phase 1b, and Phase 1c may ship. Later phases (1d,
+Phase 2, web UI, dynamic topology, prompt auto-edit, token-cost telemetry)
+are **out of scope**.
 
 See [`AUTHORITY.md`](AUTHORITY.md) for precedence.
 
@@ -138,8 +139,7 @@ Emit exactly two paste blocks (placeholders `EXEC_INTERVAL`, `SUP_INTERVAL`,
 Return the dual-loop text via `NodeResult.message` and `emit_dual_loop(...)`.
 No wake / notify / dispatch verbs in the emitted text.
 
-Keep MockHost behavior untouched. Phase 1c GrokBotDualTimerHost and Phase 1d
-ApiHost are out of scope.
+Keep MockHost behavior untouched. Phase 1d ApiHost is out of scope.
 
 ### Ops knobs
 
@@ -159,7 +159,41 @@ Parse from `ops.md`:
 
 ---
 
-## Merge-gate tests (exact names — Phase ≤1b)
+## Phase 1c — GrokBotDualTimerHost (EXPANSION-PLAN-v3.3 §6.3)
+
+A third `Host` implementation next to MockHost and PromptOnlyHost. Same live
+Protocol: `Host.invoke(node, prompt, ctx) -> NodeResult`. No model. No
+peer-wakeup API (`wake` / `notify` / `dispatch`).
+
+Product dual independent timers — executor + supervisor — with **no wake
+edge**. Shared workspace and the same run directory. Each node reads frozen
+`*.md` only.
+
+1. Two independent schedules (routines / cron / `/loop`). No `wake` /
+   `notify` / `dispatch` API between nodes.
+2. On first fire, a node writes **only its own** `ops.md` Timers cell
+   (`pending` → real timer ID). Never the peer's row.
+3. Supervisor refreshes its own next-fire prompt in place (`tick=N`);
+   the executor stays warm.
+4. Overlapping fires are skipped by the host (no-op tick). The runner
+   must tolerate a no-op.
+5. On ledger terminal, each node deletes **its own** timer only.
+6. Product path MUST NOT call or reference `longgraph-dev-continue`
+   (DEV-only). See [`runner/README.md`](../../runner/README.md).
+7. Honor [`grok.md`](../../skills/loop-graph/references/grok.md) limits
+   when on Grok Build: min interval 60s; recurring expiry 7d; overlapping
+   fires skipped.
+
+Tests use a deterministic in-process fake scheduler (record
+create / update / delete / list). No live Grok Bot. No network.
+
+Keep MockHost and PromptOnlyHost behavior untouched. Phase 1d ApiHost,
+LangGraph, wake edges, a skill-dir engine, and Phase 2 prompt auto-rewrite
+are out of scope.
+
+---
+
+## Merge-gate tests (exact names — Phase ≤1c)
 
 1. `test_golden_parse`
 2. `test_mock_roundtrip_add_tests`
@@ -176,6 +210,8 @@ Parse from `ops.md`:
 13. `test_smoke_before_new_item`
 14. `test_max_rounds_budget`
 15. `test_prompt_only_emits_dual_loop_text` (Phase 1b)
+16. `test_dual_timer_no_cross_wake` (Phase 1c)
+17. `test_docs_distinguish_dev_continue_vs_product_host` (Phase 1c)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
@@ -183,8 +219,8 @@ Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
 ## Done when (this extract)
 
-- All Phase ≤1a tests plus `test_prompt_only_emits_dual_loop_text` green
-  in CI or local pytest, documented on the PR.
-- PR title like: `feat(runner): Phase 1b PromptOnlyHost`.
+- All Phase ≤1b tests plus both Phase 1c names green in CI or local
+  pytest, documented on the PR.
+- PR title like: `feat(runner): Phase 1c GrokBotDualTimerHost`.
 - PR body lists test results and notes **DO NOT MERGE** without owner ack.
-- Do **not** merge from the agent. Open a PR only.
+- Stacks on Phase 0–1b. Do **not** merge from the agent. Open a PR only.

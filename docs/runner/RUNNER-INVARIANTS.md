@@ -1,4 +1,4 @@
-# Runner invariants (Phase ≤1b)
+# Runner invariants (Phase ≤1c)
 
 A* rules the runner must not break, plus the CI list that proves them.
 Tune numbers (intervals, caps, retries). Do not change the shape.
@@ -61,7 +61,9 @@ directory. Engine code lives under `runner/`, never under `skills/`.
 **A14 — Host isolation of writes.** MockHost (and later hosts) enforce
 A1–A3 at the write gate: supervisor cannot write the ledger; executor
 cannot write directives; scout cannot write either. PromptOnlyHost emits
-paste text only and must not write ledger or directives.
+paste text only and must not write ledger or directives. GrokBotDualTimerHost
+may write only the invoking node's `ops.md` Timers cell; it must not write
+`ledger.md` from the supervisor or `directives.md` from the executor.
 
 **A15 — Absolute red lines stay red lines.** No secrets in run files, no
 push from the runner, no treating examples as golden SoT.
@@ -69,9 +71,13 @@ push from the runner, no treating examples as golden SoT.
 **A16 — Authoring / runtime split.** Author skills may interview and
 compile. They never execute their output. The runner never reloads them.
 
+**A17 — Product dual timers, no DEV continue.** GrokBotDualTimerHost owns
+two independent timers with no wake edge. `longgraph-dev-continue` is
+DEV-only and must not appear in product Host paths.
+
 ---
 
-## D — CI list (Phase ≤1b)
+## D — CI list (Phase ≤1c)
 
 Exact test names. Do not add the banned aliases
 `test_golden_next_item_*` or `test_default_fail_until_gate`.
@@ -93,5 +99,5 @@ Exact test names. Do not add the banned aliases
 | 13 | `test_smoke_before_new_item` | A7 |
 | 14 | `test_max_rounds_budget` | A9 |
 | 15 | `test_prompt_only_emits_dual_loop_text` | Phase 1b PromptOnlyHost dual `/loop` emit, no wake verbs |
-
-Phase 1c+ tests do not belong in this PR.
+| 16 | `test_dual_timer_no_cross_wake` | Phase 1c dual timers, no wake/notify/dispatch, own-cell seed, own-timer delete, overlap no-op |
+| 17 | `test_docs_distinguish_dev_continue_vs_product_host` | A15, A17 — DEV-only deny; product Host source must not name `longgraph-dev-continue` |

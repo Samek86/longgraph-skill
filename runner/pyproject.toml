@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "longgraph-runner"
 version = "0.1.0"
-description = "Phase 1a/1b runner (MockHost + PromptOnlyHost) for compiled longgraph run directories"
+description = "Phase 1a/1b/1c runner (MockHost + PromptOnlyHost + GrokBotDualTimerHost) for compiled longgraph run directories"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Samek86" }]

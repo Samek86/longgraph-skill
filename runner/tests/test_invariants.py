@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from longgraph.hosts import Host, MockHost, PromptOnlyHost
+from longgraph.hosts import GrokBotDualTimerHost, Host, MockHost, PromptOnlyHost
 from longgraph.nodes import Runner, StatusContractError, write_status
 from longgraph.state import parse_run
 
@@ -37,7 +37,7 @@ def test_runner_never_reads_skills_dir(tmp_path: Path) -> None:
 
 def test_no_peer_wakeup_api() -> None:
     banned = ("wake", "wakeup", "notify_peer", "resume_peer", "wake_peer")
-    for cls in (Host, MockHost, PromptOnlyHost, Runner):
+    for cls in (Host, MockHost, PromptOnlyHost, GrokBotDualTimerHost, Runner):
         for name in dir(cls):
             if name.startswith("_"):
                 continue

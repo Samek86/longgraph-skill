@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .gates import GateRunner
-from .hosts import EdgeWriter, Host, MockHost
+from .hosts import NOOP_MESSAGE, EdgeWriter, Host, MockHost
 from .retry import RetryKey, increment_retry, set_last_attempt, should_resume_verify_only
 from .state import RunState, derive_item_id, parse_run
 
@@ -108,7 +108,7 @@ class Runner:
     def _tick_supervisor(self, state: RunState) -> None:
         prompt_path = self.run_dir / "supervisor.md"
         prompt = self._read(prompt_path) if prompt_path.exists() else ""
-        self.host.invoke(
+        result = self.host.invoke(
             "supervisor",
             prompt,
             {
@@ -117,6 +117,8 @@ class Runner:
                 "slice": state.current_slice,
             },
         )
+        # Overlapping supervisor fire is a complete no-op tick.
+        _ = result
 
     def _tick_scout(self, state: RunState) -> None:
         if not state.blocked_on:
@@ -225,6 +227,9 @@ class Runner:
                 )
                 # Default-FAIL: NodeResult.ok is ignored.
                 _ = result.ok
+                if (result.message or "").strip().lower().startswith(NOOP_MESSAGE):
+                    self._save_status(status, state.run_status)
+                    continue
                 set_last_attempt(status, key, "write")
 
             verify_cmd = state.current_slice.get("Verify") or ""

@@ -13,7 +13,7 @@ from .state import parse_run
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="longgraph", description="Phase 1a/1b runner")
+    parser = argparse.ArgumentParser(prog="longgraph", description="Phase 1a/1b/1c runner")
     sub = parser.add_subparsers(dest="cmd", required=True)
     for name in ("run", "status", "stop"):
         item = sub.add_parser(name)
