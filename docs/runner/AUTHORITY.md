@@ -22,8 +22,10 @@ longgraph runner. The copies here cover Phase 0 (contracts + fixtures +
 parser), Phase 1a (MockHost MVP), Phase 1b (PromptOnlyHost dual `/loop`
 emit), Phase 1c (GrokBotDualTimerHost), and DISTRIBUTION H0–H2 (write-path
 containment, fail-closed gates, DualTimer terminal/scout, CLI Host,
-contract fidelity for long runs). Later phases (1d+) are out of scope
-and must not be invented in this tree.
+contract fidelity for long runs, and Ship-S / D1 closeout scaffolding).
+Later phases (1d+) are out of scope and must not be invented in this tree.
+Public-claim wording that CI cannot bind lives in
+[`docs/ship/PUBLIC_CLAIMS.md`](../ship/PUBLIC_CLAIMS.md), not here.
 
 **Brand.** Product / repo / slash / run-root remain longgraph /
 longgraph-skill / `/longgraph` / `.longgraph/`. The engine is a **new** tree

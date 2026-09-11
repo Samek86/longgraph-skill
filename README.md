@@ -248,7 +248,10 @@ durable run directory; only how you start each tick changes.
 | [Host references](skills/loop-graph/references) | One independently loaded owner for each host's runtime facts |
 | [Worked examples](skills/loop-graph/examples) | Public-Git self-iteration plus fictional ledgers showing gates in action |
 | [Public / private boundary](docs/public-private-boundary.md) | What may enter the public tree vs stay project-local |
-| [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Planned `0.3.0-beta` |
+| [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Version string `0.3.0-beta` (untagged) |
+| [Public claims](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 bound to named pytest (not marketing copy) |
+| [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 highlights; tag is owner-only |
+| [Known issues](KNOWN_ISSUES.md) | Soak / DualTimer timer-only / telemetry residuals |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |
 
 ## Governance
