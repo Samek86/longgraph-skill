@@ -32,26 +32,34 @@ subprocess (`cwd` = workspace).
 
 ```bash
 cd runner
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
 python -m pytest
 ```
 
-Use a compiled run directory (or a fixture):
+Use a **copy** of a compiled run directory (or a fixture). `--host mock`
+writes `status.json` and creates `workspace/` under the run dir — do not
+point it at `tests/fixtures/`.
 
 ```bash
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+
 # 1. Safe default — emit two /loop paste blocks; no writes, no coupled loop
-longgraph run --host prompt-only tests/fixtures/add-tests-to-cli
+longgraph run --host prompt-only /tmp/add-tests-to-cli
 #    omitting --host is the same (defaults to prompt-only)
 
 # 2. Product DualTimer — two independent timers, no peer wake
-longgraph run --host grok-bot tests/fixtures/add-tests-to-cli
+longgraph run --host grok-bot /tmp/add-tests-to-cli
 
-# 3. MockHost coupled test loop — not the product path
-longgraph run --host mock tests/fixtures/add-tests-to-cli
+# 3. MockHost coupled test loop — not the product path; copy first
+longgraph run --host mock /tmp/add-tests-to-cli
 
-longgraph status <run_dir>
-longgraph stop <run_dir>
+longgraph status /tmp/add-tests-to-cli
+longgraph stop /tmp/add-tests-to-cli
 ```
+
+Contributor dry-run (DISTRIBUTION S4): [`docs/ship/DOCS-DRY-RUN.md`](../docs/ship/DOCS-DRY-RUN.md).
 
 Executor write-set paths resolve inside the workspace and cannot clobber
 `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`,
