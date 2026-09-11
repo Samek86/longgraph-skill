@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "runId": "2026-07-28-taskcat-tests",
+  "createdAt": "2026-07-19T10:00:00Z",
+  "updatedAt": "2026-07-19T12:00:00Z",
+  "status": "running",
+  "phase": "executing",
+  "progress": {
+    "completedRounds": 2,
+    "totalItems": 6,
+    "completedItems": 2,
+    "blockedItems": 0,
+    "currentItem": "GAP-002"
+  },
+  "nodes": {
+    "executor": {
+      "lastHeartbeat": "2026-07-19T12:00:00Z",
+      "currentRound": 3,
+      "status": "active"
+    },
+    "supervisor": {
+      "lastHeartbeat": "2026-07-19T11:30:00Z",
+      "lastReview": "2026-07-19T11:30:00Z",
+      "status": "active"
+    }
+  },
+  "ownerEscalation": null,
+  "metadata": {
+    "host": "mock",
+    "goal": "Bring taskcat date parser to green",
+    "owner": "fixture",
+    "tags": ["golden", "add-tests-to-cli"],
+    "itemRetries": {},
+    "lastAttempt": null
+  }
+}

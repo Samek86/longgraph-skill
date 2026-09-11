@@ -2,7 +2,6 @@ name: Validate longgraph-skill
 
 on:
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
@@ -278,3 +277,21 @@ jobs:
           echo "  • status.json wiring in templates"
           echo "  • Scout lifecycle documentation and templates"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  runner:
+    name: Runner Phase 0–1c tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install runner and run merge-gate tests
+        working-directory: runner
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pytest -q
