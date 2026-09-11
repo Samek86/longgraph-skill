@@ -49,7 +49,7 @@ terminal ledger (`exit-ready` / `stalled` / `closed`).
 
 **A11 — Retry key and resume.** Idempotency key is `(runId, round, item_id)`.
 Counts live in `metadata.itemRetries`. After verify-green crash-before-close,
-resume Verify only.
+resume Verify only (`test_verify_green_crash_resumes_verify_only`).
 
 **A12 — Skill is not the engine.** The runner never reads the authoring
 tree (`skills/`). Runtime follows the self-contained files in the run
@@ -101,3 +101,4 @@ Exact test names. Do not add the banned aliases
 | 15 | `test_prompt_only_emits_dual_loop_text` | Phase 1b PromptOnlyHost dual `/loop` emit, no wake verbs |
 | 16 | `test_dual_timer_no_cross_wake` | Phase 1c dual timers, no wake/notify/dispatch, own-cell seed, own-timer delete, overlap no-op |
 | 17 | `test_docs_distinguish_dev_continue_vs_product_host` | A15, A17 — DEV-only deny; product Host source must not name `longgraph-dev-continue` |
+| 18 | `test_verify_green_crash_resumes_verify_only` | A11 — `verify_green` crash-before-close resumes Verify only; write-set is not re-applied |

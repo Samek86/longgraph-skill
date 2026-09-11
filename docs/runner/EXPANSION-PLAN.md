@@ -154,7 +154,8 @@ Parse from `ops.md`:
 - Idempotency key: `(runId, round, item_id)`.
 - Retry count lives in `status.json` → `metadata.itemRetries`.
 - **verify-green-then-crash-before-close** → on resume, run **Verify only**
-  (do not re-apply the write-set).
+  (do not re-apply the write-set). Enforced by
+  `test_verify_green_crash_resumes_verify_only`.
 - `status.json` writes are atomic: write `status.json.tmp`, then `os.replace`.
 
 ---
@@ -212,6 +213,7 @@ are out of scope.
 15. `test_prompt_only_emits_dual_loop_text` (Phase 1b)
 16. `test_dual_timer_no_cross_wake` (Phase 1c)
 17. `test_docs_distinguish_dev_continue_vs_product_host` (Phase 1c)
+18. `test_verify_green_crash_resumes_verify_only` (retry/resume: Verify only after `verify_green`)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
