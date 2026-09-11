@@ -223,6 +223,9 @@ are out of scope.
 25. `test_dual_timer_host_never_closes` (C4 — DualTimer; no `busy_nodes` mute)
 26. `test_write_set_cannot_escape_workspace` (M3 — write-set stays in workspace)
 27. `test_executor_cannot_clobber_ledger_via_relpath` (M3 — no `../ledger.md` clobber)
+28. `test_subprocess_verify_red_blocks_close` (H0b — subprocess Verify red)
+29. `test_subprocess_verify_green_allows_close` (H0b — subprocess Verify green)
+30. `test_cli_default_gate_is_fail_closed` (H0b — CLI fail-closed)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

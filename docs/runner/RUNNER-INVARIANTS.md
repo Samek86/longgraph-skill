@@ -35,10 +35,13 @@ Ignore model "DONE". Empty Verify fails (no close). `n/a` Verify skips
 the gate and close. Live Current-slice `owner_blocked` skips write-set
 and close. Emit-only / timer-only / no-op ticks never close. A red gate
 leaves the item open. Green close rewrites the live scoreboard.
+Product Verify/smoke is a fail-closed subprocess (`cwd` = workspace).
+`GateRunner()` with no `script=` hook never forges `passed=True`.
 
 **A7 — Smoke before a new item.** When the runner starts an item it has
 not already written in this attempt, it runs the ops `smoke` command
-first. Smoke red → do not apply the write-set.
+first (same subprocess gate as Verify). Smoke red → do not apply the
+write-set.
 
 **A8 — Pending-audit blocks advancement.** `milestone_gate: pending-audit`
 forbids starting the next milestone's write-set or flipping the gate to
@@ -121,3 +124,6 @@ Exact test names. Do not add the banned aliases
 | 25 | `test_dual_timer_host_never_closes` | A6, A14, A17 — DualTimer timer-only never closes; no `busy_nodes` mute |
 | 26 | `test_write_set_cannot_escape_workspace` | A14 — write-set destinations resolve inside the workspace |
 | 27 | `test_executor_cannot_clobber_ledger_via_relpath` | A1, A14 — `../ledger.md` (and sibling run-dir edges) cannot clobber the scoreboard |
+| 28 | `test_subprocess_verify_red_blocks_close` | A6 — product subprocess Verify red does not close |
+| 29 | `test_subprocess_verify_green_allows_close` | A6 — product subprocess Verify green may close |
+| 30 | `test_cli_default_gate_is_fail_closed` | A6 — CLI / `GateRunner()` is fail-closed, not a forged pass |
