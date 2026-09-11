@@ -10,8 +10,10 @@ Changelog: [`CHANGELOG.md`](../CHANGELOG.md).
 Residuals: [`KNOWN_ISSUES.md`](../KNOWN_ISSUES.md).
 
 Distribution string: `0.3.0-beta` (in `pyproject.toml`; **not tagged**
-from this tree). This is **Ship-S / D1 closeout** after H2. Soak /
-GitHub Release stay owner-only.
+from this tree). This is **Ship-S / D1 closeout** after H2. GitHub
+Release stays owner-only. Multi-fixture soak harness (Ship-S1):
+[`docs/ship/SOAK.md`](../docs/ship/SOAK.md). Production D2 evidence is
+attached from a later soak run, not from a CI smoke.
 
 ## Host capability table
 

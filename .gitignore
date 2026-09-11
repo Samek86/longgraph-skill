@@ -10,6 +10,9 @@ Thumbs.db
 /loop/
 *.local.md
 
+# Live Ship-S1 soak evidence (templates live under docs/ship/soak/)
+/.longgraph-ship/
+
 # Python (runner/)
 __pycache__/
 *.py[cod]
