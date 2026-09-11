@@ -148,3 +148,4 @@ Exact test names. Do not add the banned aliases
 | 36 | `test_acceptance_directive_releases_pending_audit` | A8 — `ACCEPT-GATE` flips `pending-audit` to `passed` |
 | 37 | `test_executor_folds_directives_and_advances_watermark` | A2 — applied path folds live corrections and advances the watermark |
 | 38 | `test_rounds_log_rotates_golden_round_sections` | §1.7 — `### Round N` (golden fixture shape) rotates |
+| 39 | `test_public_claims_mapped_tests_exist` | Ship-S — every P1–P10 backtick test name is in the collected suite |

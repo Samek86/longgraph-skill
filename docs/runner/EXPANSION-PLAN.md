@@ -198,7 +198,8 @@ are out of scope.
 `--host` is `prompt-only` (safe emit-only default), `grok-bot`
 (`GrokBotDualTimerHost`, independent timers, no serial peer tick), or
 `mock` (coupled test loop only). Do not silently treat MockHost as the
-product path. Planned string: `0.3.0-beta`. Soak / Release stay
+product path. Distribution string: `0.3.0-beta` (see
+`runner/pyproject.toml`; tag is owner-only). Soak / Release stay
 out of scope.
 
 ### DISTRIBUTION H2 — contract fidelity for long runs (after H1)
@@ -216,6 +217,17 @@ LangGraph, skill engine, or Release tag.
   cap-rotate packets the watermark has not passed.
 - **M7.** Live Rounds log entries include `- R…` lines **and**
   `### Round N` sections (golden fixture shape). Both rotate.
+
+### DISTRIBUTION Ship-S / D1 closeout (after H2)
+
+Version string `0.3.0-beta` in `runner/pyproject.toml`. Public claims
+P1–P10 are bound to **existing** pytest names in
+[`docs/ship/PUBLIC_CLAIMS.md`](../ship/PUBLIC_CLAIMS.md). Negative
+cases are indexed in
+[`docs/ship/S3_NEGATIVE_BATTERY.md`](../ship/S3_NEGATIVE_BATTERY.md).
+`test_public_claims_mapped_tests_exist` fails if a mapped name leaves
+the collected suite. Soak / tag / Release stay owner-only. No ApiHost,
+LangGraph, or live DualTimer soak.
 
 ---
 
@@ -259,6 +271,7 @@ LangGraph, skill engine, or Release tag.
 36. `test_acceptance_directive_releases_pending_audit` (H2 M1 — ACCEPT-GATE)
 37. `test_executor_folds_directives_and_advances_watermark` (H2 M2 — fold)
 38. `test_rounds_log_rotates_golden_round_sections` (H2 M7 — golden `### Round`)
+39. `test_public_claims_mapped_tests_exist` (Ship-S — P1–P10 names stay in the collected suite)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
