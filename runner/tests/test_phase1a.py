@@ -212,7 +212,7 @@ def test_executor_cannot_clobber_ledger_via_relpath(tmp_path: Path) -> None:
 
     for rel, payload in (
         ("../ops.md", "tampered-ops\n"),
-        ("../status.json", '{"pwned": true}\n"),
+        ("../status.json", "tampered-status\n"),
         ("../directives.md", "tampered-directives\n"),
     ):
         sibling = MockHost(writer, write_map={"GAP-002": {rel: payload}})
