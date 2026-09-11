@@ -382,7 +382,12 @@ class Runner:
         rel = state.findings_path
         if not rel:
             return False
-        path = self.run_dir / rel
+        path = (self.run_dir / rel).resolve()
+        root = (self.run_dir / "findings").resolve()
+        try:
+            path.relative_to(root)
+        except ValueError:
+            return False
         if not path.is_file():
             return False
         return findings_status_complete(self._read(path))

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from longgraph.cli import main
 from longgraph.hosts import (
     NOOP_MESSAGE,
     FakeScheduler,
@@ -249,3 +250,60 @@ def test_dual_timer_scout_noop_when_blocked_on(tmp_path: Path) -> None:
     assert parse_run(run_dir).blocked_on == "findings#s3-client"
     assert parse_run(run_dir).run_status == "active"
     assert _create_ids(scheduler) == creates_before
+
+
+def test_dual_timer_schedule_on_terminal_creates_zero_tasks(tmp_path: Path) -> None:
+    """A17 / §1.5: schedule() on a terminal ledger must not create or recreate."""
+    run_dir = copy_fixture("add-tests-to-cli", tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    set_ledger_run_status(run_dir, "closed")
+    assert parse_run(run_dir).run_status == "closed"
+
+    scheduler = FakeScheduler()
+    host = GrokBotDualTimerHost(
+        scheduler=scheduler,
+        exec_interval="10m",
+        sup_interval="30m",
+        run_dir=run_dir,
+        workspace=workspace,
+    )
+    exec_id, sup_id = host.schedule()
+    assert exec_id == ""
+    assert sup_id == ""
+    assert scheduler.tasks == {}
+    assert _create_ids(scheduler) == []
+    assert host.exec_timer_id is None
+    assert host.sup_timer_id is None
+
+    ops_before = (run_dir / "ops.md").read_text(encoding="utf-8")
+    rc = main(["run", "--host", "grok-bot", str(run_dir)])
+    assert rc == 0
+    assert (run_dir / "ops.md").read_text(encoding="utf-8") == ops_before
+    assert parse_run(run_dir).run_status == "closed"
+
+    active = copy_fixture("add-tests-to-cli", tmp_path / "active")
+    active_ws = tmp_path / "active-ws"
+    active_ws.mkdir()
+    live = FakeScheduler()
+    live_host = GrokBotDualTimerHost(
+        scheduler=live,
+        run_dir=active,
+        workspace=active_ws,
+    )
+    first_exec, first_sup = live_host.schedule()
+    assert live.tasks
+    ctx = {"run_dir": active, "workspace": active_ws}
+    live_host.invoke("executor", (active / "executor.md").read_text(encoding="utf-8"), ctx)
+    live_host.invoke("supervisor", (active / "supervisor.md").read_text(encoding="utf-8"), ctx)
+    set_ledger_run_status(active, "closed")
+    live_host.invoke("executor", (active / "executor.md").read_text(encoding="utf-8"), ctx)
+    live_host.invoke("supervisor", (active / "supervisor.md").read_text(encoding="utf-8"), ctx)
+    assert live.tasks == {}
+    creates_after_delete = _create_ids(live)
+    again_exec, again_sup = live_host.schedule()
+    assert again_exec == ""
+    assert again_sup == ""
+    assert live.tasks == {}
+    assert _create_ids(live) == creates_after_delete
+    _ = (first_exec, first_sup)
