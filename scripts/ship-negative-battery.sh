@@ -10,7 +10,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/runner"
 
-python -m pytest \
+if command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  PY=python3
+fi
+
+"$PY" -m pytest \
   tests/test_public_claims.py::test_public_claims_mapped_tests_exist \
   tests/test_phase1a.py::test_write_set_cannot_escape_workspace \
   tests/test_phase1a.py::test_executor_cannot_clobber_ledger_via_relpath \
