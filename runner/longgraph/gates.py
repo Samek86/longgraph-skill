@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Sequence
@@ -29,12 +30,16 @@ def classify_verify(command: str | None) -> str:
 
 
 class GateRunner:
-    """Injectable gate runner. Default is pass (MockHost MVP)."""
+    """Fail-closed gate. Product path execs Verify/smoke via subprocess.
+
+    Tests may inject `script=` or an explicit `default=` bool. Omitting both
+    (CLI / `longgraph run`) never forges `passed=True`.
+    """
 
     def __init__(
         self,
         script: Script | Sequence[bool] | None = None,
-        default: bool = True,
+        default: bool | None = None,
     ):
         self.script = list(script) if isinstance(script, Sequence) and not callable(script) else script
         self.default = default
@@ -50,8 +55,34 @@ class GateRunner:
             return GateResult(passed=False, command=command, output="skipped", skipped=True)
         if callable(self.script):
             passed = bool(self.script(command, cwd))
-        elif isinstance(self.script, list):
-            passed = bool(self.script.pop(0)) if self.script else self.default
-        else:
-            passed = self.default
-        return GateResult(passed=passed, command=command, output="mock-gate")
+            return GateResult(passed=passed, command=command, output="mock-gate")
+        if isinstance(self.script, list):
+            if self.script:
+                passed = bool(self.script.pop(0))
+            elif self.default is not None:
+                passed = bool(self.default)
+            else:
+                passed = False
+            return GateResult(passed=passed, command=command, output="mock-gate")
+        if self.default is not None:
+            return GateResult(passed=bool(self.default), command=command, output="mock-gate")
+        return self._run_subprocess(command, cwd)
+
+    def _run_subprocess(self, command: str, cwd: Path) -> GateResult:
+        """Exec `command` with cwd = workspace (or the caller-supplied root)."""
+        try:
+            completed = subprocess.run(
+                command,
+                shell=True,
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+            )
+        except OSError as exc:
+            return GateResult(passed=False, command=command, output=str(exc))
+        output = "".join(part for part in (completed.stdout, completed.stderr) if part)
+        return GateResult(
+            passed=completed.returncode == 0,
+            command=command,
+            output=output,
+        )

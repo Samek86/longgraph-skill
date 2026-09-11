@@ -22,8 +22,12 @@ Executor write-set paths resolve inside the workspace and cannot clobber
 supervisor) with no wake edge between them. Close is gate re-pass only
 after an applied write-set; emit-only and timer-only ticks never close.
 Green close rewrites the live scoreboard so the item leaves the
-register. Empty / `n/a` Verify and live Current-slice `owner_blocked`
-do not close. `blocked-on` with missing findings is scout-only.
+register. Product Verify/smoke is a fail-closed subprocess
+(`cwd` = workspace): non-zero exit fails; empty Verify fails; `n/a`
+skips (does not pass). CLI / `longgraph run` does not default
+`GateRunner` to `passed=True`. Empty / `n/a` Verify and live
+Current-slice `owner_blocked` do not close. `blocked-on` with missing
+findings is scout-only.
 
 Rounds log and live Corrections are bounded and archived. Older `- R…`
 lines rotate into `archive/rounds.md` (`KEEP_ROUNDS`, default 5). Folded

@@ -75,6 +75,11 @@ An item is **FAIL until its gate re-passes**.
   close path that trusts the node result.
 - Empty Verify **fails** (do not close). `n/a` Verify **skips** the gate
   and skips close; the item stays open. Neither forges a green close.
+- Product Verify / smoke is a **fail-closed subprocess** (`cwd` = the
+  workspace, or the documented run root the caller passed). Non-zero
+  exit fails. `GateRunner()` with no `script=` hook never defaults to
+  `passed=True`; tests may still inject `script=` or an explicit
+  `default=`.
 - Live `owner_blocked` ids that apply to the Current slice: no write-set,
   no close.
 - `blocked-on: findings#<id>` with missing or incomplete findings: no
