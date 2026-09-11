@@ -140,12 +140,14 @@ def append_round_log_line(
     item_id: str,
     *,
     date: str | None = None,
+    next_item: str | None = None,
 ) -> str:
     """Append one `- Rn …` line under the Rounds log section (create if missing)."""
     match = re.search(r"Round:\s*(\d+)", ledger_text)
     n = int(match.group(1)) if match else 1
     day = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    line = f"- R{n} {day} | {item_id} | verify: green | next: {item_id}\n"
+    nxt = item_id if next_item is None else next_item
+    line = f"- R{n} {day} | {item_id} | verify: green | next: {nxt}\n"
     bounds = _heading_bounds(ledger_text, "rounds log")
     if bounds is None:
         base = ledger_text if ledger_text.endswith("\n") else ledger_text + "\n"

@@ -214,6 +214,13 @@ are out of scope.
 16. `test_dual_timer_no_cross_wake` (Phase 1c)
 17. `test_docs_distinguish_dev_continue_vs_product_host` (Phase 1c)
 18. `test_verify_green_crash_resumes_verify_only` (retry/resume: Verify only after `verify_green`)
+19. `test_close_retires_scoreboard` (C1 — scoreboard retirement)
+20. `test_blocked_on_skips_executor_until_findings` (C2 — blocked-on)
+21. `test_empty_verify_fails_no_close` (C3 — empty Verify)
+22. `test_na_verify_skips_gate_and_close` (C3 — `n/a` Verify)
+23. `test_owner_blocked_skips_write_set_and_close` (C3 — owner-blocked)
+24. `test_prompt_only_host_never_closes` (C4 — PromptOnlyHost)
+25. `test_dual_timer_host_never_closes` (C4 — DualTimer; no `busy_nodes` mute)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

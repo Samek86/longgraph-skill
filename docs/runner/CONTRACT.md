@@ -64,15 +64,30 @@ is already terminal (see §3).
 
 An item is **FAIL until its gate re-passes**.
 
-- The runner runs the Verify (and required smoke/full) gate **after** the
-  executor tick.
-- **Close** happens only when that gate is green on this attempt.
+- The runner runs the Verify (and required smoke/full) gate **after** an
+  **applied** executor write-set (or on resume-Verify). Emit-only,
+  timer-only, and no-op ticks (`NodeResult.applied` is false) never
+  close, even if a mock Verify would pass.
+- **Close** happens only when that gate is green on this attempt **and**
+  the tick applied work (or resumed Verify after a prior applied write).
 - `NodeResult.ok` is informational and **must be ignored** for close.
 - A model utterance of `DONE` / "done" is not a signal. There is no
   close path that trusts the node result.
+- Empty Verify **fails** (do not close). `n/a` Verify **skips** the gate
+  and skips close; the item stays open. Neither forges a green close.
+- Live `owner_blocked` ids that apply to the Current slice: no write-set,
+  no close.
+- `blocked-on: findings#<id>` with missing or incomplete findings: no
+  executor write-set, no close; scout-only tick until
+  `findings/<id>.md` marks **Status**: complete.
 - A red gate increments `metadata.itemRetries[item_id]` and leaves the
   item open (Default-FAIL). Exhausting `max_retries` stops the run
   without forging a close.
+- Green close **rewrites the live scoreboard**: the closed item leaves
+  `open_gaps`; `Next unclosed work item` and Current slice advance, or
+  `run_status` becomes terminal when nothing remains. Re-close of an
+  already-retired item is idempotent (no second `completedRounds`, no
+  re-applied write-set).
 
 ---
 

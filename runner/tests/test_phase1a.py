@@ -24,7 +24,10 @@ def test_mock_roundtrip_add_tests(tmp_path: Path) -> None:
     assert "GAP-002" in runner.closed_items
     assert out["progress"]["completedRounds"] == 3
     assert out["metadata"]["lastAttempt"]["phase"] == "closed"
-    assert parse_run(run_dir).run_status == "active"
+    state = parse_run(run_dir)
+    assert "GAP-002" not in state.open_gaps
+    assert "GAP-002" not in state.next_item
+    assert state.run_status in {"exit-ready", "stalled", "closed"}
     assert "supervisor" in runner.host.invocations
 
 

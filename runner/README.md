@@ -16,7 +16,11 @@ longgraph run --host prompt-only <run_dir>
 Default host is MockHost (no model). `--host prompt-only` prints the two
 `/loop` paste blocks and does not call a model or write ledger/directives.
 `GrokBotDualTimerHost` schedules two independent timers (executor +
-supervisor) with no wake edge between them. Close is gate re-pass only.
+supervisor) with no wake edge between them. Close is gate re-pass only
+after an applied write-set; emit-only and timer-only ticks never close.
+Green close rewrites the live scoreboard so the item leaves the
+register. Empty / `n/a` Verify and live Current-slice `owner_blocked`
+do not close. `blocked-on` with missing findings is scout-only.
 
 Rounds log and live Corrections are bounded and archived. Older `- R…`
 lines rotate into `archive/rounds.md` (`KEEP_ROUNDS`, default 5). Folded

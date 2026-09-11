@@ -1,8 +1,8 @@
-"""Gates run after the executor. Close listens only to these results."""
+"""Gates run after an applied executor write-set. Close needs a green, non-skipped result."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Sequence
 
@@ -12,9 +12,20 @@ class GateResult:
     passed: bool
     command: str
     output: str = ""
+    skipped: bool = False
 
 
 Script = Callable[[str, Path], bool]
+
+
+def classify_verify(command: str | None) -> str:
+    """Return `empty`, `n/a`, or `run` for a Current-slice Verify field."""
+    stripped = (command or "").strip()
+    if not stripped:
+        return "empty"
+    if stripped.lower().startswith("n/a"):
+        return "n/a"
+    return "run"
 
 
 class GateRunner:
@@ -32,8 +43,11 @@ class GateRunner:
     def run(self, command: str, cwd: Path | None = None) -> GateResult:
         cwd = Path(cwd or ".")
         self.calls.append(command)
-        if not command or command.lower().startswith("n/a"):
-            return GateResult(passed=True, command=command, output="skipped")
+        kind = classify_verify(command)
+        if kind == "empty":
+            return GateResult(passed=False, command=command, output="empty-verify")
+        if kind == "n/a":
+            return GateResult(passed=False, command=command, output="skipped", skipped=True)
         if callable(self.script):
             passed = bool(self.script(command, cwd))
         elif isinstance(self.script, list):

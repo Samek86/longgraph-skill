@@ -17,7 +17,8 @@ executor's context.
 
 **A3 — Scout writes findings only.** Scout output is `findings/<id>.md`.
 It does not write the ledger or directives. The executor reads findings
-on-reference via `blocked-on: findings#<id>`.
+on-reference via `blocked-on: findings#<id>`. Missing or incomplete
+findings block the executor write-set and close; that tick is scout-only.
 
 **A4 — No wake edge.** Each node has one self-driving timer. There is no
 API that lets a node wake, resume, or notify a peer. A directive is
@@ -29,8 +30,11 @@ workset may share one claim, write set, and gate. Verify the same round.
 Register-then-defer side gaps.
 
 **A6 — Default-FAIL close (CONTRACT §1.6).** Close is a **gate re-pass**
-only. Ignore `NodeResult.ok`. Ignore model "DONE". A red gate leaves the
-item open.
+after an applied write-set (or resume-Verify). Ignore `NodeResult.ok`.
+Ignore model "DONE". Empty Verify fails (no close). `n/a` Verify skips
+the gate and close. Live Current-slice `owner_blocked` skips write-set
+and close. Emit-only / timer-only / no-op ticks never close. A red gate
+leaves the item open. Green close rewrites the live scoreboard.
 
 **A7 — Smoke before a new item.** When the runner starts an item it has
 not already written in this attempt, it runs the ops `smoke` command
@@ -102,3 +106,10 @@ Exact test names. Do not add the banned aliases
 | 16 | `test_dual_timer_no_cross_wake` | Phase 1c dual timers, no wake/notify/dispatch, own-cell seed, own-timer delete, overlap no-op |
 | 17 | `test_docs_distinguish_dev_continue_vs_product_host` | A15, A17 — DEV-only deny; product Host source must not name `longgraph-dev-continue` |
 | 18 | `test_verify_green_crash_resumes_verify_only` | A11 — `verify_green` crash-before-close resumes Verify only; write-set is not re-applied |
+| 19 | `test_close_retires_scoreboard` | A1, A6 — green close leaves `open_gaps` / advances `next_item` or marks terminal; re-close is idempotent |
+| 20 | `test_blocked_on_skips_executor_until_findings` | A3 — missing/incomplete findings: scout-only, no write-set, no close |
+| 21 | `test_empty_verify_fails_no_close` | A6 — empty Verify fails; no close |
+| 22 | `test_na_verify_skips_gate_and_close` | A6 — `n/a` Verify skips gate and close |
+| 23 | `test_owner_blocked_skips_write_set_and_close` | A6 — live Current-slice `owner_blocked`: no write-set, no close |
+| 24 | `test_prompt_only_host_never_closes` | A6, A14 — PromptOnlyHost emit-only never closes |
+| 25 | `test_dual_timer_host_never_closes` | A6, A14, A17 — DualTimer timer-only never closes; no `busy_nodes` mute |
