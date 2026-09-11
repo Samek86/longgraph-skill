@@ -24,10 +24,13 @@
       "status": "idle"
     }
   },
+  "ownerEscalation": null,
   "metadata": {
     "host": "{{HOST}}",
     "goal": "{{GOAL_SUMMARY}}",
     "owner": "{{OWNER}}",
-    "tags": []
+    "tags": [],
+    "itemRetries": {},
+    "lastAttempt": null
   }
 }

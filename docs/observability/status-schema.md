@@ -8,6 +8,19 @@ longgraph runs can emit a machine-readable `status.json` file for monitoring, da
 
 Each run writes its own status file in its run directory.
 
+## Authority (runner vs legacy)
+
+- **Runner-managed runs require `status.json`.** The Phase 0/1a runner
+  will not start a run directory that lacks the file. See
+  [`docs/runner/CONTRACT.md`](../runner/CONTRACT.md) §4 and
+  [`docs/runner/AUTHORITY.md`](../runner/AUTHORITY.md).
+- **Writes are atomic:** write `status.json.tmp` in the same directory,
+  then `mv` / `os.replace` onto `status.json`. Never truncate the live
+  file in place.
+- **Legacy / skill-hosted runs** (no runner) may still omit the file.
+  Monitoring tools should treat a missing file as "not runner-managed",
+  not as a hard error, for those runs only.
+
 ## Schema
 
 ```json
@@ -37,11 +50,14 @@ Each run writes its own status file in its run directory.
       "status": "active"
     }
   },
+  "ownerEscalation": null,
   "metadata": {
     "host": "cursor",
     "goal": "Add authentication middleware with tests",
     "owner": "dev-team",
-    "tags": ["auth", "security"]
+    "tags": ["auth", "security"],
+    "itemRetries": {},
+    "lastAttempt": null
   }
 }
 ```
@@ -58,6 +74,7 @@ Each run writes its own status file in its run directory.
 | `updatedAt` | string (ISO 8601) | Last status update timestamp |
 | `status` | enum | Overall run status (see below) |
 | `phase` | enum | Current execution phase (see below) |
+| `ownerEscalation` | object or `null` | Outstanding owner choice-card, or `null` |
 
 ### Status Values
 
@@ -87,6 +104,17 @@ Each run writes its own status file in its run directory.
 | `blockedItems` | number | Items blocked/parked |
 | `currentItem` | string | ID of item being processed |
 
+### Metadata
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `host` | string | Host name (`cursor`, `mock`, …) |
+| `goal` | string | Short goal summary |
+| `owner` | string | Owner identifier |
+| `tags` | string[] | Free-form tags |
+| `itemRetries` | object | Map of `item_id` → retry count. Allowed and required for runner-managed runs. |
+| `lastAttempt` | object or `null` | Idempotency key + phase (`write` / `verify` / `verify_green` / `closed`) |
+
 ### Nodes
 
 Each node (executor, supervisor, scout) can report:
@@ -98,12 +126,18 @@ Each node (executor, supervisor, scout) can report:
 
 ## Usage
 
-### Emitting Status (Optional)
+### Emitting Status
 
-Add this to your executor or supervisor template at natural checkpoints:
+**Runner-managed runs** must use the runner's atomic writer (tmp + `os.replace`).
+Do not invent a second writer.
+
+#### Legacy (skill-hosted / manual only)
+
+The following `cat >` snippet is **legacy**. It is not atomic and must not
+be used by the runner. Kept so existing host checklists still parse.
 
 ```bash
-# Update status after completing a round
+# LEGACY — not atomic; do not use for runner-managed runs
 cat > .longgraph/${RUN_DIR}/status.json <<EOF
 {
   "version": "1.0",
@@ -119,23 +153,19 @@ cat > .longgraph/${RUN_DIR}/status.json <<EOF
 EOF
 ```
 
-Or from Python:
+Atomic form (required for the runner; recommended everywhere else):
 
 ```python
 import json
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 
-def update_status(run_dir, status, phase, progress):
-    status_file = f".longgraph/{run_dir}/status.json"
-    with open(status_file, "w") as f:
-        json.dump({
-            "version": "1.0",
-            "runId": run_dir,
-            "updatedAt": datetime.now(timezone.utc).isoformat(),
-            "status": status,
-            "phase": phase,
-            "progress": progress
-        }, f, indent=2)
+def update_status(status_path, payload):
+    path = Path(status_path)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
 ```
 
 ### Reading Status
@@ -168,10 +198,11 @@ Integrate with CI:
 ## Best Practices
 
 1. **Update at round boundaries** — Not mid-work; keep I/O minimal
-2. **Atomic writes** — Write to temp file, then rename
-3. **Graceful degradation** — Missing status.json is not an error
+2. **Atomic writes** — Write to `status.json.tmp`, then `mv` / `os.replace`. Required for runner-managed runs.
+3. **Graceful degradation** — Missing `status.json` is not an error for **legacy skill-hosted** runs. It **is** an error for the runner.
 4. **No secrets** — Never include tokens, credentials, or PII
 5. **Timezone-aware** — Always use UTC (ISO 8601 with `Z`)
+6. **`completed` implies terminal ledger** — Do not persist `status: "completed"` while `Run status` is still `active`.
 
 ## Integration with Templates
 
@@ -179,10 +210,13 @@ The loop-graph compiler can optionally inject status hooks into generated execut
 
 ## Backward Compatibility
 
-`status.json` is entirely optional. Existing runs without it continue working normally. Monitoring tools should gracefully handle:
-- Missing files
-- Partial schemas (older versions)
-- Stale timestamps
+For **legacy skill-hosted** runs, `status.json` remains optional. Monitoring
+tools should gracefully handle missing files, partial schemas, and stale
+timestamps on those runs.
+
+For **runner-managed** runs, `status.json` is required, must include
+`ownerEscalation` (nullable) and may include `metadata.itemRetries`, and
+must be written atomically.
 
 ---
 
