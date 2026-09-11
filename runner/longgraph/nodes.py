@@ -17,10 +17,13 @@ from .rotate import (
     ROUNDS_ARCHIVE_HEADING,
     RotationCaps,
     append_round_log_line,
+    fold_corrections_into_ledger,
+    is_accept_gate_packet,
     merge_archive,
     parse_rotation_caps,
     rotate_directives,
     rotate_rounds_log,
+    unfolded_packets,
 )
 from .state import (
     RunState,
@@ -28,6 +31,7 @@ from .state import (
     derive_item_id,
     findings_status_complete,
     parse_run,
+    paths_from_write_set,
 )
 
 TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
@@ -61,11 +65,49 @@ def write_status(path: Path, payload: dict, *, ledger_run_status: str | None = N
     os.replace(tmp, dest)
 
 
-def _looks_like_milestone_advance(state: RunState) -> bool:
-    if state.milestone_gate != "pending-audit":
+_MILESTONE_ITEM = re.compile(r"^\s*M\d+\b")
+_READ_ONLY_WRITE_SET = frozenset({"", "read-only", "n/a", "none", "-", "—"})
+_AUDIT_SURFACE = re.compile(r"^Audit surface:\s*(.*)$", re.I | re.M)
+
+
+def _audit_surface_paths(ledger_text: str) -> set[str]:
+    """Paths named on Pending promotion `Audit surface:` (empty if none)."""
+    in_section = False
+    for line in ledger_text.splitlines():
+        raw = line.strip()
+        if raw.startswith("## ") and "pending promotion" in raw.lower():
+            in_section = True
+            continue
+        if in_section and raw.startswith("## "):
+            break
+        if not in_section:
+            continue
+        match = _AUDIT_SURFACE.match(raw)
+        if match:
+            return set(paths_from_write_set(match.group(1)))
+    return set()
+
+
+def current_slice_is_next_milestone_surface(state: RunState, ledger_text: str = "") -> bool:
+    """True when the Current-slice write-set is the next-milestone surface.
+
+    CONTRACT §1.4 / A8: `pending-audit` blocks that surface only. An
+    already-registered lane item whose write-set is `read-only` or
+    disjoint from the audit surface may continue. `next_item` mentioning
+    `M\\d+` is not enough to block.
+    """
+    write_set = (state.current_slice.get("Write set") or "").strip()
+    if write_set.lower() in _READ_ONLY_WRITE_SET:
         return False
-    text = f"{state.current_slice.Item} {state.next_item}"
-    return bool(re.search(r"\bM\d+\b", text))
+    item = state.current_slice.Item or ""
+    if _MILESTONE_ITEM.match(item):
+        return True
+    if ledger_text:
+        audit = _audit_surface_paths(ledger_text)
+        writes = set(paths_from_write_set(write_set))
+        if audit and writes & audit:
+            return True
+    return False
 
 
 _GAP_ROW = re.compile(r"^(\|\s*)(GAP-\d+)(\s*\|.*)$")
@@ -249,7 +291,7 @@ class Runner:
         )
 
     def _rotate_directives(self, state: RunState) -> None:
-        """Rotate folded (and cap-excess) corrections before any supervisor append."""
+        """Rotate folded corrections (IDs ≤ watermark) before any supervisor append."""
         path = self.run_dir / "directives.md"
         if not path.exists():
             return
@@ -263,6 +305,42 @@ class Runner:
         self._append_archive("supervisor", "directives.md", archive, DIRECTIVES_ARCHIVE_HEADING)
         if new_text != current:
             self.writer.write("supervisor", path, new_text, write_set=False)
+
+    def _applied_work_path(self) -> bool:
+        """MockHost is the coupled applied-work path. Emit/timer hosts do not fold."""
+        return isinstance(self.host, MockHost)
+
+    def _persist_directive_fold(self, state: RunState) -> RunState:
+        """Write ACCEPT-GATE / watermark onto the ledger. Executor is the writer."""
+        ledger = self.run_dir / "ledger.md"
+        directives = self.run_dir / "directives.md"
+        if not ledger.exists() or not directives.exists():
+            return state
+        text = ledger.read_text(encoding="utf-8")
+        updated, _, _ = fold_corrections_into_ledger(
+            text,
+            directives.read_text(encoding="utf-8"),
+            state.last_directive_folded,
+        )
+        if updated != text:
+            self.writer.write("executor", ledger, updated, write_set=False)
+            return self._state()
+        return state
+
+    def _maybe_release_pending_audit(self, state: RunState) -> RunState:
+        """Fold an ACCEPT-GATE correction so the pending gate can flip."""
+        if not self._applied_work_path() or state.milestone_gate != "pending-audit":
+            return state
+        directives = self.run_dir / "directives.md"
+        if not directives.exists():
+            return state
+        packets = unfolded_packets(
+            directives.read_text(encoding="utf-8"),
+            state.last_directive_folded,
+        )
+        if not any(is_accept_gate_packet(packet) for _, packet in packets):
+            return state
+        return self._persist_directive_fold(state)
 
     def _host_owns_timers(self) -> bool:
         """True when the Host owns independent timers (no coupled peer ticks)."""
@@ -353,6 +431,13 @@ class Runner:
 
         text = re.sub(r"(Round:\s*)(\d+)", _bump, text, count=1)
         text = retire_live_scoreboard(text, item_id, remaining)
+        directives = self.run_dir / "directives.md"
+        if directives.exists():
+            text, _, _ = fold_corrections_into_ledger(
+                text,
+                directives.read_text(encoding="utf-8"),
+                state.last_directive_folded,
+            )
         text = append_round_log_line(text, item_id, next_item=next_item_label(remaining, text))
         text = text.rstrip() + f"\n\n<!-- runner closed {item_id} -->\n"
         caps = self._rotation_caps()
@@ -392,7 +477,15 @@ class Runner:
             item_id = derive_item_id(state)
             key = RetryKey(str(status.get("runId") or self.run_dir.name), completed + 1, item_id)
 
-            if _looks_like_milestone_advance(state):
+            state = self._maybe_release_pending_audit(state)
+            item_id = derive_item_id(state)
+            key = RetryKey(str(status.get("runId") or self.run_dir.name), completed + 1, item_id)
+
+            ledger_text = (self.run_dir / "ledger.md").read_text(encoding="utf-8")
+            if (
+                state.milestone_gate == "pending-audit"
+                and current_slice_is_next_milestone_surface(state, ledger_text)
+            ):
                 self.advancement_blocked = True
                 self.stopped_reason = "pending-audit"
                 if not self._host_owns_timers():

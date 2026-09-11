@@ -1,4 +1,4 @@
-# longgraph runner (Phase 1a / 1b / 1c + DISTRIBUTION H1 CLI Host)
+# longgraph runner (Phase 1a / 1b / 1c + DISTRIBUTION H1/H2)
 
 Engine for compiled run directories. The skill library under `skills/` is
 policy only — this package never loads it.
@@ -7,8 +7,9 @@ Authority: [`docs/runner/AUTHORITY.md`](../docs/runner/AUTHORITY.md).
 Security: [`SECURITY.md`](../SECURITY.md).
 
 Planned distribution string: `0.3.0-beta` (not tagged from this tree).
-This is **H1** on the D1 ladder (CLI Host productization). H2 / soak /
-GitHub Release stay out of scope.
+This is **H2** on the D1 ladder (contract fidelity for long runs: M1
+pending-audit lane/accept, M2 directive fold, M7 golden rounds rotate).
+Soak / GitHub Release stay out of scope.
 
 ## Host capability table
 
@@ -68,9 +69,16 @@ findings is scout-only (MockHost). DualTimer hosts do not drive
 supervisor/scout from the executor branch.
 
 Rounds log and live Corrections are bounded and archived. Older `- R…`
-lines rotate into `archive/rounds.md` (`KEEP_ROUNDS`, default 5). Folded
-corrections rotate into `archive/directives.md` at the ledger watermark
-before the supervisor appends; the live queue is capped
-(`OPEN_DIRECTIVE_CAP`, default 8). Caps are read from `ops.md` when present.
+lines **and** `### Round N` sections rotate into `archive/rounds.md`
+(`KEEP_ROUNDS`, default 5). On an applied executor tick, live corrections
+above `Last directive folded` are folded (apply or no-op) and the
+watermark advances in the same ledger write as the round. Folded
+corrections then rotate into `archive/directives.md` at that watermark
+before the supervisor appends. `OPEN_DIRECTIVE_CAP` (default 8) is
+append discipline — it does not archive unfolded packets. Caps are read
+from `ops.md` when present. A live `ACCEPT-GATE` correction (or first-line
+verb `accept-gate`) is the only runner path that flips
+`milestone_gate: pending-audit` to `passed`. Disjoint registered lane
+work may continue while the gate is pending.
 
 `longgraph-dev-continue` is DEV-only and must not appear in product Host paths.

@@ -3,12 +3,13 @@
 Pure helpers: parse caps from ops.md (or defaults), split live text from
 archive fragments. Callers write through EdgeWriter.
 
-CONTRACT: KEEP_ROUNDS (default 5) live `- R…` lines; older lines go to
-`archive/rounds.md`. Corrections with IDs ≤ the ledger watermark
-(`Last directive folded`) move to `archive/directives.md` before append.
-Next ID = max(watermark, highest live ID) + 1; never reuse rotated IDs.
-After watermark rotate, oldest excess live packets rotate until the
-queue is ≤ OPEN_DIRECTIVE_CAP (default 8).
+CONTRACT: KEEP_ROUNDS (default 5) live round entries — `- R…` lines and
+`### Round N` sections — older entries go to `archive/rounds.md`.
+Corrections with IDs ≤ the ledger watermark (`Last directive folded`)
+move to `archive/directives.md` before append. Next ID = max(watermark,
+highest live ID) + 1; never reuse rotated IDs. Packets above the
+watermark are never cap-rotated (OPEN_DIRECTIVE_CAP is append
+discipline, not a silent truncate of unfolded corrections).
 """
 
 from __future__ import annotations
@@ -26,10 +27,12 @@ DIRECTIVES_ARCHIVE_HEADING = "# Archived directives\n"
 _KEEP_ROUNDS = re.compile(r"^(?:KEEP_ROUNDS|keep_rounds):\s*(\d+)\s*$", re.M)
 _OPEN_CAP = re.compile(r"^(?:OPEN_DIRECTIVE_CAP|open_directive_cap):\s*(\d+)\s*$", re.M)
 _ROUND_LINE = re.compile(r"^- R\d+\b")
+_ROUND_SECTION = re.compile(r"^### Round\s+\d+\b")
 _DIR_LINE = re.compile(r"^D-(\d+)\b")
 _DIR_ANY = re.compile(r"\bD-(\d+)\b")
 _WATERMARK_NONE = frozenset({"none", "n/a", "-", "—", ""})
 _NONE_CORRECTION = re.compile(r"^\(none", re.I)
+_ACCEPT_GATE_TOKEN = re.compile(r"\bACCEPT-GATE\b", re.I)
 
 
 @dataclass(frozen=True)
@@ -109,12 +112,40 @@ def _raw_line(line: str) -> str:
     return line.split("\n")[0]
 
 
+def _round_entry_ranges(body: list[str]) -> list[tuple[int, int]]:
+    """Return (start, end) ranges for each `- R…` line or `### Round N` section."""
+    ranges: list[tuple[int, int]] = []
+    i = 0
+    while i < len(body):
+        raw = _raw_line(body[i])
+        if _ROUND_LINE.match(raw):
+            ranges.append((i, i + 1))
+            i += 1
+            continue
+        if _ROUND_SECTION.match(raw):
+            j = i + 1
+            while j < len(body):
+                nxt = _raw_line(body[j])
+                if _ROUND_LINE.match(nxt) or _ROUND_SECTION.match(nxt):
+                    break
+                j += 1
+            ranges.append((i, j))
+            i = j
+            continue
+        i += 1
+    return ranges
+
+
 def rotate_rounds_log(
     ledger_text: str,
     *,
     keep_rounds: int | None = None,
 ) -> tuple[str, str]:
-    """Keep the last KEEP_ROUNDS `- R…` lines; return (new_ledger, archive_append)."""
+    """Keep the last KEEP_ROUNDS live round entries; return (new_ledger, archive_append).
+
+    A live entry is one `- R…` line or one `### Round N` section (heading plus
+    body until the next entry). Mixed logs stay bounded.
+    """
     keep = DEFAULT_KEEP_ROUNDS if keep_rounds is None else keep_rounds
     bounds = _heading_bounds(ledger_text, "rounds log")
     if bounds is None:
@@ -122,11 +153,16 @@ def rotate_rounds_log(
     _, body_start, body_end = bounds
     lines = ledger_text.splitlines(keepends=True)
     body = lines[body_start:body_end]
-    round_idxs = [i for i, line in enumerate(body) if _ROUND_LINE.match(_raw_line(line))]
-    if len(round_idxs) <= keep:
+    entries = _round_entry_ranges(body)
+    if len(entries) <= keep:
         return ledger_text, ""
-    drop = set(round_idxs[: len(round_idxs) - keep])
-    archived = "".join(body[i] for i in sorted(drop))
+    drop_ranges = entries[: len(entries) - keep]
+    drop = set()
+    archived_parts: list[str] = []
+    for start, end in drop_ranges:
+        archived_parts.append("".join(body[start:end]))
+        drop.update(range(start, end))
+    archived = "".join(archived_parts)
     new_body = [line for i, line in enumerate(body) if i not in drop]
     new_lines = lines[:body_start] + new_body + lines[body_end:]
     new_text = "".join(new_lines)
@@ -211,12 +247,10 @@ def rotate_directives(
     *,
     open_directive_cap: int | None = None,
 ) -> tuple[str, str]:
-    """Move Correction packets with IDs ≤ watermark (then oldest excess) to archive.
+    """Move Correction packets with IDs ≤ watermark to archive.
 
-    Supervisor state and STANDING are preserved byte-for-byte. After the
-    watermark pass, if live Corrections still exceed OPEN_DIRECTIVE_CAP,
-    the oldest remaining packets (lowest IDs) rotate until the live queue
-    is at the cap — newest unfolded corrections stay.
+    Supervisor state and STANDING are preserved byte-for-byte. Packets
+    above the watermark stay live even when they exceed OPEN_DIRECTIVE_CAP.
     """
     cap = DEFAULT_OPEN_DIRECTIVE_CAP if open_directive_cap is None else open_directive_cap
     bounds = _heading_bounds(directives_text, "corrections")
@@ -238,10 +272,10 @@ def rotate_directives(
         else:
             live.append((ident, packet))
 
-    if cap >= 0 and len(live) > cap:
-        overflow = len(live) - cap
-        archived.extend(packet for _, packet in live[:overflow])
-        live = live[overflow:]
+    # OPEN_DIRECTIVE_CAP must not archive packets the watermark has not
+    # passed — that silently drops unfolded corrections. The cap is
+    # supervisor append discipline only (`_ = cap` keeps the kwarg live).
+    _ = cap
 
     if not archived:
         return directives_text, ""
@@ -265,6 +299,84 @@ def rotate_directives(
     if directives_text.endswith("\n") and not new_text.endswith("\n"):
         new_text += "\n"
     return new_text, "".join(archived)
+
+
+def live_correction_packets(directives_text: str) -> list[tuple[int, str]]:
+    """Return (id, packet) for every live Corrections packet, in order."""
+    bounds = _heading_bounds(directives_text, "corrections")
+    if bounds is None:
+        return []
+    _, body_start, body_end = bounds
+    lines = directives_text.splitlines(keepends=True)
+    body = "".join(lines[body_start:body_end])
+    _, packets = _parse_correction_packets(body)
+    return packets
+
+
+def unfolded_packets(directives_text: str, watermark: str) -> list[tuple[int, str]]:
+    """Live Corrections with IDs strictly above the ledger watermark."""
+    wm = watermark_n(watermark)
+    return [(ident, packet) for ident, packet in live_correction_packets(directives_text) if ident > wm]
+
+
+def packet_verb(packet: str) -> str:
+    """Third `·`-separated token on the first line (`accept`, `plan`, …)."""
+    first = packet.splitlines()[0] if packet else ""
+    parts = [part.strip() for part in first.split("·")]
+    if len(parts) < 3:
+        return ""
+    token = parts[2].split()[0] if parts[2] else ""
+    return token.strip("*").strip("`").strip(".,;").lower()
+
+
+def is_accept_gate_packet(packet: str) -> bool:
+    """True when a packet accepts the pending milestone gate.
+
+    Marker (CONTRACT §1.4): the exact token ``ACCEPT-GATE`` (ASCII,
+    case-insensitive) appears in the packet, **or** the first-line verb
+    is ``accept-gate``. A bare ``accept`` verb without ``ACCEPT-GATE`` is
+    a lane/item verdict and does not flip the gate.
+    """
+    if not packet:
+        return False
+    if packet_verb(packet) == "accept-gate":
+        return True
+    return bool(_ACCEPT_GATE_TOKEN.search(packet))
+
+
+def _set_header_rest(text: str, label: str, value: str) -> str:
+    pattern = re.compile(rf"^({re.escape(label)}:\s*).*$", re.M)
+    if not pattern.search(text):
+        return text
+    return pattern.sub(lambda match: match.group(1) + value, text, count=1)
+
+
+def fold_corrections_into_ledger(
+    ledger_text: str,
+    directives_text: str,
+    watermark: str,
+) -> tuple[str, str, bool]:
+    """Apply or no-op every correction above `watermark`.
+
+    Returns ``(new_ledger, new_watermark, accepted_gate)``.
+    ``ACCEPT-GATE`` flips ``Milestone gate`` to ``passed``. Every other
+    packet is an explicit no-op. The watermark advances to the highest
+    folded id in either case.
+    """
+    packets = unfolded_packets(directives_text, watermark)
+    if not packets:
+        return ledger_text, watermark or "none", False
+    highest = watermark_n(watermark)
+    accepted = False
+    for ident, packet in packets:
+        highest = max(highest, ident)
+        if is_accept_gate_packet(packet):
+            accepted = True
+    new_wm = format_directive_id(highest)
+    updated = _set_header_rest(ledger_text, "Last directive folded", new_wm)
+    if accepted:
+        updated = _set_header_rest(updated, "Milestone gate", "`passed` (ACCEPT-GATE folded)")
+    return updated, new_wm, accepted
 
 
 def append_correction_packet(directives_text: str, packet: str) -> str:

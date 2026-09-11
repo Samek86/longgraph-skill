@@ -198,8 +198,24 @@ are out of scope.
 `--host` is `prompt-only` (safe emit-only default), `grok-bot`
 (`GrokBotDualTimerHost`, independent timers, no serial peer tick), or
 `mock` (coupled test loop only). Do not silently treat MockHost as the
-product path. Planned string: `0.3.0-beta`. H2 / soak / Release stay
+product path. Planned string: `0.3.0-beta`. Soak / Release stay
 out of scope.
+
+### DISTRIBUTION H2 — contract fidelity for long runs (after H1)
+
+Fix Majors M1 / M2 / M7 against CONTRACT §1.4 / A8, the directives
+watermark, and bounded Rounds log. No ApiHost, soak, wake edges,
+LangGraph, skill engine, or Release tag.
+
+- **M1.** `pending-audit` blocks only the Current-slice next-milestone
+  write-set. Disjoint registered lane work continues. `ACCEPT-GATE`
+  (or first-line verb `accept-gate`) is the acceptance-release marker.
+- **M2.** On the applied executor path, fold live corrections above
+  `Last directive folded` (apply or explicit no-op) and advance the
+  watermark in the same ledger write that records the round. Do not
+  cap-rotate packets the watermark has not passed.
+- **M7.** Live Rounds log entries include `- R…` lines **and**
+  `### Round N` sections (golden fixture shape). Both rotate.
 
 ---
 
@@ -239,6 +255,10 @@ out of scope.
 32. `test_dual_timer_scout_noop_when_blocked_on` (H0c M5 — DualTimer scout is a no-op)
 33. `test_cli_accepts_grok_bot_host` (H1 — CLI `--host grok-bot`; default `prompt-only`)
 34. `test_grok_bot_host_does_not_serial_tick_peers` (H1 — DualTimer ≠ MockHost serial loop)
+35. `test_pending_audit_allows_lane_work` (H2 M1 — lane continue)
+36. `test_acceptance_directive_releases_pending_audit` (H2 M1 — ACCEPT-GATE)
+37. `test_executor_folds_directives_and_advances_watermark` (H2 M2 — fold)
+38. `test_rounds_log_rotates_golden_round_sections` (H2 M7 — golden `### Round`)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
