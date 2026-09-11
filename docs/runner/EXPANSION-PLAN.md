@@ -178,7 +178,8 @@ edge**. Shared workspace and the same run directory. Each node reads frozen
    the executor stays warm.
 4. Overlapping fires are skipped by the host (no-op tick). The runner
    must tolerate a no-op.
-5. On ledger terminal, each node deletes **its own** timer only.
+5. On ledger terminal, each node deletes **its own** timer only —
+   check terminal **before** seed/create; a later fire must not recreate.
 6. Product path MUST NOT call or reference `longgraph-dev-continue`
    (DEV-only). See [`runner/README.md`](../../runner/README.md).
 7. Honor [`grok.md`](../../skills/loop-graph/references/grok.md) limits
@@ -226,6 +227,8 @@ are out of scope.
 28. `test_subprocess_verify_red_blocks_close` (H0b — subprocess Verify red)
 29. `test_subprocess_verify_green_allows_close` (H0b — subprocess Verify green)
 30. `test_cli_default_gate_is_fail_closed` (H0b — CLI fail-closed)
+31. `test_dual_timer_stays_deleted_after_terminal` (H0c M4 — terminal-before-seed; no recreate)
+32. `test_dual_timer_scout_noop_when_blocked_on` (H0c M5 — DualTimer scout is a no-op)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

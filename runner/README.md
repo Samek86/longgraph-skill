@@ -19,8 +19,10 @@ Executor write-set paths resolve inside the workspace and cannot clobber
 `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`,
 `status.json`); runner close remains the only ledger writer.
 `GrokBotDualTimerHost` schedules two independent timers (executor +
-supervisor) with no wake edge between them. Close is gate re-pass only
-after an applied write-set; emit-only and timer-only ticks never close.
+supervisor) with no wake edge between them. A terminal ledger stops each
+node's timer without reseeding; scout ticks are a no-op. Close is gate
+re-pass only after an applied write-set; emit-only and timer-only ticks
+never close.
 Green close rewrites the live scoreboard so the item leaves the
 register. Product Verify/smoke is a fail-closed subprocess
 (`cwd` = workspace): non-zero exit fails; empty Verify fails; `n/a`

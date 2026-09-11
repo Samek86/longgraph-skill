@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from longgraph.hosts import (
+    NOOP_MESSAGE,
     FakeScheduler,
     GrokBotDualTimerHost,
     Host,
@@ -157,3 +158,94 @@ def test_docs_distinguish_dev_continue_vs_product_host() -> None:
     for py in product.glob("*.py"):
         text = py.read_text(encoding="utf-8")
         assert "longgraph-dev-continue" not in text, py
+
+
+def _create_ids(scheduler: FakeScheduler) -> list[str]:
+    return [tid for action, tid in scheduler.log if action == "create"]
+
+
+def _delete_ids(scheduler: FakeScheduler) -> list[str]:
+    return [tid for action, tid in scheduler.log if action == "delete"]
+
+
+def test_dual_timer_stays_deleted_after_terminal(tmp_path: Path) -> None:
+    run_dir = copy_fixture("add-tests-to-cli", tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    scheduler = FakeScheduler()
+    host = GrokBotDualTimerHost(
+        scheduler=scheduler,
+        exec_interval="10m",
+        sup_interval="30m",
+        run_dir=run_dir,
+        workspace=workspace,
+    )
+    exec_id, sup_id = host.schedule()
+    exec_prompt = (run_dir / "executor.md").read_text(encoding="utf-8")
+    sup_prompt = (run_dir / "supervisor.md").read_text(encoding="utf-8")
+    ctx = _ctx(run_dir, workspace)
+    host.invoke("executor", exec_prompt, ctx)
+    host.invoke("supervisor", sup_prompt, ctx)
+
+    set_ledger_run_status(run_dir, "closed")
+    assert parse_run(run_dir).run_status == "closed"
+
+    first_exec = host.invoke("executor", exec_prompt, ctx)
+    first_sup = host.invoke("supervisor", sup_prompt, ctx)
+    assert first_exec.message == "terminal"
+    assert first_sup.message == "terminal"
+    assert first_exec.applied is False
+    assert first_sup.applied is False
+    assert host.exec_timer_id is None
+    assert host.sup_timer_id is None
+    assert scheduler.get(exec_id) is None
+    assert scheduler.get(sup_id) is None
+    assert scheduler.tasks == {}
+    creates_after_first = _create_ids(scheduler)
+    deletes_after_first = _delete_ids(scheduler)
+    assert exec_id in deletes_after_first
+    assert sup_id in deletes_after_first
+
+    second_exec = host.invoke("executor", exec_prompt, ctx)
+    second_sup = host.invoke("supervisor", sup_prompt, ctx)
+    assert second_exec.message == "terminal"
+    assert second_sup.message == "terminal"
+    assert host.exec_timer_id is None
+    assert host.sup_timer_id is None
+    assert scheduler.tasks == {}
+    # Second terminal fire must not create, then delete, a replacement task.
+    assert _create_ids(scheduler) == creates_after_first
+    assert _delete_ids(scheduler) == deletes_after_first
+
+
+def test_dual_timer_scout_noop_when_blocked_on(tmp_path: Path) -> None:
+    run_dir = copy_fixture("scout-library-choice", tmp_path)
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    findings = run_dir / "findings" / "s3-client.md"
+    findings.write_text("# Findings: s3-client\n\n**Status**: incomplete\n", encoding="utf-8")
+    scheduler = FakeScheduler()
+    host = GrokBotDualTimerHost(
+        scheduler=scheduler,
+        run_dir=run_dir,
+        workspace=workspace,
+    )
+    host.schedule()
+    creates_before = _create_ids(scheduler)
+    ctx = {**_ctx(run_dir, workspace), "blocked_on": "findings#s3-client"}
+
+    result = host.invoke("scout", "", ctx)
+    assert result.ok is True
+    assert result.message.strip().lower().startswith(NOOP_MESSAGE)
+    assert result.writes == []
+    assert result.applied is False
+    assert _create_ids(scheduler) == creates_before
+    assert scheduler.tasks  # executor + supervisor remain; scout did not schedule
+
+    runner = Runner(run_dir, host=host, workspace=workspace)
+    runner.run(steps=1)
+    assert runner.stopped_reason is None
+    assert runner.closed_items == []
+    assert parse_run(run_dir).blocked_on == "findings#s3-client"
+    assert parse_run(run_dir).run_status == "active"
+    assert _create_ids(scheduler) == creates_before
