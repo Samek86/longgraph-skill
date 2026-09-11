@@ -27,6 +27,13 @@ class WriteDenied(PermissionError):
     """Single-writer edge violation."""
 
 
+_PROTECTED_RUN_FILES = frozenset({"ledger.md", "directives.md", "ops.md", "status.json"})
+
+
+def _as_resolved(path: Path | str) -> Path:
+    return Path(path).resolve()
+
+
 @dataclass
 class NodeResult:
     """Node self-report. `ok` is informational and must never close an item.
@@ -43,33 +50,89 @@ class NodeResult:
 
 
 class EdgeWriter:
-    """Enforces A1–A3 / A14 at the write gate."""
+    """Enforces A1–A3 / A14 at the write gate.
+
+    Destinations are resolved. Host write-set must stay ``relative_to``
+    workspace; named edge files must stay ``relative_to`` run_dir.
+    Executor write-set cannot resolve to run_dir ``ledger.md`` /
+    ``directives.md`` / ``ops.md`` / ``status.json``. Runner close
+    (``write_set=False``) remains the only legitimate ledger writer.
+    """
 
     def __init__(self, run_dir: Path, workspace: Path):
         self.run_dir = Path(run_dir)
         self.workspace = Path(workspace)
         self.log: list[tuple[str, str]] = []
 
-    def write(self, node: str, path: Path | str, content: str) -> None:
-        dest = Path(path)
-        name = dest.name
-        if node == "supervisor" and name == "ledger.md":
-            raise WriteDenied("supervisor cannot write ledger")
-        if node == "executor" and name == "directives.md":
-            raise WriteDenied("executor cannot write directives")
-        if node == "scout" and name in {"ledger.md", "directives.md"}:
-            raise WriteDenied("scout writes findings only")
-        supervisor_directives = name == "directives.md"
-        if node == "supervisor" and not supervisor_directives:
-            raise WriteDenied("supervisor writes directives only")
-        if node == "scout":
+    def _relative_to(self, resolved: Path, root: Path) -> Path:
+        try:
+            return resolved.relative_to(root.resolve())
+        except ValueError as exc:
+            raise WriteDenied(f"write destination escapes {root}") from exc
+
+    def _run_rel(self, resolved: Path) -> Path | None:
+        try:
+            return resolved.relative_to(self.run_dir.resolve())
+        except ValueError:
+            return None
+
+    def _protected_run_file(self, resolved: Path) -> str | None:
+        rel = self._run_rel(resolved)
+        if rel is None or len(rel.parts) != 1:
+            return None
+        name = rel.parts[0]
+        return name if name in _PROTECTED_RUN_FILES else None
+
+    def _is_directives_edge(self, resolved: Path) -> bool:
+        rel = self._run_rel(resolved)
+        if rel is None:
+            return False
+        return rel == Path("directives.md") or rel == Path("archive") / "directives.md"
+
+    def write(
+        self,
+        node: str,
+        path: Path | str,
+        content: str,
+        *,
+        write_set: bool | None = None,
+    ) -> None:
+        resolved = _as_resolved(path)
+        if write_set is None:
+            write_set = node == "executor"
+
+        if write_set:
+            if node != "executor":
+                raise WriteDenied("only executor applies a write-set")
+            self._relative_to(resolved, self.workspace)
+            protected = self._protected_run_file(resolved)
+            if protected is not None:
+                raise WriteDenied(f"executor write-set cannot clobber {protected}")
+        else:
+            self._relative_to(resolved, self.run_dir)
+
+        protected = self._protected_run_file(resolved)
+        if node == "supervisor":
+            if protected == "ledger.md":
+                raise WriteDenied("supervisor cannot write ledger")
+            if not self._is_directives_edge(resolved):
+                raise WriteDenied("supervisor writes directives only")
+        elif node == "executor" and not write_set:
+            if protected == "directives.md":
+                raise WriteDenied("executor cannot write directives")
+            if protected in {"ops.md", "status.json"}:
+                raise WriteDenied(f"executor cannot write {protected}")
+        elif node == "scout":
             try:
-                dest.resolve().relative_to((self.run_dir / "findings").resolve())
+                resolved.relative_to((self.run_dir / "findings").resolve())
             except ValueError as exc:
                 raise WriteDenied("scout writes findings only") from exc
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(content, encoding="utf-8")
-        self.log.append((node, str(dest)))
+            if protected in {"ledger.md", "directives.md"}:
+                raise WriteDenied("scout writes findings only")
+
+        resolved.parent.mkdir(parents=True, exist_ok=True)
+        resolved.write_text(content, encoding="utf-8")
+        self.log.append((node, str(resolved)))
 
 
 class Host:
@@ -118,7 +181,7 @@ class MockHost(Host):
         writes: list[str] = []
         for rel, content in mapping.items():
             dest = self.writer.workspace / rel
-            self.writer.write("executor", dest, content)
+            self.writer.write("executor", dest, content, write_set=True)
             writes.append(rel)
         return NodeResult(ok=self.force_ok, message="mock executor", writes=writes, applied=True)
 

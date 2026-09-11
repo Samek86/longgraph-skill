@@ -27,7 +27,7 @@ Rewritten in place. Keys are the human labels (spaces included):
 | Key | Meaning |
 |---|---|
 | `Item` | The independently verifiable workset for this round |
-| `Write set` | Exact paths (or `read-only`) |
+| `Write set` | Exact paths (or `read-only`). Resolved inside the workspace; relative escapes and `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`, `status.json`) are denied. |
 | `Context` | `ops.md` context id(s), e.g. `C-01` |
 | `Verify` | One narrow command |
 | `Done when` | One observable condition |

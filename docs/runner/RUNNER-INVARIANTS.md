@@ -64,10 +64,16 @@ directory. Engine code lives under `runner/`, never under `skills/`.
 
 **A14 — Host isolation of writes.** MockHost (and later hosts) enforce
 A1–A3 at the write gate: supervisor cannot write the ledger; executor
-cannot write directives; scout cannot write either. PromptOnlyHost emits
-paste text only and must not write ledger or directives. GrokBotDualTimerHost
-may write only the invoking node's `ops.md` Timers cell; it must not write
-`ledger.md` from the supervisor or `directives.md` from the executor.
+cannot write directives; scout cannot write either. Write destinations
+are resolved; Host write-set must stay `relative_to` the workspace, and
+named edge files must stay `relative_to` `run_dir`. An executor write-set
+must not escape the workspace or resolve to `run_dir/ledger.md`,
+`directives.md`, `ops.md`, or `status.json`. `_close_item` / runner-owned
+ledger updates remain the only legitimate scoreboard writers.
+PromptOnlyHost emits paste text only and must not write ledger or
+directives. GrokBotDualTimerHost may write only the invoking node's
+`ops.md` Timers cell; it must not write `ledger.md` from the supervisor
+or `directives.md` from the executor.
 
 **A15 — Absolute red lines stay red lines.** No secrets in run files, no
 push from the runner, no treating examples as golden SoT.
@@ -113,3 +119,5 @@ Exact test names. Do not add the banned aliases
 | 23 | `test_owner_blocked_skips_write_set_and_close` | A6 — live Current-slice `owner_blocked`: no write-set, no close |
 | 24 | `test_prompt_only_host_never_closes` | A6, A14 — PromptOnlyHost emit-only never closes |
 | 25 | `test_dual_timer_host_never_closes` | A6, A14, A17 — DualTimer timer-only never closes; no `busy_nodes` mute |
+| 26 | `test_write_set_cannot_escape_workspace` | A14 — write-set destinations resolve inside the workspace |
+| 27 | `test_executor_cannot_clobber_ledger_via_relpath` | A1, A14 — `../ledger.md` (and sibling run-dir edges) cannot clobber the scoreboard |
