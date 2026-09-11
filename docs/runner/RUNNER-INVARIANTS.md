@@ -85,8 +85,11 @@ push from the runner, no treating examples as golden SoT.
 compile. They never execute their output. The runner never reloads them.
 
 **A17 — Product dual timers, no DEV continue.** GrokBotDualTimerHost owns
-two independent timers with no wake edge. `longgraph-dev-continue` is
-DEV-only and must not appear in product Host paths.
+two independent timers with no wake edge. A terminal ledger deletes the
+invoking node's timer **before** any seed/create and clears the in-memory
+id; a later fire must not recreate. Nodes this host does not schedule
+(scout) are a no-op. `longgraph-dev-continue` is DEV-only and must not
+appear in product Host paths.
 
 ---
 
@@ -127,3 +130,5 @@ Exact test names. Do not add the banned aliases
 | 28 | `test_subprocess_verify_red_blocks_close` | A6 — product subprocess Verify red does not close |
 | 29 | `test_subprocess_verify_green_allows_close` | A6 — product subprocess Verify green may close |
 | 30 | `test_cli_default_gate_is_fail_closed` | A6 — CLI / `GateRunner()` is fail-closed, not a forged pass |
+| 31 | `test_dual_timer_stays_deleted_after_terminal` | A17 — terminal-before-seed; second fire creates zero new scheduler tasks |
+| 32 | `test_dual_timer_scout_noop_when_blocked_on` | A3, A4, A17 — DualTimer scout / unscheduled node is a no-op |

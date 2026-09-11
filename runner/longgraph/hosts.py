@@ -497,7 +497,9 @@ class GrokBotDualTimerHost(Host):
     def invoke(self, node: str, prompt: str, ctx: dict[str, Any]) -> NodeResult:
         _ = prompt
         if node not in {"executor", "supervisor"}:
-            raise ValueError(f"GrokBotDualTimerHost has no {node} schedule")
+            # DualTimer schedules only executor + supervisor. Scout (and any
+            # other unscheduled node) is a complete no-op tick — A3/A4.
+            return NodeResult(ok=True, message=NOOP_MESSAGE, writes=[], applied=False)
         run_dir = self._resolve_run_dir(ctx)
         workspace = self._resolve_workspace(ctx, run_dir)
         self.run_dir = run_dir
@@ -513,11 +515,12 @@ class GrokBotDualTimerHost(Host):
         try:
             self._read_frozen_md(run_dir, node)
             writes: list[str] = []
-            if self._seed_own_timer_cell(node, run_dir):
-                writes.append("ops.md")
+            # Terminal-before-seed: never create/reseed after the ledger stops.
             if self._ledger_terminal(run_dir):
                 self._delete_own_timer(node, run_dir)
                 return NodeResult(ok=True, message="terminal", writes=writes, applied=False)
+            if self._seed_own_timer_cell(node, run_dir):
+                writes.append("ops.md")
             if node == "supervisor":
                 self._refresh_supervisor_prompt(run_dir)
             return NodeResult(ok=True, message=f"{node} tick", writes=writes, applied=False)
@@ -548,7 +551,7 @@ class GrokBotDualTimerHost(Host):
     def _timer_id(self, node: str) -> str | None:
         return getattr(self, self._timer_attr(node))
 
-    def _set_timer_id(self, node: str, task_id: str) -> None:
+    def _set_timer_id(self, node: str, task_id: str | None) -> None:
         setattr(self, self._timer_attr(node), task_id)
 
     def _task_for(self, node: str) -> ScheduledTask | None:
@@ -616,8 +619,7 @@ class GrokBotDualTimerHost(Host):
             tid = found.task_id if found is not None else tid
         if tid:
             self.scheduler.delete(tid)
-            if self._timer_id(node) == tid:
-                self._set_timer_id(node, tid)
+        self._set_timer_id(node, None)
 
     def _refresh_supervisor_prompt(self, run_dir: Path) -> None:
         tid = self._ensure_own_timer("supervisor", run_dir)

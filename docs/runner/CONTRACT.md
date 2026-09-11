@@ -57,8 +57,10 @@ advancement as blocked.
 ### 1.5 Terminal ledger
 
 `run_status` in `{exit-ready, stalled, closed}` is terminal. Both node
-timers stop. `status.json` may be `"completed"` **only** when the ledger
-is already terminal (see §3).
+timers stop. GrokBotDualTimerHost deletes the invoking node's timer and
+returns **before** any Timers-cell seed or scheduler create; a later
+fire must not recreate a deleted task. `status.json` may be
+`"completed"` **only** when the ledger is already terminal (see §3).
 
 ### 1.6 Default-FAIL (close semantics)
 
