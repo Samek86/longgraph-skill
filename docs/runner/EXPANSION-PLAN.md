@@ -193,6 +193,14 @@ Keep MockHost and PromptOnlyHost behavior untouched. Phase 1d ApiHost,
 LangGraph, wake edges, a skill-dir engine, and Phase 2 prompt auto-rewrite
 are out of scope.
 
+### DISTRIBUTION H1 — CLI Host surface (after H0c)
+
+`--host` is `prompt-only` (safe emit-only default), `grok-bot`
+(`GrokBotDualTimerHost`, independent timers, no serial peer tick), or
+`mock` (coupled test loop only). Do not silently treat MockHost as the
+product path. Planned string: `0.3.0-beta`. H2 / soak / Release stay
+out of scope.
+
 ---
 
 ## Merge-gate tests (exact names — Phase ≤1c)
@@ -229,6 +237,8 @@ are out of scope.
 30. `test_cli_default_gate_is_fail_closed` (H0b — CLI fail-closed)
 31. `test_dual_timer_stays_deleted_after_terminal` (H0c M4 — terminal-before-seed; no recreate)
 32. `test_dual_timer_scout_noop_when_blocked_on` (H0c M5 — DualTimer scout is a no-op)
+33. `test_cli_accepts_grok_bot_host` (H1 — CLI `--host grok-bot`; default `prompt-only`)
+34. `test_grok_bot_host_does_not_serial_tick_peers` (H1 — DualTimer ≠ MockHost serial loop)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

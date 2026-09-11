@@ -136,7 +136,14 @@ class EdgeWriter:
 
 
 class Host:
-    """Public host interface. No peer-wake methods exist on this type."""
+    """Public host interface. No peer-wake methods exist on this type.
+
+    `owns_timers` is True when this Host drives independent per-node timers.
+    The Runner must not serial-tick supervisor/scout from the executor branch
+    for those hosts (MockHost keeps the coupled test loop).
+    """
+
+    owns_timers: bool = False
 
     def invoke(self, node: str, prompt: str, ctx: dict[str, Any]) -> NodeResult:
         raise NotImplementedError
@@ -452,6 +459,8 @@ class GrokBotDualTimerHost(Host):
     directives.md (executor). Supervisor refreshes its own next-fire prompt
     in place; the executor stays warm.
     """
+
+    owns_timers = True
 
     def __init__(
         self,

@@ -248,6 +248,8 @@ Buildを含む）を選択します。本当にカスタムな実行形状の場
 | [ホストリファレンス](skills/loop-graph/references) | 各ホストのランタイム事実のための一つの独立して読み込まれる所有者 |
 | [実例](skills/loop-graph/examples) | 公開Git自己反復+動作中のゲートを示す架空の台帳 |
 | [公開/プライベート境界](docs/public-private-boundary.md) | 公開ツリーに入る可能性があるものとプロジェクトローカルのままであるもの |
+| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリ用エンジン — `--host prompt-only`（安全なデフォルト）、`grok-bot` DualTimer、`mock` はテスト専用。予定タグ `0.3.0-beta` |
+| [SECURITY.md](SECURITY.md) | ワークスペース外書き込み拒否、フィクスチャに秘密情報なし、runner は `git push` しない |
 
 ## ガバナンス
 

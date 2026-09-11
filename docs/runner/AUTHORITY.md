@@ -9,6 +9,7 @@ never loads it at runtime.
 | [`CONTRACT.md`](CONTRACT.md) | Ledger / directives / ops / status field names, Default-FAIL, fixture authorship |
 | [`RUNNER-INVARIANTS.md`](RUNNER-INVARIANTS.md) | A* rules and the Phase ≤1c CI list |
 | [`EXPANSION-PLAN.md`](EXPANSION-PLAN.md) | Phase 0 / 1a / 1b / 1c extract of EXPANSION-PLAN-v3.3 (golden table, Host/MockHost, PromptOnlyHost, GrokBotDualTimerHost, retry) |
+| [`SECURITY.md`](../../SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner must not `git push` |
 
 **Conflict rule.** If a skill prompt, example, or host note disagrees with
 CONTRACT or RUNNER-INVARIANTS, the runner docs win for anything under

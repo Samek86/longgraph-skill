@@ -1,20 +1,55 @@
-# longgraph runner (Phase 1a MockHost / Phase 1b PromptOnlyHost / Phase 1c GrokBotDualTimerHost)
+# longgraph runner (Phase 1a / 1b / 1c + DISTRIBUTION H1 CLI Host)
 
 Engine for compiled run directories. The skill library under `skills/` is
 policy only — this package never loads it.
 
 Authority: [`docs/runner/AUTHORITY.md`](../docs/runner/AUTHORITY.md).
+Security: [`SECURITY.md`](../SECURITY.md).
+
+Planned distribution string: `0.3.0-beta` (not tagged from this tree).
+This is **H1** on the D1 ladder (CLI Host productization). H2 / soak /
+GitHub Release stay out of scope.
+
+## Host capability table
+
+| CLI `--host` | Class | Emit | Apply write-set | Owns timers | Serial peer ticks |
+|---|---|---|---|---|---|
+| `prompt-only` (**safe default**) | `PromptOnlyHost` | dual `/loop` paste blocks | no | no | n/a (emit and exit) |
+| `grok-bot` (product DualTimer) | `GrokBotDualTimerHost` | no | no (timer-only) | yes | **no** — independent timers, no peer wake |
+| `mock` (tests only) | `MockHost` | no | yes | no | yes — coupled executor→supervisor→scout |
+
+`longgraph run` without `--host` is **emit-only** (`prompt-only`). It does
+**not** silently default to MockHost as the product path.
+
+Close is **Default-FAIL**: gate re-pass after an applied write-set. Emit-only
+and timer-only ticks never close. Product Verify/smoke is a fail-closed
+subprocess (`cwd` = workspace).
+
+## 5-minute quickstart
 
 ```bash
 cd runner
 python -m pip install -e ".[dev]"
 python -m pytest
-longgraph run|status|stop <run_dir>
-longgraph run --host prompt-only <run_dir>
 ```
 
-Default host is MockHost (no model). `--host prompt-only` prints the two
-`/loop` paste blocks and does not call a model or write ledger/directives.
+Use a compiled run directory (or a fixture):
+
+```bash
+# 1. Safe default — emit two /loop paste blocks; no writes, no coupled loop
+longgraph run --host prompt-only tests/fixtures/add-tests-to-cli
+#    omitting --host is the same (defaults to prompt-only)
+
+# 2. Product DualTimer — two independent timers, no peer wake
+longgraph run --host grok-bot tests/fixtures/add-tests-to-cli
+
+# 3. MockHost coupled test loop — not the product path
+longgraph run --host mock tests/fixtures/add-tests-to-cli
+
+longgraph status <run_dir>
+longgraph stop <run_dir>
+```
+
 Executor write-set paths resolve inside the workspace and cannot clobber
 `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`,
 `status.json`); runner close remains the only ledger writer.
@@ -29,7 +64,8 @@ register. Product Verify/smoke is a fail-closed subprocess
 skips (does not pass). CLI / `longgraph run` does not default
 `GateRunner` to `passed=True`. Empty / `n/a` Verify and live
 Current-slice `owner_blocked` do not close. `blocked-on` with missing
-findings is scout-only.
+findings is scout-only (MockHost). DualTimer hosts do not drive
+supervisor/scout from the executor branch.
 
 Rounds log and live Corrections are bounded and archived. Older `- R…`
 lines rotate into `archive/rounds.md` (`KEEP_ROUNDS`, default 5). Folded

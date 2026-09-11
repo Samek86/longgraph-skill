@@ -214,3 +214,16 @@ Rules:
 
 `RunState` exposes the ledger fields in §1 plus `ops` and `status`.
 `next_item` is already span-stripped.
+
+---
+
+## 8. CLI Host (`longgraph run --host`)
+
+| Value | Host | Role |
+|---|---|---|
+| `prompt-only` | `PromptOnlyHost` | **Safe default.** Emit two `/loop` paste blocks and exit. |
+| `grok-bot` | `GrokBotDualTimerHost` | Product DualTimer. Independent timers; Runner does not serial-tick peers. |
+| `mock` | `MockHost` | Coupled test loop only. Not the product path. |
+
+Omitting `--host` is emit-only (`prompt-only`). The CLI must not silently
+treat MockHost as the product default.
