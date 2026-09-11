@@ -8,6 +8,7 @@ Security: [`SECURITY.md`](../SECURITY.md).
 Ship claims (CI-bound): [`docs/ship/PUBLIC_CLAIMS.md`](../docs/ship/PUBLIC_CLAIMS.md).
 Changelog: [`CHANGELOG.md`](../CHANGELOG.md).
 Residuals: [`KNOWN_ISSUES.md`](../KNOWN_ISSUES.md).
+Negative battery (Ship-S3): [`docs/ship/NEGATIVE-BATTERY.md`](../docs/ship/NEGATIVE-BATTERY.md).
 
 Distribution string: `0.3.0-beta` (in `pyproject.toml`; **not tagged**
 from this tree). This is **Ship-S / D1 closeout** after H2. Soak /
