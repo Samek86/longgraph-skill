@@ -84,7 +84,7 @@ def test_cli_default_gate_is_fail_closed(tmp_path: Path) -> None:
     assert product.run("false", tmp_path).passed is False
 
     run_dir = _product_run(tmp_path, verify="false")
-    rc = main(["run", str(run_dir)])
+    rc = main(["run", "--host", "mock", str(run_dir)])
     assert rc == 0
     status = _status(run_dir)
     assert _ITEM not in (status.get("metadata") or {}).get("closedItems", [])

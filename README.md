@@ -248,6 +248,8 @@ durable run directory; only how you start each tick changes.
 | [Host references](skills/loop-graph/references) | One independently loaded owner for each host's runtime facts |
 | [Worked examples](skills/loop-graph/examples) | Public-Git self-iteration plus fictional ledgers showing gates in action |
 | [Public / private boundary](docs/public-private-boundary.md) | What may enter the public tree vs stay project-local |
+| [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Planned `0.3.0-beta` |
+| [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |
 
 ## Governance
 

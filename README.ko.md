@@ -194,6 +194,8 @@ Grok Build에서의 저작은 해당 설치 후 `/longgraph`입니다. 두 런�
 | [호스트 참조](skills/loop-graph/references) | 각 호스트의 런타임 사실을 위한 하나의 독립적으로 로드된 소유자 |
 | [실제 예제](skills/loop-graph/examples) | 공개 Git 자체 반복+작동 중인 게이트를 보여주는 가상 원장 |
 | [공개/개인 경계](docs/public-private-boundary.md) | 공개 트리에 들어갈 수 있는 것과 프로젝트 로컬로 남아 있는 것 |
+| [Runner CLI](runner/README.md) | 컴파일된 run 디렉터리 엔진 — `--host prompt-only`(안전 기본값), `grok-bot` DualTimer, `mock`은 테스트 전용. 예정 문자열 `0.3.0-beta` |
+| [SECURITY.md](SECURITY.md) | 워크스페이스 탈출 거부, 픽스처에 비밀 없음, runner는 `git push` 하지 않음 |
 
 ## 거버넌스
 

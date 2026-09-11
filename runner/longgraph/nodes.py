@@ -264,6 +264,10 @@ class Runner:
         if new_text != current:
             self.writer.write("supervisor", path, new_text, write_set=False)
 
+    def _host_owns_timers(self) -> bool:
+        """True when the Host owns independent timers (no coupled peer ticks)."""
+        return bool(getattr(self.host, "owns_timers", False))
+
     def _tick_supervisor(self, state: RunState) -> None:
         self._rotate_directives(state)
         prompt_path = self.run_dir / "supervisor.md"
@@ -391,7 +395,8 @@ class Runner:
             if _looks_like_milestone_advance(state):
                 self.advancement_blocked = True
                 self.stopped_reason = "pending-audit"
-                self._tick_supervisor(state)
+                if not self._host_owns_timers():
+                    self._tick_supervisor(state)
                 self._save_status(status, state.run_status)
                 break
 
@@ -401,7 +406,8 @@ class Runner:
                 continue
 
             if state.blocked_on and not self._findings_ready(state):
-                self._tick_scout(state)
+                if not self._host_owns_timers():
+                    self._tick_scout(state)
                 self._save_status(status, state.run_status)
                 continue
 
@@ -418,7 +424,8 @@ class Runner:
                 if status["metadata"]["itemRetries"].get(item_id, 0) >= ops.max_retries:
                     self.stopped_reason = "max_retries"
                     status["status"] = "failed"
-                self._tick_supervisor(state)
+                if not self._host_owns_timers():
+                    self._tick_supervisor(state)
                 self._save_status(status, state.run_status)
                 if self.stopped_reason:
                     break
@@ -468,7 +475,8 @@ class Runner:
             gate = self.gates.run(verify_cmd, self.workspace)
             set_last_attempt(status, key, "verify")
             if gate.skipped:
-                self._tick_supervisor(state)
+                if not self._host_owns_timers():
+                    self._tick_supervisor(state)
                 self._save_status(status, state.run_status)
                 continue
             if gate.passed:
@@ -483,9 +491,10 @@ class Runner:
                     self.stopped_reason = "max_retries"
                     status["status"] = "failed"
 
-            self._tick_supervisor(state)
-            if state.blocked_on:
-                self._tick_scout(state)
+            if not self._host_owns_timers():
+                self._tick_supervisor(state)
+                if state.blocked_on:
+                    self._tick_scout(state)
             self._save_status(status, state.run_status)
             if self.stopped_reason:
                 break
