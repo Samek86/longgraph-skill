@@ -1,15 +1,17 @@
-# longgraph runner (Phase 1a / 1b / 1c + DISTRIBUTION H1/H2)
+# longgraph runner (Phase 1a / 1b / 1c + DISTRIBUTION H0–H2 / Ship-S)
 
 Engine for compiled run directories. The skill library under `skills/` is
 policy only — this package never loads it.
 
 Authority: [`docs/runner/AUTHORITY.md`](../docs/runner/AUTHORITY.md).
 Security: [`SECURITY.md`](../SECURITY.md).
+Ship claims (CI-bound): [`docs/ship/PUBLIC_CLAIMS.md`](../docs/ship/PUBLIC_CLAIMS.md).
+Changelog: [`CHANGELOG.md`](../CHANGELOG.md).
+Residuals: [`KNOWN_ISSUES.md`](../KNOWN_ISSUES.md).
 
-Planned distribution string: `0.3.0-beta` (not tagged from this tree).
-This is **H2** on the D1 ladder (contract fidelity for long runs: M1
-pending-audit lane/accept, M2 directive fold, M7 golden rounds rotate).
-Soak / GitHub Release stay out of scope.
+Distribution string: `0.3.0-beta` (in `pyproject.toml`; **not tagged**
+from this tree). This is **Ship-S / D1 closeout** after H2. Soak /
+GitHub Release stay owner-only.
 
 ## Host capability table
 
