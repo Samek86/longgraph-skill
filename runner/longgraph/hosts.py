@@ -15,7 +15,7 @@ from .rotate import (
     parse_rotation_caps,
     rotate_directives,
 )
-from .state import parse_run, paths_from_write_set
+from .state import parse_run, paths_from_write_set, safe_findings_ident
 
 NOOP_MESSAGE = "no-op"
 _TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
@@ -245,7 +245,10 @@ class MockHost(Host):
 
     def _scout(self, ctx: dict[str, Any]) -> NodeResult:
         blocked = ctx.get("blocked_on") or ""
-        ident = blocked.split("#")[-1] if blocked else "brief"
+        raw = blocked.split("#")[-1] if blocked else "brief"
+        ident = safe_findings_ident(raw)
+        if ident is None:
+            return NodeResult(ok=True, message=NOOP_MESSAGE, writes=[], applied=False)
         dest = Path(ctx["run_dir"]) / "findings" / f"{ident}.md"
         if dest.exists():
             return NodeResult(ok=True, message="findings already present", writes=[])
@@ -482,11 +485,19 @@ class GrokBotDualTimerHost(Host):
         self._sup_tick = 0
 
     def schedule(self, ctx: dict[str, Any] | None = None) -> tuple[str, str]:
-        """Create two independent timers. Not a peer-wake; no notify/dispatch."""
+        """Create two independent timers. Not a peer-wake; no notify/dispatch.
+
+        CONTRACT §1.5 / A17: a terminal ledger must not seed or create.
+        Delete any leftover own-timer and return without scheduler.create.
+        """
         run_dir = self._resolve_run_dir(ctx)
         workspace = self._resolve_workspace(ctx, run_dir)
         self.run_dir = run_dir
         self.workspace = workspace
+        if self._ledger_terminal(run_dir):
+            for node in ("executor", "supervisor"):
+                self._delete_own_timer(node, run_dir)
+            return self.exec_timer_id or "", self.sup_timer_id or ""
         if self.exec_timer_id and self.scheduler.get(self.exec_timer_id) is None:
             self.exec_timer_id = None
         if self.sup_timer_id and self.scheduler.get(self.sup_timer_id) is None:

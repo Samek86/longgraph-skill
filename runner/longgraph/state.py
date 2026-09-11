@@ -89,11 +89,26 @@ class RunState:
     run_dir: Path | None = None
 
 
+_FINDINGS_IDENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+
+def safe_findings_ident(ident: str | None) -> str | None:
+    """Single path segment for `findings/<id>.md`. Rejects `..` / slashes."""
+    token = (ident or "").strip().strip("`")
+    if not token or token.lower() in _ABSENT:
+        return None
+    if token != Path(token).name or token in {".", ".."} or ".." in token:
+        return None
+    if not _FINDINGS_IDENT.match(token):
+        return None
+    return token
+
+
 def findings_relpath(blocked_on: str | None) -> str | None:
     if not blocked_on or "#" not in blocked_on:
         return None
-    ident = blocked_on.split("#", 1)[1].strip()
-    if not ident or ident.lower() in _ABSENT:
+    ident = safe_findings_ident(blocked_on.split("#", 1)[1])
+    if not ident:
         return None
     return f"findings/{ident}.md"
 

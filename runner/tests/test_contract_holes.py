@@ -8,7 +8,7 @@ from pathlib import Path
 from longgraph.gates import GateRunner, classify_verify
 from longgraph.hosts import FakeScheduler, GrokBotDualTimerHost, MockHost, PromptOnlyHost
 from longgraph.nodes import Runner
-from longgraph.state import parse_run
+from longgraph.state import findings_relpath, parse_run, safe_findings_ident
 
 from tests.support import copy_fixture
 
@@ -67,6 +67,39 @@ def test_blocked_on_skips_executor_until_findings(tmp_path: Path) -> None:
     runner.run(steps=1)
     assert "executor" in host.invocations
     assert (workspace / "shutterlog" / "storage.py").is_file()
+
+
+def test_blocked_on_rejects_findings_path_escape(tmp_path: Path) -> None:
+    """A3 / §1.3: findings#../decoy must not resolve outside findings/ or close."""
+    assert safe_findings_ident("../decoy") is None
+    assert findings_relpath("findings#../decoy") is None
+    assert findings_relpath("findings#s3-client") == "findings/s3-client.md"
+
+    run_dir = copy_fixture("scout-library-choice", tmp_path)
+    workspace = tmp_path / "ws"
+    decoy = run_dir / "decoy.md"
+    decoy.write_text("# decoy\n\n**Status**: complete\n", encoding="utf-8")
+    findings = run_dir / "findings" / "s3-client.md"
+    findings.write_text("# Findings: s3-client\n\n**Status**: incomplete\n", encoding="utf-8")
+    ledger = run_dir / "ledger.md"
+    ledger.write_text(
+        ledger.read_text(encoding="utf-8").replace(
+            "blocked-on: findings#s3-client",
+            "blocked-on: findings#../decoy",
+        ),
+        encoding="utf-8",
+    )
+    state = parse_run(run_dir)
+    assert state.blocked_on == "findings#../decoy"
+    assert state.findings_path is None
+
+    host = MockHost()
+    runner = Runner(run_dir, host=host, gates=GateRunner(default=True), workspace=workspace)
+    runner.run(steps=1)
+    assert "executor" not in host.invocations
+    assert not (workspace / "shutterlog" / "storage.py").exists()
+    assert runner.closed_items == []
+    assert parse_run(run_dir).run_status == "active"
 
 
 def test_empty_verify_fails_no_close(tmp_path: Path) -> None:
