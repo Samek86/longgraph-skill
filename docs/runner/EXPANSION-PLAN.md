@@ -221,6 +221,8 @@ are out of scope.
 23. `test_owner_blocked_skips_write_set_and_close` (C3 — owner-blocked)
 24. `test_prompt_only_host_never_closes` (C4 — PromptOnlyHost)
 25. `test_dual_timer_host_never_closes` (C4 — DualTimer; no `busy_nodes` mute)
+26. `test_write_set_cannot_escape_workspace` (M3 — write-set stays in workspace)
+27. `test_executor_cannot_clobber_ledger_via_relpath` (M3 — no `../ledger.md` clobber)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

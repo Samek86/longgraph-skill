@@ -15,6 +15,9 @@ longgraph run --host prompt-only <run_dir>
 
 Default host is MockHost (no model). `--host prompt-only` prints the two
 `/loop` paste blocks and does not call a model or write ledger/directives.
+Executor write-set paths resolve inside the workspace and cannot clobber
+`run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`,
+`status.json`); runner close remains the only ledger writer.
 `GrokBotDualTimerHost` schedules two independent timers (executor +
 supervisor) with no wake edge between them. Close is gate re-pass only
 after an applied write-set; emit-only and timer-only ticks never close.

@@ -145,7 +145,11 @@ def derive_item_id(state: RunState) -> str:
 def paths_from_write_set(write_set: str) -> dict[str, str]:
     found: dict[str, str] = {}
     for match in _FILE_IN_WRITE_SET.finditer(write_set or ""):
-        rel = match.group(1).lstrip("./")
+        rel = match.group(1)
+        while rel.startswith("./"):
+            rel = rel[2:]
+        if not rel:
+            continue
         found[rel] = f"# mock write-set for {rel}\n"
     return found
 

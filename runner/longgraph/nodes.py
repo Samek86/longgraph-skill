@@ -241,7 +241,12 @@ class Runner:
             return
         dest = self.run_dir / "archive" / name
         existing = dest.read_text(encoding="utf-8") if dest.exists() else ""
-        self.writer.write(node, dest, merge_archive(existing, fragment, heading=heading))
+        self.writer.write(
+            node,
+            dest,
+            merge_archive(existing, fragment, heading=heading),
+            write_set=False,
+        )
 
     def _rotate_directives(self, state: RunState) -> None:
         """Rotate folded (and cap-excess) corrections before any supervisor append."""
@@ -257,7 +262,7 @@ class Runner:
         )
         self._append_archive("supervisor", "directives.md", archive, DIRECTIVES_ARCHIVE_HEADING)
         if new_text != current:
-            self.writer.write("supervisor", path, new_text)
+            self.writer.write("supervisor", path, new_text, write_set=False)
 
     def _tick_supervisor(self, state: RunState) -> None:
         self._rotate_directives(state)
@@ -327,7 +332,7 @@ class Runner:
             if healed != text:
                 caps = self._rotation_caps()
                 healed, archive = rotate_rounds_log(healed, keep_rounds=caps.keep_rounds)
-                self.writer.write("executor", ledger, healed)
+                self.writer.write("executor", ledger, healed, write_set=False)
                 self._append_archive("executor", "rounds.md", archive, ROUNDS_ARCHIVE_HEADING)
             return
 
@@ -348,7 +353,7 @@ class Runner:
         text = text.rstrip() + f"\n\n<!-- runner closed {item_id} -->\n"
         caps = self._rotation_caps()
         text, archive = rotate_rounds_log(text, keep_rounds=caps.keep_rounds)
-        self.writer.write("executor", ledger, text)
+        self.writer.write("executor", ledger, text, write_set=False)
         self._append_archive("executor", "rounds.md", archive, ROUNDS_ARCHIVE_HEADING)
 
     def _mark_completed(self, state: RunState, status: dict) -> None:
