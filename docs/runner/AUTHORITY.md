@@ -20,8 +20,10 @@ the golden source of truth. Normalized fixtures live at
 **What this extract is.** EXPANSION-PLAN-v3.3 is the SHIPPABLE brief for the
 longgraph runner. The copies here cover Phase 0 (contracts + fixtures +
 parser), Phase 1a (MockHost MVP), Phase 1b (PromptOnlyHost dual `/loop`
-emit), and Phase 1c (GrokBotDualTimerHost). Later phases (1d+) are out of
-scope and must not be invented in this tree.
+emit), Phase 1c (GrokBotDualTimerHost), and DISTRIBUTION H0–H2 (write-path
+containment, fail-closed gates, DualTimer terminal/scout, CLI Host,
+contract fidelity for long runs). Later phases (1d+) are out of scope
+and must not be invented in this tree.
 
 **Brand.** Product / repo / slash / run-root remain longgraph /
 longgraph-skill / `/longgraph` / `.longgraph/`. The engine is a **new** tree

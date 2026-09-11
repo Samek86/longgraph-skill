@@ -41,10 +41,12 @@ Do not use a singular `findings.md` as the golden path.
 
 ### 1.7 Rounds log (bounded)
 
-The Rounds log keeps the last `KEEP_ROUNDS` (default 5) `- R…` lines.
-Older lines move to `archive/rounds.md` (create with a heading if missing).
-`KEEP_ROUNDS` is read from `ops.md` when present. The executor is the
-only writer of the ledger and of `archive/rounds.md`.
+The Rounds log keeps the last `KEEP_ROUNDS` (default 5) **live round
+entries**. An entry is one `- R…` line **or** one `### Round N` section
+(heading plus body until the next entry). Mixed logs are allowed; both
+shapes rotate. Older entries move to `archive/rounds.md` (create with a
+heading if missing). `KEEP_ROUNDS` is read from `ops.md` when present.
+The executor is the only writer of the ledger and of `archive/rounds.md`.
 
 ### 1.4 Pending promotion / pending-audit
 
@@ -53,6 +55,20 @@ the milestone (no next-milestone write-set, no flip to `passed` without an
 acceptance directive). Lane work that is already registered and disjoint
 from the audit surface may continue; the runner still treats milestone
 advancement as blocked.
+
+The runner blocks the executor write-set only when the **Current-slice
+write-set** is the next-milestone surface: the Current-slice `Item` starts
+with `M\d+` and the write-set is not `read-only`, **or** the write-set
+paths overlap Pending promotion `Audit surface:`. An `M\d+` token in
+`next_item` or a lane `Item` is not enough to stop the run.
+
+**Acceptance-release marker.** A live correction releases the gate when
+it contains the exact token `ACCEPT-GATE` (ASCII, case-insensitive), or
+when its first-line verb (the third `·`-separated field) is
+`accept-gate`. The executor folds that packet, flips `Milestone gate` to
+`passed`, and advances `Last directive folded` — it never self-passes.
+A bare `accept` verb without `ACCEPT-GATE` is a lane/item verdict and
+does not flip the gate.
 
 ### 1.5 Terminal ledger
 
@@ -109,14 +125,20 @@ line) naming `brief <id>`. Scout output does not land here.
 
 ### Watermark / rotate
 
+On an applied executor tick, the executor reads live Corrections above
+`Last directive folded`, applies each one or records an explicit no-op,
+and advances the watermark in the same ledger write that records the
+round. `ACCEPT-GATE` (see §1.4) is the apply that flips a pending
+milestone gate; every other packet is a no-op fold.
+
 Before the supervisor appends, move Corrections entries with IDs ≤ the
 ledger watermark (`Last directive folded`) to `archive/directives.md`
 (create with a heading if missing). Next ID = max(watermark, highest
-live ID) + 1; never reuse rotated IDs. The live Corrections queue is
-capped by `OPEN_DIRECTIVE_CAP` (default 8, from `ops.md` when present).
-After the watermark pass, oldest excess live packets (lowest IDs) rotate
-until the queue is at the cap — newest unfolded corrections stay.
-Supervisor state and STANDING are not rotated.
+live ID) + 1; never reuse rotated IDs. `OPEN_DIRECTIVE_CAP` (default 8,
+from `ops.md` when present) is **append discipline**: do not add more
+unfolded packets once the live queue is at the cap. Rotation must **not**
+archive packets the watermark has not passed — that silently drops
+unfolded corrections. Supervisor state and STANDING are not rotated.
 
 ---
 
@@ -129,8 +151,8 @@ Runner-parsed knobs (line form `key: value`, or the Build / test alias):
 | `max_rounds` | Hard budget. When `progress.completedRounds >= max_rounds`, stop. Not a close. |
 | `max_retries` | Per-item retry cap (see §5). |
 | `smoke` | Command run **before a new item** starts. Alias: a Build / test line beginning with `smoke`. |
-| `KEEP_ROUNDS` | Live `- R…` Rounds log lines to keep (default 5). Alias: `keep_rounds`. |
-| `OPEN_DIRECTIVE_CAP` | Live Corrections cap (default 8). Alias: `open_directive_cap`. |
+| `KEEP_ROUNDS` | Live Rounds log entries to keep (`- R…` or `### Round N`; default 5). Alias: `keep_rounds`. |
+| `OPEN_DIRECTIVE_CAP` | Live Corrections append cap (default 8). Does not archive unfolded packets. Alias: `open_directive_cap`. |
 
 Missing knobs: `max_rounds` / `max_retries` default to a high backstop
 (100 / 3) so fixtures without them still parse; tests that care set them

@@ -171,17 +171,17 @@ def test_directives_rotate_at_watermark(tmp_path: Path) -> None:
     archived = archive.read_text(encoding="utf-8")
     assert archived.lstrip().startswith("#")
 
-    for folded in ("D-001", "D-002", "D-003"):
+    # Applied-path fold advances the watermark through live packets (D-004,
+    # D-005). Rotate-before-append then archives IDs ≤ the new watermark.
+    for folded in ("D-001", "D-002", "D-003", "D-004", "D-005"):
         assert not re.search(rf"^{folded}\b", live, re.M), folded
         assert re.search(rf"^{folded}\b", archived, re.M), folded
 
     assert standing.strip() in live
     live_ids = [int(m.group(1)) for m in re.finditer(r"^D-(\d+)\b", live, re.M)]
     assert live_ids
-    assert all(n > 3 for n in live_ids)
-    assert 4 in live_ids
-    assert 5 in live_ids
-    allocated = next_directive_id("D-003", live, archived)
-    assert int(re.search(r"(\d+)", allocated).group(1)) > 3
-    assert allocated not in {"D-001", "D-002", "D-003"}
+    assert all(n > 5 for n in live_ids)
+    allocated = next_directive_id("D-005", live, archived)
+    assert int(re.search(r"(\d+)", allocated).group(1)) > 5
+    assert allocated not in {"D-001", "D-002", "D-003", "D-004", "D-005"}
     assert not re.search(r"^D-001\b", live, re.M)

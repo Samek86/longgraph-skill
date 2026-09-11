@@ -45,7 +45,9 @@ write-set.
 
 **A8 — Pending-audit blocks advancement.** `milestone_gate: pending-audit`
 forbids starting the next milestone's write-set or flipping the gate to
-`passed` without an acceptance directive.
+`passed` without an acceptance directive (`ACCEPT-GATE` / first-line verb
+`accept-gate`). Disjoint registered lane work may continue. An `M\d+`
+token in `next_item` or a lane `Item` is not a run stop.
 
 **A9 — Hard budgets.** `max_rounds` stops the run (not a close).
 `max_retries` stops retries on one item (not a close).
@@ -117,7 +119,7 @@ Exact test names. Do not add the banned aliases
 | 7 | `test_runner_never_reads_skills_dir` | A12, A16 |
 | 8 | `test_no_peer_wakeup_api` | A4 |
 | 9 | `test_status_atomic` | A10 |
-| 10 | `test_pending_audit_blocks_advancement` | A8 |
+| 10 | `test_pending_audit_blocks_advancement` | A8 — next-milestone write-set blocked |
 | 11 | `test_public_surface_has_no_langgraph_import` | A13 |
 | 12 | `test_status_completed_implies_ledger_terminal` | A10 |
 | 13 | `test_smoke_before_new_item` | A7 |
@@ -142,3 +144,7 @@ Exact test names. Do not add the banned aliases
 | 32 | `test_dual_timer_scout_noop_when_blocked_on` | A3, A4, A17 — DualTimer scout / unscheduled node is a no-op |
 | 33 | `test_cli_accepts_grok_bot_host` | A18 — CLI `--host grok-bot`; safe default is `prompt-only` |
 | 34 | `test_grok_bot_host_does_not_serial_tick_peers` | A4, A17, A18 — DualTimer does not serial-tick peers; MockHost still does |
+| 35 | `test_pending_audit_allows_lane_work` | A8 — disjoint lane work continues under `pending-audit` |
+| 36 | `test_acceptance_directive_releases_pending_audit` | A8 — `ACCEPT-GATE` flips `pending-audit` to `passed` |
+| 37 | `test_executor_folds_directives_and_advances_watermark` | A2 — applied path folds live corrections and advances the watermark |
+| 38 | `test_rounds_log_rotates_golden_round_sections` | §1.7 — `### Round N` (golden fixture shape) rotates |
