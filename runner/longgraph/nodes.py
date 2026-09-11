@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .gates import GateRunner
+from .gates import GateRunner, classify_verify
 from .hosts import NOOP_MESSAGE, EdgeWriter, Host, MockHost
 from .retry import RetryKey, increment_retry, set_last_attempt, should_resume_verify_only
 from .rotate import (
@@ -22,7 +22,13 @@ from .rotate import (
     rotate_directives,
     rotate_rounds_log,
 )
-from .state import RunState, derive_item_id, parse_run
+from .state import (
+    RunState,
+    current_slice_owner_blocked,
+    derive_item_id,
+    findings_status_complete,
+    parse_run,
+)
 
 TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
 STOP_STATUS = frozenset({"completed", "cancelled", "failed"})
@@ -60,6 +66,116 @@ def _looks_like_milestone_advance(state: RunState) -> bool:
         return False
     text = f"{state.current_slice.Item} {state.next_item}"
     return bool(re.search(r"\bM\d+\b", text))
+
+
+_GAP_ROW = re.compile(r"^(\|\s*)(GAP-\d+)(\s*\|.*)$")
+_CLOSED_WORDS = re.compile(r"\bresolved\b|\bclosed\b|\bclosure\b", re.I)
+
+
+def _gap_one_liner(text: str, gap_id: str) -> str:
+    for line in text.splitlines():
+        if not re.match(rf"^\|\s*{re.escape(gap_id)}\s*\|", line):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) >= 3:
+            return cells[-1]
+    return ""
+
+
+def _mark_gap_resolved(text: str, item_id: str) -> str:
+    if not re.match(r"GAP-\d+$", item_id):
+        return text
+    out: list[str] = []
+    for line in text.splitlines(keepends=True):
+        raw = line.split("\n")[0]
+        match = _GAP_ROW.match(raw)
+        if match and match.group(2) == item_id and not _CLOSED_WORDS.search(raw):
+            nl = "\n" if line.endswith("\n") else ""
+            line = raw.rstrip() + " — resolved" + nl
+        out.append(line)
+    return "".join(out)
+
+
+def _set_header_rest(text: str, label: str, value: str) -> str:
+    pattern = re.compile(rf"^({re.escape(label)}:\s*).*$", re.M)
+    if not pattern.search(text):
+        return text
+    return pattern.sub(lambda match: match.group(1) + value, text, count=1)
+
+
+def _rewrite_current_slice(text: str, fields: dict[str, str]) -> str:
+    lines = text.splitlines(keepends=True)
+    start: int | None = None
+    end = len(lines)
+    for i, line in enumerate(lines):
+        raw = line.split("\n")[0]
+        if start is None and raw.startswith("## ") and raw.lower().startswith("## current slice"):
+            start = i
+            continue
+        if start is not None and raw.startswith("## "):
+            end = i
+            break
+    if start is None:
+        return text
+    body = (
+        "\n"
+        f"Item: {fields['Item']}\n"
+        f"Write set: {fields['Write set']}\n"
+        f"Context: {fields['Context']}\n"
+        f"Verify: {fields['Verify']}\n"
+        f"Done when: {fields['Done when']}\n"
+        "\n"
+    )
+    return "".join(lines[: start + 1]) + body + "".join(lines[end:])
+
+
+def retire_live_scoreboard(text: str, item_id: str, remaining_gaps: list[str]) -> str:
+    """Rewrite next-item / Current slice / gap register after a green close."""
+    updated = _mark_gap_resolved(text, item_id)
+    if remaining_gaps:
+        next_label = remaining_gaps[0]
+        one = _gap_one_liner(updated, next_label)
+        if one:
+            next_label = f"{next_label} {one}"
+        slice_fields = {
+            "Item": next_label,
+            "Write set": "read-only",
+            "Context": "n/a",
+            "Verify": "n/a",
+            "Done when": "awaiting a compiled slice",
+        }
+        run_status = None
+    else:
+        next_label = "none"
+        slice_fields = {
+            "Item": "(none)",
+            "Write set": "read-only",
+            "Context": "n/a",
+            "Verify": "n/a",
+            "Done when": "no remaining unclosed work",
+        }
+        run_status = "exit-ready"
+    updated = _set_header_rest(updated, "Next unclosed work item", next_label)
+    updated = _rewrite_current_slice(updated, slice_fields)
+    if run_status is not None:
+        updated, n = re.subn(
+            r"^Run status:\s*`?[\w-]+`?",
+            f"Run status: `{run_status}`",
+            updated,
+            count=1,
+            flags=re.M,
+        )
+        if n == 0:
+            updated = updated.rstrip() + f"\nRun status: `{run_status}`\n"
+    return updated
+
+
+def next_item_label(remaining_gaps: list[str], ledger_text: str) -> str:
+    if not remaining_gaps:
+        return "none"
+    gap_id = remaining_gaps[0]
+    one = _gap_one_liner(ledger_text, gap_id)
+    return f"{gap_id} {one}".strip() if one else gap_id
 
 
 class Runner:
@@ -173,27 +289,63 @@ class Runner:
             },
         )
 
+    def _findings_ready(self, state: RunState) -> bool:
+        if not state.blocked_on:
+            return True
+        rel = state.findings_path
+        if not rel:
+            return False
+        path = self.run_dir / rel
+        if not path.is_file():
+            return False
+        return findings_status_complete(self._read(path))
+
+    def _item_already_closed(self, status: dict, item_id: str) -> bool:
+        if item_id in self.closed_items:
+            return True
+        closed = (status.get("metadata") or {}).get("closedItems") or []
+        if item_id in closed:
+            return True
+        ledger = self.run_dir / "ledger.md"
+        if ledger.exists():
+            return f"<!-- runner closed {item_id} -->" in ledger.read_text(encoding="utf-8")
+        return False
+
     def _close_item(self, state: RunState, status: dict, item_id: str, key: RetryKey) -> None:
-        self.closed_items.append(item_id)
+        ledger = self.run_dir / "ledger.md"
+        text = ledger.read_text(encoding="utf-8")
         meta = status.setdefault("metadata", {})
         closed = meta.setdefault("closedItems", [])
-        if item_id not in closed:
-            closed.append(item_id)
+        already = (
+            item_id in self.closed_items
+            or item_id in closed
+            or f"<!-- runner closed {item_id} -->" in text
+        )
+        remaining = [gap for gap in state.open_gaps if gap != item_id]
+        if already:
+            healed = retire_live_scoreboard(text, item_id, remaining)
+            if healed != text:
+                caps = self._rotation_caps()
+                healed, archive = rotate_rounds_log(healed, keep_rounds=caps.keep_rounds)
+                self.writer.write("executor", ledger, healed)
+                self._append_archive("executor", "rounds.md", archive, ROUNDS_ARCHIVE_HEADING)
+            return
+
+        self.closed_items.append(item_id)
+        closed.append(item_id)
         progress = status.setdefault("progress", {})
         progress["completedRounds"] = int(progress.get("completedRounds", 0)) + 1
         progress["completedItems"] = int(progress.get("completedItems", 0)) + 1
+        progress["currentItem"] = remaining[0] if remaining else "none"
         set_last_attempt(status, key, "closed")
-        ledger = self.run_dir / "ledger.md"
-        text = ledger.read_text(encoding="utf-8")
 
         def _bump(match: re.Match[str]) -> str:
             return f"{match.group(1)}{int(match.group(2)) + 1}"
 
         text = re.sub(r"(Round:\s*)(\d+)", _bump, text, count=1)
-        already = f"<!-- runner closed {item_id} -->" in text
-        if not already:
-            text = append_round_log_line(text, item_id)
-            text = text.rstrip() + f"\n\n<!-- runner closed {item_id} -->\n"
+        text = retire_live_scoreboard(text, item_id, remaining)
+        text = append_round_log_line(text, item_id, next_item=next_item_label(remaining, text))
+        text = text.rstrip() + f"\n\n<!-- runner closed {item_id} -->\n"
         caps = self._rotation_caps()
         text, archive = rotate_rounds_log(text, keep_rounds=caps.keep_rounds)
         self.writer.write("executor", ledger, text)
@@ -238,6 +390,35 @@ class Runner:
                 self._save_status(status, state.run_status)
                 break
 
+            if self._item_already_closed(status, item_id):
+                self._close_item(state, status, item_id, key)
+                self._save_status(status, state.run_status)
+                continue
+
+            if state.blocked_on and not self._findings_ready(state):
+                self._tick_scout(state)
+                self._save_status(status, state.run_status)
+                continue
+
+            verify_cmd = state.current_slice.get("Verify") or ""
+            verify_kind = classify_verify(verify_cmd)
+            if current_slice_owner_blocked(state) or verify_kind == "n/a":
+                self._save_status(status, state.run_status)
+                continue
+
+            if verify_kind == "empty":
+                self.gates.run(verify_cmd, self.workspace)
+                set_last_attempt(status, key, "verify")
+                increment_retry(status, item_id)
+                if status["metadata"]["itemRetries"].get(item_id, 0) >= ops.max_retries:
+                    self.stopped_reason = "max_retries"
+                    status["status"] = "failed"
+                self._tick_supervisor(state)
+                self._save_status(status, state.run_status)
+                if self.stopped_reason:
+                    break
+                continue
+
             resume_verify = should_resume_verify_only(status, key)
             if not resume_verify:
                 started = list(status.setdefault("metadata", {}).setdefault("startedItems", []))
@@ -274,11 +455,17 @@ class Runner:
                 if (result.message or "").strip().lower().startswith(NOOP_MESSAGE):
                     self._save_status(status, state.run_status)
                     continue
+                if not result.applied:
+                    self._save_status(status, state.run_status)
+                    continue
                 set_last_attempt(status, key, "write")
 
-            verify_cmd = state.current_slice.get("Verify") or ""
             gate = self.gates.run(verify_cmd, self.workspace)
             set_last_attempt(status, key, "verify")
+            if gate.skipped:
+                self._tick_supervisor(state)
+                self._save_status(status, state.run_status)
+                continue
             if gate.passed:
                 set_last_attempt(status, key, "verify_green")
                 self._save_status(status, state.run_status)

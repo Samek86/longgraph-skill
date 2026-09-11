@@ -9,6 +9,7 @@ from longgraph.hosts import (
     timer_ids_from_ops,
 )
 from longgraph.nodes import Runner, set_ledger_run_status
+from longgraph.state import parse_run
 
 from tests.support import copy_fixture
 
@@ -114,11 +115,11 @@ def test_dual_timer_no_cross_wake(tmp_path: Path) -> None:
     scheduler.mark_busy(exec_id, False)
 
     runner = Runner(run_dir, host=host, workspace=workspace)
-    host.busy_nodes.add("executor")
     runner.run(steps=1)
-    host.busy_nodes.discard("executor")
     assert runner.stopped_reason is None
     assert "GAP-002" not in runner.closed_items
+    assert "GAP-002" in parse_run(run_dir).open_gaps
+    assert parse_run(run_dir).run_status == "active"
 
     set_ledger_run_status(run_dir, "closed")
     host.invoke("executor", exec_prompt.read_text(encoding="utf-8"), _ctx(run_dir, workspace))

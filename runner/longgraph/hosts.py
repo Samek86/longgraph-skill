@@ -29,11 +29,17 @@ class WriteDenied(PermissionError):
 
 @dataclass
 class NodeResult:
-    """Node self-report. `ok` is informational and must never close an item."""
+    """Node self-report. `ok` is informational and must never close an item.
+
+    `applied` is true only when the executor actually applied a work write-set
+    (including a read-only / empty mapping). Emit-only, timer-only, and no-op
+    ticks leave it false so the runner cannot close on a mock-green Verify.
+    """
 
     ok: bool = False
     message: str = ""
     writes: list[str] = field(default_factory=list)
+    applied: bool = False
 
 
 class EdgeWriter:
@@ -114,7 +120,7 @@ class MockHost(Host):
             dest = self.writer.workspace / rel
             self.writer.write("executor", dest, content)
             writes.append(rel)
-        return NodeResult(ok=self.force_ok, message="mock executor", writes=writes)
+        return NodeResult(ok=self.force_ok, message="mock executor", writes=writes, applied=True)
 
     def _supervisor(self, ctx: dict[str, Any]) -> NodeResult:
         run_dir = Path(ctx["run_dir"])
@@ -253,7 +259,7 @@ class PromptOnlyHost(Host):
     def invoke(self, node: str, prompt: str, ctx: dict[str, Any]) -> NodeResult:
         # Emit only. Never call a model and never write ledger/directives.
         _ = (node, prompt)
-        return NodeResult(ok=True, message=self.emit_dual_loop(ctx), writes=[])
+        return NodeResult(ok=True, message=self.emit_dual_loop(ctx), writes=[], applied=False)
 
 
 def interval_seconds(text: str) -> int:
@@ -435,7 +441,7 @@ class GrokBotDualTimerHost(Host):
         self.workspace = workspace
 
         if self._overlapping(node):
-            return NodeResult(ok=True, message=NOOP_MESSAGE, writes=[])
+            return NodeResult(ok=True, message=NOOP_MESSAGE, writes=[], applied=False)
 
         self.busy_nodes.add(node)
         task = self._task_for(node)
@@ -448,10 +454,10 @@ class GrokBotDualTimerHost(Host):
                 writes.append("ops.md")
             if self._ledger_terminal(run_dir):
                 self._delete_own_timer(node, run_dir)
-                return NodeResult(ok=True, message="terminal", writes=writes)
+                return NodeResult(ok=True, message="terminal", writes=writes, applied=False)
             if node == "supervisor":
                 self._refresh_supervisor_prompt(run_dir)
-            return NodeResult(ok=True, message=f"{node} tick", writes=writes)
+            return NodeResult(ok=True, message=f"{node} tick", writes=writes, applied=False)
         finally:
             self.busy_nodes.discard(node)
             if task is not None:

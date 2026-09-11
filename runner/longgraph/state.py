@@ -98,6 +98,41 @@ def findings_relpath(blocked_on: str | None) -> str | None:
     return f"findings/{ident}.md"
 
 
+_FINDINGS_STATUS = re.compile(r"(?:\*\*Status\*\*|Status)\s*:\s*(\S+)", re.I)
+
+
+def findings_status_complete(text: str) -> bool:
+    """True when a findings body marks **Status**: complete."""
+    match = _FINDINGS_STATUS.search(text or "")
+    if not match:
+        return False
+    token = match.group(1).strip().strip("*").strip("`").lower().rstrip(".,;")
+    return token == "complete"
+
+
+def current_slice_owner_blocked(state: RunState) -> bool:
+    """True when a live OB-xxx applies to the Current slice / next item."""
+    live = list(state.owner_blocked or [])
+    if not live:
+        return False
+    blob = " ".join(
+        filter(
+            None,
+            [
+                state.current_slice.Item,
+                state.current_slice.get("Write set"),
+                state.current_slice.Context,
+                state.current_slice.Verify,
+                state.current_slice.get("Done when"),
+                state.next_item,
+            ],
+        )
+    )
+    if any(ob in blob for ob in live):
+        return True
+    return derive_item_id(state) in live
+
+
 def derive_item_id(state: RunState) -> str:
     for text in (state.current_slice.Item, state.next_item):
         match = _ITEM_ID.search(text or "")
