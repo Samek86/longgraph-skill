@@ -12,6 +12,16 @@ from typing import Any
 from .gates import GateRunner
 from .hosts import NOOP_MESSAGE, EdgeWriter, Host, MockHost
 from .retry import RetryKey, increment_retry, set_last_attempt, should_resume_verify_only
+from .rotate import (
+    DIRECTIVES_ARCHIVE_HEADING,
+    ROUNDS_ARCHIVE_HEADING,
+    RotationCaps,
+    append_round_log_line,
+    merge_archive,
+    parse_rotation_caps,
+    rotate_directives,
+    rotate_rounds_log,
+)
 from .state import RunState, derive_item_id, parse_run
 
 TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
@@ -105,7 +115,36 @@ class Runner:
     def _state(self) -> RunState:
         return parse_run(self.run_dir, read_text=self._read)
 
+    def _rotation_caps(self) -> RotationCaps:
+        ops = self.run_dir / "ops.md"
+        text = ops.read_text(encoding="utf-8") if ops.exists() else ""
+        return parse_rotation_caps(text)
+
+    def _append_archive(self, node: str, name: str, fragment: str, heading: str) -> None:
+        if not fragment or not fragment.strip():
+            return
+        dest = self.run_dir / "archive" / name
+        existing = dest.read_text(encoding="utf-8") if dest.exists() else ""
+        self.writer.write(node, dest, merge_archive(existing, fragment, heading=heading))
+
+    def _rotate_directives(self, state: RunState) -> None:
+        """Rotate folded (and cap-excess) corrections before any supervisor append."""
+        path = self.run_dir / "directives.md"
+        if not path.exists():
+            return
+        current = path.read_text(encoding="utf-8")
+        caps = self._rotation_caps()
+        new_text, archive = rotate_directives(
+            current,
+            state.last_directive_folded,
+            open_directive_cap=caps.open_directive_cap,
+        )
+        self._append_archive("supervisor", "directives.md", archive, DIRECTIVES_ARCHIVE_HEADING)
+        if new_text != current:
+            self.writer.write("supervisor", path, new_text)
+
     def _tick_supervisor(self, state: RunState) -> None:
+        self._rotate_directives(state)
         prompt_path = self.run_dir / "supervisor.md"
         prompt = self._read(prompt_path) if prompt_path.exists() else ""
         result = self.host.invoke(
@@ -151,9 +190,14 @@ class Runner:
             return f"{match.group(1)}{int(match.group(2)) + 1}"
 
         text = re.sub(r"(Round:\s*)(\d+)", _bump, text, count=1)
-        if f"<!-- runner closed {item_id} -->" not in text:
+        already = f"<!-- runner closed {item_id} -->" in text
+        if not already:
+            text = append_round_log_line(text, item_id)
             text = text.rstrip() + f"\n\n<!-- runner closed {item_id} -->\n"
+        caps = self._rotation_caps()
+        text, archive = rotate_rounds_log(text, keep_rounds=caps.keep_rounds)
         self.writer.write("executor", ledger, text)
+        self._append_archive("executor", "rounds.md", archive, ROUNDS_ARCHIVE_HEADING)
 
     def _mark_completed(self, state: RunState, status: dict) -> None:
         if state.run_status not in TERMINAL_LEDGER:

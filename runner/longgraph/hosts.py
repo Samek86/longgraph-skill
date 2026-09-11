@@ -7,6 +7,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .rotate import (
+    DIRECTIVES_ARCHIVE_HEADING,
+    append_correction_packet,
+    merge_archive,
+    next_directive_id,
+    parse_rotation_caps,
+    rotate_directives,
+)
 from .state import parse_run, paths_from_write_set
 
 NOOP_MESSAGE = "no-op"
@@ -45,7 +53,8 @@ class EdgeWriter:
             raise WriteDenied("executor cannot write directives")
         if node == "scout" and name in {"ledger.md", "directives.md"}:
             raise WriteDenied("scout writes findings only")
-        if node == "supervisor" and name != "directives.md":
+        supervisor_directives = name == "directives.md"
+        if node == "supervisor" and not supervisor_directives:
             raise WriteDenied("supervisor writes directives only")
         if node == "scout":
             try:
@@ -108,19 +117,53 @@ class MockHost(Host):
         return NodeResult(ok=self.force_ok, message="mock executor", writes=writes)
 
     def _supervisor(self, ctx: dict[str, Any]) -> NodeResult:
-        path = Path(ctx["run_dir"]) / "directives.md"
+        run_dir = Path(ctx["run_dir"])
+        path = run_dir / "directives.md"
         current = path.read_text(encoding="utf-8") if path.exists() else (
-            "# Directives\n\n## Supervisor state\n\nLast completed tick: none\n"
+            "# Directives\n\n## Supervisor state\n\nLast completed tick: none\n\n"
+            "## STANDING — authority only (always in force; treat like red lines)\n\n"
+            "(none yet)\n\n"
+            "## Corrections (numbered; live queue = not-yet-folded only)\n\n"
+            "(none yet)\n"
         )
-        if "Last completed tick:" in current:
+        watermark = "none"
+        if (run_dir / "ledger.md").exists():
+            watermark = parse_run(run_dir).last_directive_folded
+        ops_path = run_dir / "ops.md"
+        ops_text = ops_path.read_text(encoding="utf-8") if ops_path.exists() else ""
+        caps = parse_rotation_caps(ops_text)
+        # Rotate-before-append: folded IDs leave the live queue first.
+        rotated, archive_append = rotate_directives(
+            current,
+            watermark,
+            open_directive_cap=caps.open_directive_cap,
+        )
+        if archive_append:
+            dest = run_dir / "archive" / "directives.md"
+            existing = dest.read_text(encoding="utf-8") if dest.exists() else ""
+            self.writer.write(
+                "supervisor",
+                dest,
+                merge_archive(existing, archive_append, heading=DIRECTIVES_ARCHIVE_HEADING),
+            )
+        if "Last completed tick:" in rotated:
             updated = re.sub(
                 r"Last completed tick:.*",
                 "Last completed tick: mock",
-                current,
+                rotated,
                 count=1,
             )
         else:
-            updated = current.rstrip() + "\nLast completed tick: mock\n"
+            updated = rotated.rstrip() + "\nLast completed tick: mock\n"
+        next_id = next_directive_id(watermark, updated, archive_append)
+        packet = (
+            f"{next_id} · mock · plan\n"
+            "Context: runner\n"
+            "Action: mock supervisor tick\n"
+            "Verify: n/a\n"
+            "Stop: mock only\n"
+        )
+        updated = append_correction_packet(updated, packet)
         self.writer.write("supervisor", path, updated)
         return NodeResult(ok=True, message="mock supervisor", writes=["directives.md"])
 

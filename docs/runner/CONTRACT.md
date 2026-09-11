@@ -39,6 +39,13 @@ Access: `state.current_slice["Write set"]` or `state.current_slice.Item`.
 `blocked-on: findings#<id>` resolves to **`findings/<id>.md`**.
 Do not use a singular `findings.md` as the golden path.
 
+### 1.7 Rounds log (bounded)
+
+The Rounds log keeps the last `KEEP_ROUNDS` (default 5) `- R…` lines.
+Older lines move to `archive/rounds.md` (create with a heading if missing).
+`KEEP_ROUNDS` is read from `ops.md` when present. The executor is the
+only writer of the ledger and of `archive/rounds.md`.
+
 ### 1.4 Pending promotion / pending-audit
 
 While `milestone_gate` is `pending-audit`, the executor must not **advance**
@@ -78,6 +85,17 @@ The supervisor **never writes** the ledger.
 A scout **dispatch** is a numbered correction (or an explicit dispatch
 line) naming `brief <id>`. Scout output does not land here.
 
+### Watermark / rotate
+
+Before the supervisor appends, move Corrections entries with IDs ≤ the
+ledger watermark (`Last directive folded`) to `archive/directives.md`
+(create with a heading if missing). Next ID = max(watermark, highest
+live ID) + 1; never reuse rotated IDs. The live Corrections queue is
+capped by `OPEN_DIRECTIVE_CAP` (default 8, from `ops.md` when present).
+After the watermark pass, oldest excess live packets (lowest IDs) rotate
+until the queue is at the cap — newest unfolded corrections stay.
+Supervisor state and STANDING are not rotated.
+
 ---
 
 ## 3. Ops (`ops.md`) — ambient; nodes do not treat it as an edge
@@ -89,6 +107,8 @@ Runner-parsed knobs (line form `key: value`, or the Build / test alias):
 | `max_rounds` | Hard budget. When `progress.completedRounds >= max_rounds`, stop. Not a close. |
 | `max_retries` | Per-item retry cap (see §5). |
 | `smoke` | Command run **before a new item** starts. Alias: a Build / test line beginning with `smoke`. |
+| `KEEP_ROUNDS` | Live `- R…` Rounds log lines to keep (default 5). Alias: `keep_rounds`. |
+| `OPEN_DIRECTIVE_CAP` | Live Corrections cap (default 8). Alias: `open_directive_cap`. |
 
 Missing knobs: `max_rounds` / `max_retries` default to a high backstop
 (100 / 3) so fixtures without them still parse; tests that care set them
