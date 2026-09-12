@@ -48,7 +48,8 @@ write-set.
 forbids starting the next milestone's write-set or flipping the gate to
 `passed` without an acceptance directive (`ACCEPT-GATE` / first-line verb
 `accept-gate`). Disjoint registered lane work may continue. Write-set /
-audit-surface overlap uses normalized paths (`.` / `..` cannot dodge).
+audit-surface overlap uses normalized paths (`.` / `..` cannot dodge)
+and workspace hardlink / symlink aliases (`samefile` / `resolve`).
 An `M\d+` token in `next_item` or a lane `Item` is not a run stop.
 
 **A9 — Hard budgets.** `max_rounds` stops the run (not a close).
@@ -158,3 +159,4 @@ Exact test names. Do not add the banned aliases
 | 43 | `test_pending_audit_blocks_normalized_audit_surface_overlap` | A8 — `a/../a/file` cannot dodge the audit surface |
 | 44 | `test_executor_cannot_clobber_scoreboard_via_hardlink` | A1, A14 — workspace hardlink/symlink alias cannot clobber scoreboard files |
 | 45 | `test_accept_gate_folds_after_applied_non_mock_host` | A8 — ACCEPT-GATE fold is runner-owned after any applied write-set |
+| 46 | `test_pending_audit_blocks_audit_surface_hardlink_alias` | A8 — workspace hardlink/symlink to the audit surface cannot dodge |

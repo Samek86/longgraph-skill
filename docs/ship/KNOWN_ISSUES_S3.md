@@ -39,6 +39,12 @@ Other packets still fold on close. DualTimer remains timer-only
 (M-S3-3) and does not apply, so it does not fold.
 Test: `test_accept_gate_folds_after_applied_non_mock_host`.
 
+### C-TIP-3 — pending-audit audit-surface inode alias — FIXED
+
+A workspace hardlink or symlink to the audit surface cannot dodge
+pending-audit overlap.
+Test: `test_pending_audit_blocks_audit_surface_hardlink_alias`.
+
 ## Major (open)
 
 ### M-S3-3 — DualTimer Host is timer-only
@@ -59,5 +65,7 @@ multi-day DualTimer soak is out of scope here (PR #15).
 
 ## Owner-only
 
-Git tags, GitHub Releases, live DualTimer product soaks, and merge
-to `main` require owner ack. This PR must not be merged without it.
+New git tags, GitHub Releases, live DualTimer product soaks, and merge
+to `main` require owner ack. Annotated tag `0.3.0-beta` already exists
+(owner-cut at `eeb7591`). Agents must not create further tags. This PR
+must not be merged without owner ack.

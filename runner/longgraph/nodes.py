@@ -88,7 +88,40 @@ def _audit_surface_paths(ledger_text: str) -> set[str]:
     return set()
 
 
-def current_slice_is_next_milestone_surface(state: RunState, ledger_text: str = "") -> bool:
+def _same_file(left: Path | str, right: Path | str) -> bool:
+    """True when both paths exist and share a device+inode (hardlink/alias)."""
+    try:
+        return os.path.samefile(left, right)
+    except OSError:
+        return False
+
+
+def _workspace_declared_alias(write_rel: str, audit_rel: str, workspace: Path) -> bool:
+    """True when a write-set dest is the same file as an audit-surface dest.
+
+    String overlap is handled by the caller. This catches a workspace
+    hardlink (same inode, different path) or symlink (resolve equality)
+    that would let a lane write-set clobber the surface under audit.
+    """
+    write_path = Path(workspace) / write_rel
+    audit_path = Path(workspace) / audit_rel
+    if _same_file(write_path, audit_path):
+        return True
+    try:
+        write_res = write_path.resolve()
+        audit_res = audit_path.resolve()
+    except OSError:
+        return False
+    if write_res != audit_res:
+        return False
+    return write_path.is_symlink() or audit_path.is_symlink()
+
+
+def current_slice_is_next_milestone_surface(
+    state: RunState,
+    ledger_text: str = "",
+    workspace: Path | str | None = None,
+) -> bool:
     """True when the Current-slice write-set is the next-milestone surface.
 
     CONTRACT §1.4 / A8: `pending-audit` blocks that surface only. An
@@ -109,6 +142,14 @@ def current_slice_is_next_milestone_surface(state: RunState, ledger_text: str = 
         # `migrations/../migrations/drop.sql` cannot dodge the surface.
         if audit and writes & audit:
             return True
+        if workspace is not None and audit and writes:
+            root = Path(workspace)
+            if any(
+                _workspace_declared_alias(write_rel, audit_rel, root)
+                for write_rel in writes
+                for audit_rel in audit
+            ):
+                return True
     return False
 
 
@@ -506,7 +547,9 @@ class Runner:
             ledger_text = (self.run_dir / "ledger.md").read_text(encoding="utf-8")
             if (
                 state.milestone_gate == "pending-audit"
-                and current_slice_is_next_milestone_surface(state, ledger_text)
+                and current_slice_is_next_milestone_surface(
+                    state, ledger_text, self.workspace
+                )
             ):
                 self.advancement_blocked = True
                 self.stopped_reason = "pending-audit"

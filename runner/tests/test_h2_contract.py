@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
+import pytest
+
 from longgraph.gates import GateRunner
 from longgraph.hosts import Host, MockHost, NodeResult
-from longgraph.nodes import Runner
+from longgraph.nodes import Runner, current_slice_is_next_milestone_surface
 from longgraph.rotate import (
     append_correction_packet,
     rotate_directives,
@@ -398,3 +401,54 @@ def test_pending_audit_blocks_normalized_audit_surface_overlap(tmp_path: Path) -
     assert lane_runner.stopped_reason != "pending-audit"
     assert "executor" in lane_host.invocations
     assert (lane_ws / "docs" / "lane-policy.md").is_file()
+
+
+def _link_or_skip(src: Path, dest: Path, *, kind: str) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if kind == "hard":
+            os.link(src, dest)
+        else:
+            dest.symlink_to(src)
+    except OSError as exc:
+        pytest.skip(f"{kind}link unsupported here: {exc}")
+
+
+def test_pending_audit_blocks_audit_surface_hardlink_alias(tmp_path: Path) -> None:
+    """C-TIP-3: workspace hardlink/symlink to the audit surface cannot dodge A8."""
+
+    def _probe(kind: str, dest: Path) -> None:
+        ws = dest / "ws"
+        ws.mkdir(parents=True)
+        surface = ws / "migrations" / "drop_blob.sql"
+        surface.parent.mkdir(parents=True)
+        surface.write_text("-- audit surface\n", encoding="utf-8")
+        alias = ws / "lane" / "alias.sql"
+        _link_or_skip(surface, alias, kind=kind)
+        before = surface.read_text(encoding="utf-8")
+        run_dir = _write_run(
+            dest,
+            ledger=_ledger(
+                item="GAP-010 lane via alias",
+                write_set="lane/alias.sql",
+                next_item="GAP-010 lane via alias",
+                gate="pending-audit",
+                audit_surface="migrations/drop_blob.sql",
+            ),
+            directives=_empty_directives(),
+        )
+        state = parse_run(run_dir)
+        assert current_slice_is_next_milestone_surface(
+            state, (run_dir / "ledger.md").read_text(encoding="utf-8"), ws
+        )
+        host = MockHost()
+        runner = Runner(run_dir, host=host, gates=GateRunner(default=True), workspace=ws)
+        runner.run(steps=1)
+        assert runner.stopped_reason == "pending-audit"
+        assert runner.advancement_blocked is True
+        assert "executor" not in host.invocations
+        assert surface.read_text(encoding="utf-8") == before
+        assert runner.closed_items == []
+
+    _probe("hard", tmp_path / "hard")
+    _probe("sym", tmp_path / "sym")

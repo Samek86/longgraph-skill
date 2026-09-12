@@ -62,8 +62,10 @@ with `M\d+` and the write-set is not `read-only`, **or** the write-set
 paths overlap Pending promotion `Audit surface:`. Overlap compares
 **normalized** paths (`relative_to` a dummy root / `normpath`), not raw
 string equality — `migrations/../migrations/drop_blob.sql` is the same
-file as `migrations/drop_blob.sql`. An `M\d+` token in `next_item` or a
-lane `Item` is not enough to stop the run.
+file as `migrations/drop_blob.sql`. A workspace hardlink or symlink
+that aliases a write-set dest to an audit-surface dest is the same
+file (`os.path.samefile` / `Path.resolve`). An `M\d+` token in
+`next_item` or a lane `Item` is not enough to stop the run.
 
 **Acceptance-release marker.** A live correction releases the gate when
 it contains the exact token `ACCEPT-GATE` (ASCII, case-insensitive), or

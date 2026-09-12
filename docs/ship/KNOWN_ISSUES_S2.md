@@ -57,6 +57,13 @@ on the applied-work Host path. Emit/timer hosts still do not apply
 (see M-R2-3).
 Test: `test_accept_gate_folds_after_applied_non_mock_host`.
 
+### C-TIP-3 — pending-audit audit-surface inode alias — FIXED
+
+A workspace hardlink or symlink to the audit surface cannot dodge
+pending-audit overlap. Path spelling was already covered (M-ADV-1 /
+C-TIP-1).
+Test: `test_pending_audit_blocks_audit_surface_hardlink_alias`.
+
 ## Major (open)
 
 ### M-R2-3 — DualTimer Host is timer-only
@@ -76,5 +83,7 @@ scope here).
 
 ## Owner-only
 
-Git tags, GitHub Releases, live DualTimer product soaks, and merge
-to `main` require owner ack. This PR must not be merged without it.
+New git tags, GitHub Releases, live DualTimer product soaks, and merge
+to `main` require owner ack. Annotated tag `0.3.0-beta` already exists
+(owner-cut at `eeb7591`). Agents must not create further tags. This PR
+must not be merged without owner ack.
