@@ -7,33 +7,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **New git tags and GitHub Releases are owner-only.** Agents must not
-create them. Annotated tag `0.3.0-beta` and its GitHub prerelease
-already exist at `eeb7591` (owner-cut). Candidate string `0.4.0-rc.1`
-is in `runner/pyproject.toml`; the `0.4.0-rc.1` tag does **not** exist
-yet. This tree does not cut tags.
+create them. Prior tag `0.3.0-beta` and its GitHub prerelease already
+exist at `eeb7591` (do not retarget). Lightweight tag `0.4.0-rc.1`
+and GitHub prerelease already exist at `3824ef4`. This tree does not
+cut **new** tags.
 
 ## [Unreleased]
 
-Release candidate ready: ship-complete D2 coding evidence lives under
-[`[0.4.0-rc.1]`](#040-rc1--2026-09-12-candidate-owner-must-tag). Further
-work after that candidate lands here. Publish is **not** done until the
-owner tags.
+Further work after the `0.4.0-rc.1` candidate lands here. Tag
+`0.4.0-rc.1` and its GitHub prerelease already exist at `3824ef4`.
+Owner D2 *stable* / non-rc publish ack is **not** done. Live DualTimer
+soak (M-R2-3) remains owner-only.
 
-## [0.4.0-rc.1] — 2026-09-12 (candidate; owner must tag)
+## [0.4.0-rc.1] — 2026-09-12 (prerelease; tag exists at `3824ef4`)
 
 Version in `runner/pyproject.toml`. **Coding D2 evidence pack READY.**
-Publish is **not** done until the owner cuts a SemVer tag and records a
-D2 publish ack. This section does **not** claim that tag `0.4.0-rc.1`
-exists.
+Lightweight tag `0.4.0-rc.1` and GitHub prerelease exist at `3824ef4`
+(`3824ef4127f966d1d021695b7e63486830841ef5`). Owner D2 *stable* /
+non-rc publish ack is **not** done. This section does **not** claim
+DualTimer soak happened.
 
 Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md).
 
 ### Added
 
 - D2 Go/No-Go checklist (DISTRIBUTION-READINESS-v1 §8) with concrete
-  SHAs and evidence links for tip `f2f493b`. Owner-only rows stay
-  unchecked: live DualTimer soak (M-R2-3), D2 publish ack, new SemVer
-  tag/Release beyond `0.3.0-beta`.
+  SHAs and evidence links for tip `3824ef4` (PR #24). Owner-only rows
+  stay unchecked: live DualTimer soak (M-R2-3), D2 *stable* publish
+  ack. Tag/Release `0.4.0-rc.1` is MET (prerelease at `3824ef4`).
 - D1 closeout scaffolding: [public claims](docs/ship/PUBLIC_CLAIMS.md) bind
   DISTRIBUTION-READINESS-v1 §1.1 P1–P10 to existing pytest names;
   [S3 negative battery](docs/ship/S3_NEGATIVE_BATTERY.md) indexes the
@@ -52,9 +53,9 @@ Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md).
   Meta-test `test_adversarial_tip_doc_exists`.
 - Tip mock soak N=50 evidence pack for `5de40a9`:
   [`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
-  Valid for post-soak tip `f2f493b` (docs-only soak commit). Meta-test
-  `test_tip_soak_evidence_pack_exists`. Live DualTimer soak and new
-  tags remain owner-only.
+  Valid for #24 tip `3824ef4` (release-prep docs/version/meta).
+  Meta-test `test_tip_soak_evidence_pack_exists`. Live DualTimer soak
+  remains owner-only. Agents must not create **new** tags.
 
 ### Fixed
 
@@ -119,6 +120,6 @@ create them.
 - Close remains **Default-FAIL**. Emit-only and timer-only ticks never
   close. DualTimer Host does not apply write-sets.
 
-[Unreleased]: https://github.com/Samek86/longgraph-skill/compare/0.3.0-beta...HEAD
-[0.4.0-rc.1]: https://github.com/Samek86/longgraph-skill/compare/0.3.0-beta...HEAD
+[Unreleased]: https://github.com/Samek86/longgraph-skill/compare/0.4.0-rc.1...HEAD
+[0.4.0-rc.1]: https://github.com/Samek86/longgraph-skill/releases/tag/0.4.0-rc.1
 [0.3.0-beta]: https://github.com/Samek86/longgraph-skill/releases/tag/0.3.0-beta

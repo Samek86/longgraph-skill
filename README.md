@@ -267,11 +267,11 @@ durable run directory; only how you start each tick changes.
 | [Host references](skills/loop-graph/references) | One independently loaded owner for each host's runtime facts |
 | [Worked examples](skills/loop-graph/examples) | Public-Git self-iteration plus fictional ledgers showing gates in action |
 | [Public / private boundary](docs/public-private-boundary.md) | What may enter the public tree vs stay project-local |
-| [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Version string `0.4.0-rc.1` (candidate; owner must tag) |
+| [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Version string `0.4.0-rc.1` (prerelease tag exists at `3824ef4`) |
 | [Public claims](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 bound to named pytest (not marketing copy) |
-| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R pack: coding evidence READY; publish NOT done until owner tag + ack |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R pack: coding evidence READY; rc.1 prerelease at `3824ef4`; stable publish ack + DualTimer soak stay owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 candidate; new tags are owner-only |
-| [Known issues](KNOWN_ISSUES.md) | Tip `f2f493b` / mock N=50 done; DualTimer soak + `0.4.0-rc.1` tag stay owner |
+| [Known issues](KNOWN_ISSUES.md) | Tip `3824ef4` / mock N=50 done; DualTimer soak + stable publish ack stay owner |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4: stranger follows README for mock + prompt-only on a fixture copy |
 | [Support surface](docs/ship/SUPPORT.md) | S5: CLI hosts + Python 3.11/3.12 + ubuntu-latest; CI matrix bound |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |

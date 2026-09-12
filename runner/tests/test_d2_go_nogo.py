@@ -8,8 +8,8 @@ from pathlib import Path
 _REPO = Path(__file__).resolve().parents[2]
 _DOC = _REPO / "docs" / "ship" / "D2-GO-NOGO.md"
 _PYPROJECT = _REPO / "runner" / "pyproject.toml"
-_TIP_SHA = "f2f493b"
-_TIP_SHA_FULL = "f2f493b52a66daac172fdde9ace485297a32b297"
+_TIP_SHA = "3824ef4"
+_TIP_SHA_FULL = "3824ef4127f966d1d021695b7e63486830841ef5"
 _SOAK_PATH = "soak/tip-5de40a9-n50-mock"
 _VERSION = "0.4.0-rc.1"
 _VERSION_LINE = re.compile(r'^version\s*=\s*"([^"]+)"', re.M)
@@ -21,9 +21,14 @@ _UNCHECKED_PUBLISH = re.compile(
     r"- \[ \].*(?:publish|ack)",
     re.I,
 )
-_UNCHECKED_TAG = re.compile(
-    r"- \[ \].*(?:SemVer tag|GitHub Release|0\.4\.0-rc\.1)",
-    re.I,
+_RC1_PRESENT = re.compile(
+    r"(?:tag|Release).{0,200}0\.4\.0-rc\.1.{0,200}(?:exist|\*\*MET\*\*)"
+    r"|0\.4\.0-rc\.1.{0,200}(?:exists|prerelease|\*\*MET\*\*)",
+    re.I | re.S,
+)
+_RC1_ABSENT = re.compile(
+    r"0\.4\.0-rc\.1.{0,80}does\s+(?:\*\*)?not(?:\*\*)?\s+exist",
+    re.I | re.S,
 )
 
 
@@ -48,11 +53,11 @@ def test_d2_go_nogo_doc_exists() -> None:
     assert _UNCHECKED_PUBLISH.search(text), (
         f"{_DOC} must keep an unchecked owner D2 publish ack row"
     )
-    assert _UNCHECKED_TAG.search(text), (
-        f"{_DOC} must keep an unchecked new SemVer tag / Release row"
+    assert _RC1_PRESENT.search(text), (
+        f"{_DOC} must acknowledge that tag/Release {_VERSION} exists (or MET)"
     )
-    assert "not exist" in lowered or "does **not** exist" in lowered, (
-        f"{_DOC} must state that the {_VERSION} tag does not exist"
+    assert not _RC1_ABSENT.search(text), (
+        f"{_DOC} must not claim that the {_VERSION} tag is absent"
     )
 
 

@@ -248,11 +248,11 @@ Buildを含む）を選択します。本当にカスタムな実行形状の場
 | [ホストリファレンス](skills/loop-graph/references) | 各ホストのランタイム事実のための一つの独立して読み込まれる所有者 |
 | [実例](skills/loop-graph/examples) | 公開Git自己反復+動作中のゲートを示す架空の台帳 |
 | [公開/プライベート境界](docs/public-private-boundary.md) | 公開ツリーに入る可能性があるものとプロジェクトローカルのままであるもの |
-| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリ用エンジン — `--host prompt-only`（安全なデフォルト）、`grok-bot` DualTimer、`mock` はテスト専用。バージョン文字列 `0.4.0-rc.1`（候補；owner が tag する） |
+| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリ用エンジン — `--host prompt-only`（安全なデフォルト）、`grok-bot` DualTimer、`mock` はテスト専用。バージョン文字列 `0.4.0-rc.1`（prerelease tag は `3824ef4` に存在） |
 | [公開クレーム](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 を既存 pytest 名に束縛（宣伝文ではない） |
-| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R パック：コーディング証拠 READY；公開は owner の tag + ack まで未了 |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R パック：コーディング証拠 READY；rc.1 prerelease は `3824ef4`；stable publish ack と DualTimer soak は owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候補。新しい tag は owner のみ |
-| [既知の問題](KNOWN_ISSUES.md) | tip `f2f493b` / mock N=50 済み；DualTimer soak と `0.4.0-rc.1` tag は owner |
+| [既知の問題](KNOWN_ISSUES.md) | tip `3824ef4` / mock N=50 済み；DualTimer soak と stable publish ack は owner |
 | [SECURITY.md](SECURITY.md) | ワークスペース外書き込み拒否、フィクスチャに秘密情報なし、runner は `git push` しない |
 
 ## ガバナンス

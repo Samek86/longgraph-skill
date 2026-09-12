@@ -234,10 +234,10 @@ LangGraph, or live DualTimer soak.
 Version string `0.4.0-rc.1` in `runner/pyproject.toml`. Go/No-Go
 checklist: [`docs/ship/D2-GO-NOGO.md`](../ship/D2-GO-NOGO.md).
 S exit allows `0.4.0` or `1.0.0-rc.1`; this tree uses `rc.1` so it
-does not claim stable without an owner tag. The `0.4.0-rc.1` tag
-does **not** exist. New tags, GitHub Releases, live DualTimer soak,
-and the D2 publish ack stay owner-only. No ApiHost or Phase 2
-prompt compiler.
+does not claim stable without an owner ack. Tag `0.4.0-rc.1` exists
+at `3824ef4` (GitHub prerelease). New tags, GitHub Releases, live
+DualTimer soak, and the D2 *stable* publish ack stay owner-only. No
+ApiHost or Phase 2 prompt compiler.
 
 ---
 
