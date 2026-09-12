@@ -185,6 +185,8 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先
 ```
 
 把结果记入 [docs dry-run](docs/ship/DOCS-DRY-RUN.md)。
+支持的 Host / Python / OS 见 [Support surface](docs/ship/SUPPORT.md)
+（Python 3.11–3.12、`ubuntu-latest`；不宣称 macOS / Windows）。
 
 ## 这张图怎么运行
 
@@ -233,6 +235,7 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 要点；tag 仅限 owner |
 | [已知问题](KNOWN_ISSUES.md) | D2 编码 Major 已关闭；soak / DualTimer 仅定时器 / 遥测残留 |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4：陌生人按 README 在夹具副本上跑 mock + prompt-only |
+| [Support surface](docs/ship/SUPPORT.md) | S5：CLI host + Python 3.11/3.12 + ubuntu-latest；CI 矩阵绑定 |
 | [SECURITY.md](SECURITY.md) | 禁止工作区逃逸、夹具不含密钥、runner 不得 `git push` |
 
 ## 治理

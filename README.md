@@ -219,6 +219,8 @@ longgraph run --host mock /tmp/add-tests-to-cli          # coupled test loop; co
 ```
 
 Record the result with the [docs dry-run](docs/ship/DOCS-DRY-RUN.md).
+Supported Host / Python / OS: [Support surface](docs/ship/SUPPORT.md)
+(Python 3.11–3.12 on `ubuntu-latest`; macOS / Windows are not claimed).
 
 ## How the graph works
 
@@ -270,6 +272,7 @@ durable run directory; only how you start each tick changes.
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 highlights; tag is owner-only |
 | [Known issues](KNOWN_ISSUES.md) | D2 coding Majors closed; soak / DualTimer timer-only / telemetry residuals |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4: stranger follows README for mock + prompt-only on a fixture copy |
+| [Support surface](docs/ship/SUPPORT.md) | S5: CLI hosts + Python 3.11/3.12 + ubuntu-latest; CI matrix bound |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |
 
 ## Governance
