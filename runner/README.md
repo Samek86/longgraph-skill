@@ -11,12 +11,14 @@ Changelog: [`CHANGELOG.md`](../CHANGELOG.md).
 Residuals: [`KNOWN_ISSUES.md`](../KNOWN_ISSUES.md).
 Negative battery (Ship-S3): [`docs/ship/NEGATIVE-BATTERY.md`](../docs/ship/NEGATIVE-BATTERY.md).
 
-Distribution string: `0.3.0-beta` (in `pyproject.toml`; **not tagged**
-from this tree). This is **Ship-S / S5** after H2 and D1 closeout.
+Distribution string: `0.4.0-rc.1` (in `pyproject.toml`; **candidate —
+owner must tag**). The `0.4.0-rc.1` tag does **not** exist yet.
+Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](../docs/ship/D2-GO-NOGO.md).
 GitHub Release stays owner-only. Multi-fixture soak harness (Ship-S1):
 [`docs/ship/SOAK.md`](../docs/ship/SOAK.md). Tip mock N=50 tick evidence
-is in [`docs/ship/soak/tip-5de40a9-n50-mock/`](../docs/ship/soak/tip-5de40a9-n50-mock/).
-Live DualTimer / ≥24h wall-clock soak stays owner-only.
+is in [`docs/ship/soak/tip-5de40a9-n50-mock/`](../docs/ship/soak/tip-5de40a9-n50-mock/)
+(valid for post-soak tip `f2f493b`). Live DualTimer / ≥24h wall-clock
+soak stays owner-only.
 
 ## Host capability table
 

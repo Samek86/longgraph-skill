@@ -8,13 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **New git tags and GitHub Releases are owner-only.** Agents must not
 create them. Annotated tag `0.3.0-beta` and its GitHub prerelease
-already exist at `eeb7591` (owner-cut). This tree does not cut further
-tags.
+already exist at `eeb7591` (owner-cut). Candidate string `0.4.0-rc.1`
+is in `runner/pyproject.toml`; the `0.4.0-rc.1` tag does **not** exist
+yet. This tree does not cut tags.
 
 ## [Unreleased]
 
+Release candidate ready: ship-complete D2 coding evidence lives under
+[`[0.4.0-rc.1]`](#040-rc1--2026-09-12-candidate-owner-must-tag). Further
+work after that candidate lands here. Publish is **not** done until the
+owner tags.
+
+## [0.4.0-rc.1] — 2026-09-12 (candidate; owner must tag)
+
+Version in `runner/pyproject.toml`. **Coding D2 evidence pack READY.**
+Publish is **not** done until the owner cuts a SemVer tag and records a
+D2 publish ack. This section does **not** claim that tag `0.4.0-rc.1`
+exists.
+
+Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md).
+
 ### Added
 
+- D2 Go/No-Go checklist (DISTRIBUTION-READINESS-v1 §8) with concrete
+  SHAs and evidence links for tip `f2f493b`. Owner-only rows stay
+  unchecked: live DualTimer soak (M-R2-3), D2 publish ack, new SemVer
+  tag/Release beyond `0.3.0-beta`.
 - D1 closeout scaffolding: [public claims](docs/ship/PUBLIC_CLAIMS.md) bind
   DISTRIBUTION-READINESS-v1 §1.1 P1–P10 to existing pytest names;
   [S3 negative battery](docs/ship/S3_NEGATIVE_BATTERY.md) indexes the
@@ -33,8 +52,9 @@ tags.
   Meta-test `test_adversarial_tip_doc_exists`.
 - Tip mock soak N=50 evidence pack for `5de40a9`:
   [`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
-  Meta-test `test_tip_soak_evidence_pack_exists`. Live DualTimer soak
-  and new tags remain owner-only.
+  Valid for post-soak tip `f2f493b` (docs-only soak commit). Meta-test
+  `test_tip_soak_evidence_pack_exists`. Live DualTimer soak and new
+  tags remain owner-only.
 
 ### Fixed
 
@@ -58,9 +78,10 @@ tags.
 
 ## [0.3.0-beta] — 2026-09-12 (owner-cut prerelease)
 
-Version in `runner/pyproject.toml`. Annotated tag `0.3.0-beta` points at
-`eeb759164f42b5ceb5fbeb25405a027286e3b93a`. New tags and GitHub
-Releases remain owner-only; agents must not create them.
+Version in `runner/pyproject.toml` at tag time. Annotated tag
+`0.3.0-beta` points at `eeb759164f42b5ceb5fbeb25405a027286e3b93a`.
+New tags and GitHub Releases remain owner-only; agents must not
+create them.
 
 ### Added
 
@@ -99,4 +120,5 @@ Releases remain owner-only; agents must not create them.
   close. DualTimer Host does not apply write-sets.
 
 [Unreleased]: https://github.com/Samek86/longgraph-skill/compare/0.3.0-beta...HEAD
+[0.4.0-rc.1]: https://github.com/Samek86/longgraph-skill/compare/0.3.0-beta...HEAD
 [0.3.0-beta]: https://github.com/Samek86/longgraph-skill/releases/tag/0.3.0-beta

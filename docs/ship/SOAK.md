@@ -96,9 +96,13 @@ deleted after the run. Do not commit those work trees.
 
 **Mock N=50 tick evidence is in-repo** at
 [`soak/tip-5de40a9-n50-mock/`](soak/tip-5de40a9-n50-mock/) for tip
-`5de40a9`. That pack is the D2 tick-budget close for `host=mock`. A live
-DualTimer multi-day / ≥24h wall-clock soak remains **owner-only** (do not
-fabricate DualTimer logs).
+`5de40a9`. That pack is the D2 tick-budget close for `host=mock`. It
+remains valid for post-soak tip `f2f493b`
+(`f2f493b52a66daac172fdde9ace485297a32b297`): that commit is the
+docs-only soak pack merge (PR #23) and does not change runner engine
+files versus `5de40a9`. A live DualTimer multi-day / ≥24h wall-clock
+soak remains **owner-only** (do not fabricate DualTimer logs). Go/No-Go:
+[`D2-GO-NOGO.md`](D2-GO-NOGO.md).
 
 ---
 
