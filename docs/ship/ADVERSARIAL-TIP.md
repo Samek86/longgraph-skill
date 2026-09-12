@@ -1,6 +1,13 @@
 # Ship-D2 tip re-pass (eeb7591)
 
-Hostile source review of the runner on **main tip**
+Main tip is now `5de40a9`
+(`fix(runner): tip re-pass + C-TIP-3 audit-surface inode alias`) after
+PR #22. This pack's basis SHA remains `eeb7591`; C-TIP-3 closed on the
+same-PR stack. Critical=0. Mock N=50 tick evidence:
+[`soak/tip-5de40a9-n50-mock/`](soak/tip-5de40a9-n50-mock/). Live DualTimer
+soak remains owner-only.
+
+Hostile source review of the runner on **basis SHA**
 `eeb759164f42b5ceb5fbeb25405a027286e3b93a`
 (`fix(runner): deny hardlink scoreboard clobber (M-TIP-1)`).
 

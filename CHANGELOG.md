@@ -29,7 +29,12 @@ tags.
   `test_ci_runner_matrix_covers_supported_python`,
   `test_support_hosts_match_cli`.
 - Tip re-pass evidence: [ADVERSARIAL-TIP.md](docs/ship/ADVERSARIAL-TIP.md)
-  on tip `eeb7591`. Meta-test `test_adversarial_tip_doc_exists`.
+  on tip `eeb7591` (main advanced to `5de40a9`; C-TIP-3 closed).
+  Meta-test `test_adversarial_tip_doc_exists`.
+- Tip mock soak N=50 evidence pack for `5de40a9`:
+  [`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
+  Meta-test `test_tip_soak_evidence_pack_exists`. Live DualTimer soak
+  and new tags remain owner-only.
 
 ### Fixed
 

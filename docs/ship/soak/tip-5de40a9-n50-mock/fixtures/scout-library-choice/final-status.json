@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "runId": "2025-01-15-scout-s3-client",
+  "createdAt": "2025-01-15T09:00:00Z",
+  "updatedAt": "2026-09-12T02:29:47Z",
+  "status": "failed",
+  "phase": "executing",
+  "progress": {
+    "completedRounds": 2,
+    "totalItems": 6,
+    "completedItems": 1,
+    "blockedItems": 1,
+    "currentItem": "dual-path-upload"
+  },
+  "nodes": {
+    "executor": {
+      "lastHeartbeat": "2025-01-15T10:00:00Z",
+      "currentRound": 2,
+      "status": "active"
+    },
+    "supervisor": {
+      "lastHeartbeat": "2025-01-15T09:45:00Z",
+      "lastReview": "2025-01-15T09:45:00Z",
+      "status": "active"
+    },
+    "scout": {
+      "lastHeartbeat": null,
+      "status": "idle"
+    }
+  },
+  "ownerEscalation": null,
+  "metadata": {
+    "host": "mock",
+    "goal": "Choose an S3 client off the critical path",
+    "owner": "fixture",
+    "tags": [
+      "golden",
+      "scout-library-choice"
+    ],
+    "itemRetries": {
+      "implement-dual-path-upload-new-photos-object-store": 3
+    },
+    "lastAttempt": {
+      "key": {
+        "runId": "2025-01-15-scout-s3-client",
+        "round": 3,
+        "item_id": "implement-dual-path-upload-new-photos-object-store"
+      },
+      "phase": "write"
+    },
+    "startedItems": []
+  }
+}

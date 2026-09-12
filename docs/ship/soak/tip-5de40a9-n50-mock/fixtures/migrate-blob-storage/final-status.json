@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "runId": "2026-07-28-blob-storage",
+  "createdAt": "2026-07-18T10:00:00Z",
+  "updatedAt": "2026-09-12T02:29:46Z",
+  "status": "running",
+  "phase": "blocked",
+  "progress": {
+    "completedRounds": 9,
+    "totalItems": 12,
+    "completedItems": 8,
+    "blockedItems": 1,
+    "currentItem": "M3"
+  },
+  "nodes": {
+    "executor": {
+      "lastHeartbeat": "2026-07-20T16:00:00Z",
+      "currentRound": 9,
+      "status": "idle"
+    },
+    "supervisor": {
+      "lastHeartbeat": "2026-07-20T15:30:00Z",
+      "lastReview": "2026-07-20T15:30:00Z",
+      "status": "active"
+    }
+  },
+  "ownerEscalation": {
+    "id": "OB-001",
+    "choices": [
+      "A",
+      "B"
+    ]
+  },
+  "metadata": {
+    "host": "mock",
+    "goal": "Migrate shutterlog blobs to object storage",
+    "owner": "fixture",
+    "tags": [
+      "golden",
+      "migrate-blob-storage"
+    ],
+    "itemRetries": {},
+    "lastAttempt": null
+  }
+}
