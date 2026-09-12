@@ -157,6 +157,6 @@ No Host / CLI semantics were changed. No new Host code.
 
 ## Out of scope
 
-S5 CI matrix, Release tag, ApiHost, prompt compiler, live DualTimer
-multi-day soak, merging later ship PRs, inventing an external human
-success record.
+S5 CI matrix ([SUPPORT.md](SUPPORT.md); sibling track), Release tag,
+ApiHost, prompt compiler, live DualTimer multi-day soak, merging later
+ship PRs, inventing an external human success record.

@@ -21,6 +21,12 @@ may read `0.3.0-beta` while no matching tag exists.
   mapped name leaves the collected suite.
 - [Known issues](KNOWN_ISSUES.md) — soak / DualTimer timer-only /
   deferred telemetry residuals.
+- S5 support surface freeze: [SUPPORT.md](docs/ship/SUPPORT.md) binds
+  CLI hosts (`prompt-only`, `grok-bot`, `mock`), Python 3.11 / 3.12,
+  and `ubuntu-latest`. The validate `runner` job is a matrix of those
+  two Pythons. Meta-tests: `test_support_surface_doc_exists`,
+  `test_ci_runner_matrix_covers_supported_python`,
+  `test_support_hosts_match_cli`.
 
 ### Fixed
 

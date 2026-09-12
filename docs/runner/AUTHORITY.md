@@ -26,6 +26,8 @@ contract fidelity for long runs, and Ship-S / D1 closeout scaffolding).
 Later phases (1d+) are out of scope and must not be invented in this tree.
 Public-claim wording that CI cannot bind lives in
 [`docs/ship/PUBLIC_CLAIMS.md`](../ship/PUBLIC_CLAIMS.md), not here.
+Supported Host / Python / OS freeze:
+[`docs/ship/SUPPORT.md`](../ship/SUPPORT.md).
 
 **Brand.** Product / repo / slash / run-root remain longgraph /
 longgraph-skill / `/longgraph` / `.longgraph/`. The engine is a **new** tree

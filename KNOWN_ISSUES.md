@@ -1,10 +1,12 @@
 # Known issues
 
-Residuals after Phase 0–1c, DISTRIBUTION H0–H2, and the D2 coding
-closeout. D1 closeout binds public claims to CI. D2 coding Majors
-M-R2-1 / M-R2-2 (and the prior audit-path / OB-token holes) are
-fixed in this tree; live DualTimer soak (M-R2-3) is still owner
-evidence. See [public claims](docs/ship/PUBLIC_CLAIMS.md),
+Residuals after Phase 0–1c, DISTRIBUTION H0–H2, the D2 coding
+closeout, and the S5 support-surface freeze. D1 closeout binds public
+claims to CI. D2 coding Majors M-R2-1 / M-R2-2 (and the prior
+audit-path / OB-token holes) are fixed in this tree; live DualTimer
+soak (M-R2-3) is still owner evidence. See
+[public claims](docs/ship/PUBLIC_CLAIMS.md),
+[support surface](docs/ship/SUPPORT.md),
 [`docs/ship/KNOWN_ISSUES_S2.md`](docs/ship/KNOWN_ISSUES_S2.md), and
 [`docs/runner/CONTRACT.md`](docs/runner/CONTRACT.md).
 
@@ -16,6 +18,13 @@ are closed: resolved OB rows are not live; `OPEN_DIRECTIVE_CAP`
 refuses append-at-cap; pending-audit overlap uses normalized paths;
 live OBs bind without a slice token. This tree does not fabricate
 soak logs.
+
+## Support surface — Linux + Python 3.11/3.12 only
+
+CI and product claims are **`ubuntu-latest` (Linux)** plus Python
+**3.11 and 3.12**. `requires-python = ">=3.11"` is the install floor;
+3.13+ and macOS / Windows are not matrix-proven and are not
+supported. This freeze is not soak evidence.
 
 ## DualTimer Host is timer-only
 

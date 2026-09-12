@@ -6,13 +6,14 @@ policy only — this package never loads it.
 Authority: [`docs/runner/AUTHORITY.md`](../docs/runner/AUTHORITY.md).
 Security: [`SECURITY.md`](../SECURITY.md).
 Ship claims (CI-bound): [`docs/ship/PUBLIC_CLAIMS.md`](../docs/ship/PUBLIC_CLAIMS.md).
+Support surface (S5): [`docs/ship/SUPPORT.md`](../docs/ship/SUPPORT.md).
 Changelog: [`CHANGELOG.md`](../CHANGELOG.md).
 Residuals: [`KNOWN_ISSUES.md`](../KNOWN_ISSUES.md).
 Negative battery (Ship-S3): [`docs/ship/NEGATIVE-BATTERY.md`](../docs/ship/NEGATIVE-BATTERY.md).
 
 Distribution string: `0.3.0-beta` (in `pyproject.toml`; **not tagged**
-from this tree). This is **Ship-S / D1 closeout** after H2. GitHub
-Release stays owner-only. Multi-fixture soak harness (Ship-S1):
+from this tree). This is **Ship-S / S5** after H2 and D1 closeout.
+GitHub Release stays owner-only. Multi-fixture soak harness (Ship-S1):
 [`docs/ship/SOAK.md`](../docs/ship/SOAK.md). Production D2 evidence is
 attached from a later soak run, not from a CI smoke.
 
@@ -26,6 +27,19 @@ attached from a later soak run, not from a CI smoke.
 
 `longgraph run` without `--host` is **emit-only** (`prompt-only`). It does
 **not** silently default to MockHost as the product path.
+
+## Support surface
+
+| Axis | Supported (CI-bound) |
+|---|---|
+| CLI `--host` | `prompt-only` (safe default), `grok-bot` (DualTimer, timer-only), `mock` (tests only) |
+| Python | 3.11, 3.12 |
+| OS | ubuntu-latest (Linux) |
+
+Full freeze + explicit non-support:
+[`docs/ship/SUPPORT.md`](../docs/ship/SUPPORT.md). macOS / Windows and
+Python 3.13+ are not matrix-proven and are not supported. The venv
+`Scripts\activate` hint below is a shell path, not a platform claim.
 
 Close is **Default-FAIL**: gate re-pass after an applied write-set. Emit-only
 and timer-only ticks never close. Product Verify/smoke is a fail-closed
