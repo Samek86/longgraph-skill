@@ -9,32 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **New git tags and GitHub Releases are owner-only.** Agents must not
 create them. Prior tag `0.3.0-beta` and its GitHub prerelease already
 exist at `eeb7591` (do not retarget). Lightweight tag `0.4.0-rc.1`
-and GitHub prerelease already exist at `3824ef4`. This tree does not
+and GitHub prerelease already exist at `a4cce0f`. This tree does not
 cut **new** tags.
 
 ## [Unreleased]
 
 Further work after the `0.4.0-rc.1` candidate lands here. Tag
-`0.4.0-rc.1` and its GitHub prerelease already exist at `3824ef4`.
+`0.4.0-rc.1` and its GitHub prerelease already exist at `a4cce0f`.
 Owner D2 *stable* / non-rc publish ack is **not** done. Live DualTimer
 soak (M-R2-3) remains owner-only.
 
-## [0.4.0-rc.1] — 2026-09-12 (prerelease; tag exists at `3824ef4`)
+## [0.4.0-rc.1] — 2026-09-12 (prerelease; tag exists at `a4cce0f`)
 
 Version in `runner/pyproject.toml`. **Coding D2 evidence pack READY.**
-Lightweight tag `0.4.0-rc.1` and GitHub prerelease exist at `3824ef4`
-(`3824ef4127f966d1d021695b7e63486830841ef5`). Owner D2 *stable* /
-non-rc publish ack is **not** done. This section does **not** claim
-DualTimer soak happened.
+Lightweight tag `0.4.0-rc.1` and GitHub prerelease exist at `a4cce0f`
+(`a4cce0f54fc887e91158dcf630d328f2af709061`). History: #24 @
+`3824ef4` then #25 reconcile, then the tag object at tip `a4cce0f`.
+Owner D2 *stable* / non-rc publish ack is **not** done. This section
+does **not** claim DualTimer soak happened.
 
 Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md).
 
 ### Added
 
 - D2 Go/No-Go checklist (DISTRIBUTION-READINESS-v1 §8) with concrete
-  SHAs and evidence links for tip `3824ef4` (PR #24). Owner-only rows
-  stay unchecked: live DualTimer soak (M-R2-3), D2 *stable* publish
-  ack. Tag/Release `0.4.0-rc.1` is MET (prerelease at `3824ef4`).
+  SHAs and evidence links for tip `a4cce0f` (PR #25; history #24 @
+  `3824ef4` then #25 reconcile). Owner-only rows stay unchecked: live
+  DualTimer soak (M-R2-3), D2 *stable* publish ack. Tag/Release
+  `0.4.0-rc.1` is MET (prerelease at `a4cce0f`).
 - D1 closeout scaffolding: [public claims](docs/ship/PUBLIC_CLAIMS.md) bind
   DISTRIBUTION-READINESS-v1 §1.1 P1–P10 to existing pytest names;
   [S3 negative battery](docs/ship/S3_NEGATIVE_BATTERY.md) indexes the
@@ -53,7 +55,7 @@ Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md).
   Meta-test `test_adversarial_tip_doc_exists`.
 - Tip mock soak N=50 evidence pack for `5de40a9`:
   [`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
-  Valid for #24 tip `3824ef4` (release-prep docs/version/meta).
+  Valid for #25 tip `a4cce0f` (docs-only after #24 @ `3824ef4`).
   Meta-test `test_tip_soak_evidence_pack_exists`. Live DualTimer soak
   remains owner-only. Agents must not create **new** tags.
 
