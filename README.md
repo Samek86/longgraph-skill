@@ -203,6 +203,23 @@ Authoring and runtime stay separate: the author skill compiles the work but neve
 executes it. Generated nodes follow their frozen run contract under
 `.longgraph/<date-slug>/`.
 
+### Runner engine (optional, 5 minutes)
+
+The Markdown skill needs no Python. The optional engine under
+[`runner/`](runner/README.md) can be checked on a fresh machine:
+
+```sh
+cd runner
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python -m pip install -e ".[dev]"
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+longgraph run --host prompt-only /tmp/add-tests-to-cli   # emit-only; does not close
+longgraph run --host mock /tmp/add-tests-to-cli          # coupled test loop; copy first
+```
+
+Record the result with the [docs dry-run](docs/ship/DOCS-DRY-RUN.md).
+
 ## How the graph works
 
 | Role | Responsibility | Durable edge |
@@ -252,6 +269,7 @@ durable run directory; only how you start each tick changes.
 | [Public claims](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 bound to named pytest (not marketing copy) |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 highlights; tag is owner-only |
 | [Known issues](KNOWN_ISSUES.md) | Soak / DualTimer timer-only / telemetry residuals |
+| [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4: stranger follows README for mock + prompt-only on a fixture copy |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |
 
 ## Governance

@@ -170,6 +170,22 @@ shell/cron 同样走 prompts-only 执行——见[宿主兼容性](#宿主兼容
 生成期与运行期严格分离：author skill 只编译，不执行。生成的节点遵循
 `.longgraph/<日期-slug>/` 下已固化的本次 run 契约。
 
+### Runner 引擎（可选，5 分钟）
+
+Markdown skill 不需要 Python。可选引擎在 [`runner/`](runner/README.md)，可在新机器上这样核对：
+
+```sh
+cd runner
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python -m pip install -e ".[dev]"
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+longgraph run --host prompt-only /tmp/add-tests-to-cli   # 仅 emit；不会 close
+longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先复制
+```
+
+把结果记入 [docs dry-run](docs/ship/DOCS-DRY-RUN.md)。
+
 ## 这张图怎么运行
 
 | 角色 | 职责 | 持久边 |
@@ -216,6 +232,7 @@ shell/cron 同样走 prompts-only 执行——见[宿主兼容性](#宿主兼容
 | [公开主张](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 绑定到具名 pytest（不是营销文案） |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 要点；tag 仅限 owner |
 | [已知问题](KNOWN_ISSUES.md) | soak / DualTimer 仅定时器 / 遥测残留 |
+| [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4：陌生人按 README 在夹具副本上跑 mock + prompt-only |
 | [SECURITY.md](SECURITY.md) | 禁止工作区逃逸、夹具不含密钥、runner 不得 `git push` |
 
 ## 治理
