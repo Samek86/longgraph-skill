@@ -3,12 +3,13 @@
 Residuals after Phase 0–1c, DISTRIBUTION H0–H2, the D2 coding
 closeout, the S5 support-surface freeze, the tip containment pass
 (M-TIP-1 / M-TIP-2), the tip re-pass (C-TIP-3), and the tip mock
-soak N=50 pack. Main tip is `f2f493b`
-(`f2f493b52a66daac172fdde9ace485297a32b297`). D1 closeout binds
-public claims to CI. D2 coding Majors M-R2-1 / M-R2-2 (and the
-prior audit-path / OB-token holes) are fixed in this tree; live
-DualTimer soak (M-R2-3) is still owner evidence. Version candidate
-`0.4.0-rc.1` is in `runner/pyproject.toml` awaiting an owner tag —
+soak N=50 pack. Main tip is `3824ef4`
+(`3824ef4127f966d1d021695b7e63486830841ef5`) after PR #24. D1
+closeout binds public claims to CI. D2 coding Majors M-R2-1 /
+M-R2-2 (and the prior audit-path / OB-token holes) are fixed in
+this tree; live DualTimer soak (M-R2-3) is still owner evidence.
+Version `0.4.0-rc.1` is in `runner/pyproject.toml`; tag
+`0.4.0-rc.1` and GitHub prerelease already exist at that tip —
 see [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md). See also
 [public claims](docs/ship/PUBLIC_CLAIMS.md),
 [support surface](docs/ship/SUPPORT.md),
@@ -50,8 +51,8 @@ Test: `test_pending_audit_blocks_audit_surface_hardlink_alias`.
 
 **Mock N=50 tick evidence is in-repo** for tip `5de40a9`:
 [`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
-That pack remains valid for post-soak tip `f2f493b` (docs-only soak
-commit; runner engine unchanged). Protocol:
+That pack remains valid for #24 tip `3824ef4` (release-prep
+docs/version/meta; runner engine unchanged). Protocol:
 [`docs/ship/SOAK.md`](docs/ship/SOAK.md).
 
 No multi-day soak on live DualTimer product agents (M-R2-3 /
@@ -99,10 +100,11 @@ directive fold).
 ## Owner-only
 
 New git tags, GitHub Releases, and live DualTimer product soaks are
-owner-only. Agents must not create tags. Annotated tag `0.3.0-beta`
-and its GitHub prerelease already exist (owner-cut at `eeb7591`).
-Version candidate `0.4.0-rc.1` is in `runner/pyproject.toml`; that
-tag does **not** exist yet and must be owner-cut. Mock N=50 tick
-evidence for tip `5de40a9` / post-soak `f2f493b` is already in-repo
-(see above); that does not satisfy the DualTimer residual. Coding
-D2 evidence pack READY; publish NOT done until owner tag + ack.
+owner-only. Agents must not create tags. Prior tag `0.3.0-beta`
+and its GitHub prerelease already exist (owner-cut at `eeb7591`;
+do not retarget). Lightweight tag `0.4.0-rc.1` and GitHub
+prerelease already exist at `3824ef4`. Mock N=50 tick evidence for
+tip `5de40a9` is already in-repo (see above); that does not satisfy
+the DualTimer residual. Coding D2 evidence pack READY; owner D2
+*stable* / non-rc publish ack remains unchecked. rc.1 prerelease
+≠ stable publish.
