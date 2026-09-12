@@ -309,8 +309,13 @@ class Runner:
             self.writer.write("supervisor", path, new_text, write_set=False)
 
     def _applied_work_path(self) -> bool:
-        """MockHost is the coupled applied-work path. Emit/timer hosts do not fold."""
-        return isinstance(self.host, MockHost)
+        """True when this Host can apply a work write-set.
+
+        Pre-apply ACCEPT-GATE release (same-tick next-milestone unblock)
+        stays on this path. Emit/timer hosts never apply. After any
+        ``NodeResult.applied`` tick the runner folds regardless of Host.
+        """
+        return bool(getattr(self.host, "applies_write_set", False))
 
     def _persist_directive_fold(self, state: RunState) -> RunState:
         """Write ACCEPT-GATE / watermark onto the ledger. Executor is the writer."""
@@ -330,9 +335,19 @@ class Runner:
         return state
 
     def _maybe_release_pending_audit(self, state: RunState) -> RunState:
-        """Fold an ACCEPT-GATE correction so the pending gate can flip."""
+        """Fold an ACCEPT-GATE correction so the pending gate can flip.
+
+        Pre-apply (same-tick next-milestone unblock) stays on the
+        applied-work Host path. After apply, call
+        ``_fold_accept_gate_after_apply`` instead — that path is
+        Host-agnostic.
+        """
         if not self._applied_work_path() or state.milestone_gate != "pending-audit":
             return state
+        return self._fold_accept_gate_after_apply(state)
+
+    def _fold_accept_gate_after_apply(self, state: RunState) -> RunState:
+        """Runner-owned ACCEPT-GATE fold after any applied write-set."""
         directives = self.run_dir / "directives.md"
         if not directives.exists():
             return state
@@ -571,6 +586,9 @@ class Runner:
                     self._save_status(status, state.run_status)
                     continue
                 set_last_attempt(status, key, "write")
+                # ACCEPT-GATE fold after any applied path (not MockHost-only).
+                # Other packets still fold on close with the round write.
+                state = self._fold_accept_gate_after_apply(state)
 
             gate = self.gates.run(verify_cmd, self.workspace)
             set_last_attempt(status, key, "verify")

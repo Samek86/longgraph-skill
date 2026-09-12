@@ -276,6 +276,8 @@ LangGraph, or live DualTimer soak.
 41. `test_owner_blocked_applies_without_slice_token` (D2 M-ADV-2 — live OB binds without a slice token)
 42. `test_open_directive_cap_refuses_append_at_cap` (D2 M-R2-2 — append discipline)
 43. `test_pending_audit_blocks_normalized_audit_surface_overlap` (D2 M-ADV-1 — path normalize)
+44. `test_executor_cannot_clobber_scoreboard_via_hardlink` (M-TIP-1 — no hardlink/symlink alias clobber)
+45. `test_accept_gate_folds_after_applied_non_mock_host` (M-TIP-2 — ACCEPT-GATE fold after any applied path)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

@@ -75,7 +75,8 @@ cannot write directives; scout cannot write either. Write destinations
 are resolved; Host write-set must stay `relative_to` the workspace, and
 named edge files must stay `relative_to` `run_dir`. An executor write-set
 must not escape the workspace or resolve to `run_dir/ledger.md`,
-`directives.md`, `ops.md`, or `status.json`. `_close_item` / runner-owned
+`directives.md`, `ops.md`, or `status.json`, and must not alias those
+files via symlink or hardlink (`os.path.samefile`). `_close_item` / runner-owned
 ledger updates remain the only legitimate scoreboard writers.
 PromptOnlyHost emits paste text only and must not write ledger or
 directives. GrokBotDualTimerHost may write only the invoking node's
@@ -155,3 +156,5 @@ Exact test names. Do not add the banned aliases
 | 41 | `test_owner_blocked_applies_without_slice_token` | A6 — live OB binds without an `OB-xxx` token in the slice |
 | 42 | `test_open_directive_cap_refuses_append_at_cap` | §2 — supervisor append refuses at `OPEN_DIRECTIVE_CAP` |
 | 43 | `test_pending_audit_blocks_normalized_audit_surface_overlap` | A8 — `a/../a/file` cannot dodge the audit surface |
+| 44 | `test_executor_cannot_clobber_scoreboard_via_hardlink` | A1, A14 — workspace hardlink/symlink alias cannot clobber scoreboard files |
+| 45 | `test_accept_gate_folds_after_applied_non_mock_host` | A8 — ACCEPT-GATE fold is runner-owned after any applied write-set |

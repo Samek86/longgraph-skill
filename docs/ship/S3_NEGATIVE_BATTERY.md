@@ -15,7 +15,7 @@ add a fragile SIGKILL test.
 
 | Negative | What must not happen | Pytest |
 | --- | --- | --- |
-| Escape write-set | Write outside the workspace, or clobber `run_dir` scoreboard files via `../` | `test_write_set_cannot_escape_workspace` `test_executor_cannot_clobber_ledger_via_relpath` |
+| Escape write-set | Write outside the workspace, or clobber `run_dir` scoreboard files via `../`, symlink, or hardlink/alias | `test_write_set_cannot_escape_workspace` `test_executor_cannot_clobber_ledger_via_relpath` `test_executor_cannot_clobber_scoreboard_via_hardlink` |
 | Empty Verify | Empty / whitespace Verify forges a green close | `test_empty_verify_fails_no_close` |
 | `n/a` Verify | `n/a` is treated as pass | `test_na_verify_skips_gate_and_close` |
 | Missing findings / `blocked-on` | Executor applies a write-set or closes while findings are missing or incomplete | `test_blocked_on_skips_executor_until_findings` |

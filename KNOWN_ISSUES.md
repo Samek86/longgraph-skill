@@ -1,14 +1,37 @@
 # Known issues
 
 Residuals after Phase 0–1c, DISTRIBUTION H0–H2, the D2 coding
-closeout, and the S5 support-surface freeze. D1 closeout binds public
-claims to CI. D2 coding Majors M-R2-1 / M-R2-2 (and the prior
-audit-path / OB-token holes) are fixed in this tree; live DualTimer
-soak (M-R2-3) is still owner evidence. See
+closeout, the S5 support-surface freeze, and the tip containment
+pass (M-TIP-1 / M-TIP-2). D1 closeout binds public claims to CI.
+D2 coding Majors M-R2-1 / M-R2-2 (and the prior audit-path /
+OB-token holes) are fixed in this tree; live DualTimer soak
+(M-R2-3) is still owner evidence. See
 [public claims](docs/ship/PUBLIC_CLAIMS.md),
 [support surface](docs/ship/SUPPORT.md),
 [`docs/ship/KNOWN_ISSUES_S2.md`](docs/ship/KNOWN_ISSUES_S2.md), and
 [`docs/runner/CONTRACT.md`](docs/runner/CONTRACT.md).
+
+## Tip containment (fixed)
+
+### M-TIP-1 — workspace hardlink alias clobber — FIXED
+
+`Path.resolve` already followed a workspace symlink to
+`run_dir/ledger.md` (deny via `relative_to` / protected name). A
+hardlink keeps a workspace path and shares the inode, so write-set
+could overwrite the scoreboard. The write gate now denies
+`os.path.samefile` aliases to `ledger.md` / `directives.md` /
+`ops.md` / `status.json`.
+Test: `test_executor_cannot_clobber_scoreboard_via_hardlink`.
+
+### M-TIP-2 — ACCEPT-GATE fold after any applied path — FIXED
+
+Pre-apply same-tick next-milestone release stays on the applied-work
+Host path (MockHost, or `Host.applies_write_set`). After any
+`NodeResult.applied` tick the runner folds a live `ACCEPT-GATE`
+packet regardless of Host. Other packets still fold on close.
+Emit-only / timer-only hosts still never apply, so they never fold
+— that is a Host capability limit, not a forged pass.
+Test: `test_accept_gate_folds_after_applied_non_mock_host`.
 
 ## D2 blocked — soak / DualTimer capability
 

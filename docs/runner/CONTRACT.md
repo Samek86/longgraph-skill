@@ -27,7 +27,7 @@ Rewritten in place. Keys are the human labels (spaces included):
 | Key | Meaning |
 |---|---|
 | `Item` | The independently verifiable workset for this round |
-| `Write set` | Exact paths (or `read-only`). Resolved inside the workspace; relative escapes and `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`, `status.json`) are denied. |
+| `Write set` | Exact paths (or `read-only`). Resolved inside the workspace; relative escapes, symlinks, and hardlink/inode aliases to `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`, `status.json`) are denied. |
 | `Context` | `ops.md` context id(s), e.g. `C-01` |
 | `Verify` | One narrow command |
 | `Done when` | One observable condition |
@@ -68,10 +68,12 @@ lane `Item` is not enough to stop the run.
 **Acceptance-release marker.** A live correction releases the gate when
 it contains the exact token `ACCEPT-GATE` (ASCII, case-insensitive), or
 when its first-line verb (the third `·`-separated field) is
-`accept-gate`. The executor folds that packet, flips `Milestone gate` to
-`passed`, and advances `Last directive folded` — it never self-passes.
-A bare `accept` verb without `ACCEPT-GATE` is a lane/item verdict and
-does not flip the gate.
+`accept-gate`. The runner folds that packet after an applied write-set
+(any Host that sets `NodeResult.applied`), flips `Milestone gate` to
+`passed`, and advances `Last directive folded` — the executor never
+self-passes. A same-tick next-milestone unblock may also fold before
+apply on an applied-work Host. A bare `accept` verb without
+`ACCEPT-GATE` is a lane/item verdict and does not flip the gate.
 
 ### 1.5 Terminal ledger
 
@@ -131,11 +133,11 @@ line) naming `brief <id>`. Scout output does not land here.
 
 ### Watermark / rotate
 
-On an applied executor tick, the executor reads live Corrections above
-`Last directive folded`, applies each one or records an explicit no-op,
-and advances the watermark in the same ledger write that records the
-round. `ACCEPT-GATE` (see §1.4) is the apply that flips a pending
-milestone gate; every other packet is a no-op fold.
+On an applied executor tick (`NodeResult.applied` on any Host), a live
+`ACCEPT-GATE` packet is folded immediately (gate flip + watermark).
+Every other live packet is folded on close with the round write
+(apply or explicit no-op). Close may fold again; a second pass is a
+no-op once the watermark has moved.
 
 Before the supervisor appends, move Corrections entries with IDs ≤ the
 ledger watermark (`Last directive folded`) to `archive/directives.md`

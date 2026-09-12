@@ -11,7 +11,8 @@ Executor write-set destinations are resolved and must stay
 `relative_to` the workspace. Paths that escape the workspace — including
 `../ledger.md` and other `run_dir` scoreboard files (`ledger.md`,
 `directives.md`, `ops.md`, `status.json`) — are denied at the write gate.
-Named edge writes stay `relative_to` `run_dir`.
+A workspace symlink or hardlink (same inode) to those files is also
+denied. Named edge writes stay `relative_to` `run_dir`.
 
 ## No secrets in fixtures
 

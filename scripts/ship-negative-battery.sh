@@ -20,6 +20,7 @@ fi
   tests/test_public_claims.py::test_public_claims_mapped_tests_exist \
   tests/test_phase1a.py::test_write_set_cannot_escape_workspace \
   tests/test_phase1a.py::test_executor_cannot_clobber_ledger_via_relpath \
+  tests/test_phase1a.py::test_executor_cannot_clobber_scoreboard_via_hardlink \
   tests/test_contract_holes.py::test_empty_verify_fails_no_close \
   tests/test_contract_holes.py::test_na_verify_skips_gate_and_close \
   tests/test_contract_holes.py::test_blocked_on_skips_executor_until_findings \
