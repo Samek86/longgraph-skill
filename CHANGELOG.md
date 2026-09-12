@@ -33,10 +33,10 @@ may read `0.3.0-beta` while no matching tag exists.
 - M-TIP-1: executor write-set cannot clobber `run_dir` scoreboard
   files via workspace hardlink or symlink alias (`os.path.samefile`).
   Relative-escape and symlink-via-`resolve` deny already existed.
-- M-TIP-2: ACCEPT-GATE / watermark fold runs after any applied
-  write-set (not MockHost-only). Pre-apply same-tick next-milestone
-  release stays on the applied-work Host path. Emit/timer hosts
-  still do not apply.
+- M-TIP-2: ACCEPT-GATE fold runs after any applied write-set (not
+  MockHost-only). Other packets still fold on close. Pre-apply
+  same-tick next-milestone release stays on the applied-work Host
+  path. Emit/timer hosts still do not apply.
 
 - D2 coding Majors: `_parse_owner_blocked` skips resolved/closed rows
   (M-R2-1 / M-S3-1); `append_correction_packet` refuses at

@@ -101,9 +101,9 @@ hosts do not drive supervisor/scout from the executor branch.
 Rounds log and live Corrections are bounded and archived. Older `- R…`
 lines **and** `### Round N` sections rotate into `archive/rounds.md`
 (`KEEP_ROUNDS`, default 5). On an applied executor tick (any Host that
-sets `NodeResult.applied`), live corrections above `Last directive folded`
-are folded (apply or no-op) and the watermark advances. Close may fold
-again; a second pass is a no-op. Folded
+sets `NodeResult.applied`), a live `ACCEPT-GATE` packet is folded
+immediately. Other live corrections fold on close with the round write.
+Close may fold again; a second pass is a no-op. Folded
 corrections then rotate into `archive/directives.md` at that watermark
 before the supervisor appends. `OPEN_DIRECTIVE_CAP` (default 8) is
 append discipline — the append helper refuses once the unfolded queue

@@ -27,10 +27,10 @@ Test: `test_executor_cannot_clobber_scoreboard_via_hardlink`.
 
 Pre-apply same-tick next-milestone release stays on the applied-work
 Host path (MockHost, or `Host.applies_write_set`). After any
-`NodeResult.applied` tick the runner folds live corrections,
-including `ACCEPT-GATE`, regardless of Host. Emit-only / timer-only
-hosts still never apply, so they never fold — that is a Host
-capability limit, not a forged pass.
+`NodeResult.applied` tick the runner folds a live `ACCEPT-GATE`
+packet regardless of Host. Other packets still fold on close.
+Emit-only / timer-only hosts still never apply, so they never fold
+— that is a Host capability limit, not a forged pass.
 Test: `test_accept_gate_folds_after_applied_non_mock_host`.
 
 ## D2 blocked — soak / DualTimer capability

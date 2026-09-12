@@ -133,12 +133,11 @@ line) naming `brief <id>`. Scout output does not land here.
 
 ### Watermark / rotate
 
-On an applied executor tick (`NodeResult.applied` on any Host), the
-runner reads live Corrections above `Last directive folded`, applies
-each one or records an explicit no-op, and advances the watermark.
-`ACCEPT-GATE` (see §1.4) is the apply that flips a pending milestone
-gate; every other packet is a no-op fold. Close may fold again; a
-second pass is a no-op once the watermark has moved.
+On an applied executor tick (`NodeResult.applied` on any Host), a live
+`ACCEPT-GATE` packet is folded immediately (gate flip + watermark).
+Every other live packet is folded on close with the round write
+(apply or explicit no-op). Close may fold again; a second pass is a
+no-op once the watermark has moved.
 
 Before the supervisor appends, move Corrections entries with IDs ≤ the
 ledger watermark (`Last directive folded`) to `archive/directives.md`

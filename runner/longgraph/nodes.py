@@ -335,9 +335,19 @@ class Runner:
         return state
 
     def _maybe_release_pending_audit(self, state: RunState) -> RunState:
-        """Fold an ACCEPT-GATE correction so the pending gate can flip."""
+        """Fold an ACCEPT-GATE correction so the pending gate can flip.
+
+        Pre-apply (same-tick next-milestone unblock) stays on the
+        applied-work Host path. After apply, call
+        ``_fold_accept_gate_after_apply`` instead — that path is
+        Host-agnostic.
+        """
         if not self._applied_work_path() or state.milestone_gate != "pending-audit":
             return state
+        return self._fold_accept_gate_after_apply(state)
+
+    def _fold_accept_gate_after_apply(self, state: RunState) -> RunState:
+        """Runner-owned ACCEPT-GATE fold after any applied write-set."""
         directives = self.run_dir / "directives.md"
         if not directives.exists():
             return state
@@ -576,8 +586,9 @@ class Runner:
                     self._save_status(status, state.run_status)
                     continue
                 set_last_attempt(status, key, "write")
-                # Runner-owned fold after any applied path (not MockHost-only).
-                state = self._persist_directive_fold(state)
+                # ACCEPT-GATE fold after any applied path (not MockHost-only).
+                # Other packets still fold on close with the round write.
+                state = self._fold_accept_gate_after_apply(state)
 
             gate = self.gates.run(verify_cmd, self.workspace)
             set_last_attempt(status, key, "verify")

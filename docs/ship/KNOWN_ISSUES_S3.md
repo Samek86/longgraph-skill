@@ -34,8 +34,9 @@ Test: `test_executor_cannot_clobber_scoreboard_via_hardlink`.
 
 ### M-TIP-2 — ACCEPT-GATE fold after any applied path — FIXED
 
-Runner folds after any applied write-set. DualTimer remains
-timer-only (M-S3-3) and does not apply, so it does not fold.
+ACCEPT-GATE fold is runner-owned after any applied write-set.
+Other packets still fold on close. DualTimer remains timer-only
+(M-S3-3) and does not apply, so it does not fold.
 Test: `test_accept_gate_folds_after_applied_non_mock_host`.
 
 ## Major (open)

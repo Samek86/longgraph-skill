@@ -51,9 +51,10 @@ Test: `test_executor_cannot_clobber_scoreboard_via_hardlink`.
 
 ### M-TIP-2 — ACCEPT-GATE fold after any applied path — FIXED
 
-Fold is runner-owned after `NodeResult.applied`. Same-tick
-next-milestone unblock stays on the applied-work Host path.
-Emit/timer hosts still do not apply (see M-R2-3).
+ACCEPT-GATE fold is runner-owned after `NodeResult.applied`. Other
+packets still fold on close. Same-tick next-milestone unblock stays
+on the applied-work Host path. Emit/timer hosts still do not apply
+(see M-R2-3).
 Test: `test_accept_gate_folds_after_applied_non_mock_host`.
 
 ## Major (open)
