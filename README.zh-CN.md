@@ -231,7 +231,7 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先
 | [Runner CLI](runner/README.md) | 已编译 run 目录的引擎 — `--host prompt-only`（安全默认）、`grok-bot` DualTimer、`mock` 仅测试。版本字符串 `0.3.0-beta`（未打 tag） |
 | [公开主张](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 绑定到具名 pytest（不是营销文案） |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 要点；tag 仅限 owner |
-| [已知问题](KNOWN_ISSUES.md) | soak / DualTimer 仅定时器 / 遥测残留 |
+| [已知问题](KNOWN_ISSUES.md) | D2 编码 Major 已关闭；soak / DualTimer 仅定时器 / 遥测残留 |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4：陌生人按 README 在夹具副本上跑 mock + prompt-only |
 | [SECURITY.md](SECURITY.md) | 禁止工作区逃逸、夹具不含密钥、runner 不得 `git push` |
 

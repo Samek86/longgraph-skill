@@ -1,16 +1,21 @@
 # Known issues
 
-Residuals after Phase 0–1c and DISTRIBUTION H0–H2. D1 closeout binds
-public claims to CI; it does **not** close D2. See
-[public claims](docs/ship/PUBLIC_CLAIMS.md) and
+Residuals after Phase 0–1c, DISTRIBUTION H0–H2, and the D2 coding
+closeout. D1 closeout binds public claims to CI. D2 coding Majors
+M-R2-1 / M-R2-2 (and the prior audit-path / OB-token holes) are
+fixed in this tree; live DualTimer soak (M-R2-3) is still owner
+evidence. See [public claims](docs/ship/PUBLIC_CLAIMS.md),
+[`docs/ship/KNOWN_ISSUES_S2.md`](docs/ship/KNOWN_ISSUES_S2.md), and
 [`docs/runner/CONTRACT.md`](docs/runner/CONTRACT.md).
 
-## D2 blocked — soak / adversarial re-pass
+## D2 blocked — soak / DualTimer capability
 
-No multi-day soak on live DualTimer product agents. The original
-adversarial Grok review has not been re-run against post-H2 code.
-D2 stays blocked until the owner collects that evidence. This tree
-does not fabricate soak logs or re-run an external review.
+No multi-day soak on live DualTimer product agents (M-R2-3 /
+M-S3-3). Coding Majors from Ship-S2 / S3 that this tree can close
+are closed: resolved OB rows are not live; `OPEN_DIRECTIVE_CAP`
+refuses append-at-cap; pending-audit overlap uses normalized paths;
+live OBs bind without a slice token. This tree does not fabricate
+soak logs.
 
 ## DualTimer Host is timer-only
 

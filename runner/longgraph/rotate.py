@@ -379,8 +379,25 @@ def fold_corrections_into_ledger(
     return updated, new_wm, accepted
 
 
-def append_correction_packet(directives_text: str, packet: str) -> str:
-    """Insert a correction packet at the end of the Corrections section."""
+def append_correction_packet(
+    directives_text: str,
+    packet: str,
+    *,
+    watermark: str = "none",
+    open_directive_cap: int | None = DEFAULT_OPEN_DIRECTIVE_CAP,
+) -> str:
+    """Insert a correction packet, or refuse when the unfolded queue is at cap.
+
+    CONTRACT §2: ``OPEN_DIRECTIVE_CAP`` is append discipline. Rotation
+    must not archive unfolded packets; this helper must not grow the
+    unfolded queue past the cap. Callers rotate-before-append so folded
+    IDs leave the live queue first. ``open_directive_cap=None`` disables
+    the gate (fixture construction only).
+    """
+    if open_directive_cap is not None and (
+        len(unfolded_packets(directives_text, watermark)) >= open_directive_cap
+    ):
+        return directives_text
     body = packet if packet.endswith("\n") else packet + "\n"
     bounds = _heading_bounds(directives_text, "corrections")
     if bounds is None:

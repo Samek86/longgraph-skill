@@ -18,7 +18,7 @@ below. See [`AUTHORITY.md`](AUTHORITY.md).
 | `run_status` | `Run status:` | `active` \| `exit-ready` \| `stalled` \| `closed` (first token, strip backticks). |
 | `blocked_on` | `blocked-on:` | Pointer such as `findings#s3-client`. May live in the Current slice or a round line. Absent → `None`. |
 | `open_gaps` | Debt & gap register | Live `GAP-xxx` row ids. Skip rows whose text marks the gap resolved/closed. Empty prose / no rows → `[]`. |
-| `owner_blocked` | owner-blocked table | Live `OB-xxx` ids. `(none)` / `（none）` / empty → `[]`. |
+| `owner_blocked` | owner-blocked table | Live `OB-xxx` ids. Skip rows whose text marks the decision resolved/closed (same closed-words as `open_gaps`). `(none)` / `（none）` / empty → `[]`. Live ids apply to this run's Current slice — no literal `OB-xxx` token is required in the slice text. |
 
 ### 1.2 Current slice
 
@@ -59,8 +59,11 @@ advancement as blocked.
 The runner blocks the executor write-set only when the **Current-slice
 write-set** is the next-milestone surface: the Current-slice `Item` starts
 with `M\d+` and the write-set is not `read-only`, **or** the write-set
-paths overlap Pending promotion `Audit surface:`. An `M\d+` token in
-`next_item` or a lane `Item` is not enough to stop the run.
+paths overlap Pending promotion `Audit surface:`. Overlap compares
+**normalized** paths (`relative_to` a dummy root / `normpath`), not raw
+string equality — `migrations/../migrations/drop_blob.sql` is the same
+file as `migrations/drop_blob.sql`. An `M\d+` token in `next_item` or a
+lane `Item` is not enough to stop the run.
 
 **Acceptance-release marker.** A live correction releases the gate when
 it contains the exact token `ACCEPT-GATE` (ASCII, case-insensitive), or
@@ -98,8 +101,11 @@ An item is **FAIL until its gate re-passes**.
   exit fails. `GateRunner()` with no `script=` hook never defaults to
   `passed=True`; tests may still inject `script=` or an explicit
   `default=`.
-- Live `owner_blocked` ids that apply to the Current slice: no write-set,
-  no close.
+- Live `owner_blocked` ids apply to the Current slice of this run (no
+  literal `OB-xxx` token required in the slice text): no write-set, no
+  close. Resolved/closed table rows are not live and must not over-block.
+  Unlike `pending-audit`, a live OB has no lane-continue exception —
+  any live id fails closed for this slice.
 - `blocked-on: findings#<id>` with missing or incomplete findings: no
   executor write-set, no close; scout-only tick until
   `findings/<id>.md` marks **Status**: complete.
@@ -136,9 +142,12 @@ ledger watermark (`Last directive folded`) to `archive/directives.md`
 (create with a heading if missing). Next ID = max(watermark, highest
 live ID) + 1; never reuse rotated IDs. `OPEN_DIRECTIVE_CAP` (default 8,
 from `ops.md` when present) is **append discipline**: do not add more
-unfolded packets once the live queue is at the cap. Rotation must **not**
-archive packets the watermark has not passed — that silently drops
-unfolded corrections. Supervisor state and STANDING are not rotated.
+unfolded packets once the live queue is at the cap. The append helper
+**refuses** (leaves the file unchanged) when
+`len(unfolded_packets) >= OPEN_DIRECTIVE_CAP`. Callers rotate-before-append
+so folded IDs leave the live queue first; rotation must **not** archive
+packets the watermark has not passed — that silently drops unfolded
+corrections. Supervisor state and STANDING are not rotated.
 
 ---
 

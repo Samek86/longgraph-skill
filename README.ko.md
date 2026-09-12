@@ -197,7 +197,7 @@ Grok Build에서의 저작은 해당 설치 후 `/longgraph`입니다. 두 런�
 | [Runner CLI](runner/README.md) | 컴파일된 run 디렉터리 엔진 — `--host prompt-only`(안전 기본값), `grok-bot` DualTimer, `mock`은 테스트 전용. 버전 문자열 `0.3.0-beta`(태그 없음) |
 | [공개 주장](docs/ship/PUBLIC_CLAIMS.md) | P1–P10을 기존 pytest 이름에 묶음(마케팅 문구 아님) |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 요점. 태그는 owner 전용 |
-| [알려진 문제](KNOWN_ISSUES.md) | soak / DualTimer는 타이머 전용 / 텔레메트리 잔여 |
+| [알려진 문제](KNOWN_ISSUES.md) | D2 코딩 Major는 닫힘; soak / DualTimer는 타이머 전용 / 텔레메트리 잔여 |
 | [SECURITY.md](SECURITY.md) | 워크스페이스 탈출 거부, 픽스처에 비밀 없음, runner는 `git push` 하지 않음 |
 
 ## 거버넌스

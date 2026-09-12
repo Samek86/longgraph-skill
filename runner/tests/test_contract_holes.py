@@ -8,7 +8,13 @@ from pathlib import Path
 from longgraph.gates import GateRunner, classify_verify
 from longgraph.hosts import FakeScheduler, GrokBotDualTimerHost, MockHost, PromptOnlyHost
 from longgraph.nodes import Runner
-from longgraph.state import findings_relpath, parse_run, safe_findings_ident
+from longgraph.state import (
+    current_slice_owner_blocked,
+    findings_relpath,
+    parse_ledger,
+    parse_run,
+    safe_findings_ident,
+)
 
 from tests.support import copy_fixture
 
@@ -177,8 +183,85 @@ def test_owner_blocked_skips_write_set_and_close(tmp_path: Path) -> None:
     assert runner.closed_items == []
     state = parse_run(run_dir)
     assert state.owner_blocked == ["OB-001"]
+    assert current_slice_owner_blocked(state) is True
     assert state.run_status == "active"
     assert state.next_item.startswith("M3")
+
+
+def test_parse_owner_blocked_skips_resolved_rows() -> None:
+    """M-R2-1: resolved/closed OB rows are not live (mirror gap parsing)."""
+    parsed = parse_ledger(
+        "# ledger\n\n"
+        "## Status header\n\n"
+        "Next unclosed work item: GAP-001\n"
+        "Last directive folded: none\n"
+        "Milestone gate: n/a\n"
+        "Run status: active\n\n"
+        "## Current slice\n\n"
+        "Item: GAP-001\n"
+        "Write set: read-only\n"
+        "Context: C-01\n"
+        "Verify: true\n"
+        "Done when: done\n\n"
+        "## owner-blocked\n\n"
+        "| ID | Decision | Recommended | Other | Why now |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| OB-001 | drop the column? | A | B | still waiting |\n"
+        "| OB-002 | rename the bucket? | A | B | resolved — owner chose A |\n"
+        "| OB-003 | keep the fallback? | A | B | closed in Round 4 |\n"
+    )
+    assert parsed["owner_blocked"] == ["OB-001"]
+
+
+def test_resolved_owner_blocked_does_not_over_block(tmp_path: Path) -> None:
+    """M-R2-1: a resolved OB row must not skip write-set / close."""
+    run_dir = copy_fixture("migrate-blob-storage", tmp_path)
+    ledger = run_dir / "ledger.md"
+    text = ledger.read_text(encoding="utf-8")
+    text = text.replace("Verify: n/a — owner-blocked on OB-001", "Verify: true")
+    text = text.replace(
+        "| OB-001 | Remove the old photo-data column now that every photo is verified in object storage? | A — remove it with a reversible migration | B — keep it for one release and remove later | M3 cannot finish while both storage copies remain |",
+        "| OB-001 | Remove the old photo-data column now that every photo is verified in object storage? | A — remove it with a reversible migration | B — keep it for one release and remove later | resolved — owner chose A |",
+    )
+    ledger.write_text(text, encoding="utf-8")
+    state = parse_run(run_dir)
+    assert state.owner_blocked == []
+    assert current_slice_owner_blocked(state) is False
+
+    workspace = tmp_path / "ws"
+    runner = Runner(run_dir, gates=GateRunner(default=True), workspace=workspace)
+    runner.run(steps=2)
+    assert (workspace / "migrations" / "drop_blob.sql").is_file()
+    assert "M3" in runner.closed_items
+
+
+def test_owner_blocked_applies_without_slice_token(tmp_path: Path) -> None:
+    """M-ADV-2: a live OB binds even when the slice text never names it."""
+    run_dir = copy_fixture("migrate-blob-storage", tmp_path)
+    ledger = run_dir / "ledger.md"
+    text = ledger.read_text(encoding="utf-8")
+    text = text.replace("Verify: n/a — owner-blocked on OB-001", "Verify: true")
+    text = text.replace(" (owner-only; not applied while OB-001 is open)", "")
+    text = text.replace(
+        "owner answers A or B on OB-001; then reversible migration drops the blob column",
+        "reversible migration drops the blob column",
+    )
+    ledger.write_text(text, encoding="utf-8")
+    state = parse_run(run_dir)
+    assert state.owner_blocked == ["OB-001"]
+    assert "OB-001" not in state.current_slice.Item
+    assert "OB-001" not in (state.current_slice.get("Write set") or "")
+    assert "OB-001" not in state.current_slice.Verify
+    assert "OB-001" not in (state.current_slice.get("Done when") or "")
+    assert "OB-001" not in state.next_item
+    assert current_slice_owner_blocked(state) is True
+
+    workspace = tmp_path / "ws"
+    runner = Runner(run_dir, gates=GateRunner(default=True), workspace=workspace)
+    runner.run(steps=2)
+    assert not (workspace / "migrations" / "drop_blob.sql").exists()
+    assert runner.closed_items == []
+    assert parse_run(run_dir).run_status == "active"
 
 
 def test_prompt_only_host_never_closes(tmp_path: Path) -> None:

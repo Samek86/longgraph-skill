@@ -251,7 +251,7 @@ Buildを含む）を選択します。本当にカスタムな実行形状の場
 | [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリ用エンジン — `--host prompt-only`（安全なデフォルト）、`grok-bot` DualTimer、`mock` はテスト専用。バージョン文字列 `0.3.0-beta`（未タグ） |
 | [公開クレーム](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 を既存 pytest 名に束縛（宣伝文ではない） |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 の要点。tag は owner のみ |
-| [既知の問題](KNOWN_ISSUES.md) | soak / DualTimer はタイマーのみ / テレメトリ残留 |
+| [既知の問題](KNOWN_ISSUES.md) | D2 のコーディング Major はクローズ；soak / DualTimer はタイマーのみ / テレメトリ残留 |
 | [SECURITY.md](SECURITY.md) | ワークスペース外書き込み拒否、フィクスチャに秘密情報なし、runner は `git push` しない |
 
 ## ガバナンス

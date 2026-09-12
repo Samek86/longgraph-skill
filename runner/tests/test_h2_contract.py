@@ -9,8 +9,13 @@ from pathlib import Path
 from longgraph.gates import GateRunner
 from longgraph.hosts import MockHost
 from longgraph.nodes import Runner
-from longgraph.rotate import rotate_directives, rotate_rounds_log
-from longgraph.state import parse_run
+from longgraph.rotate import (
+    append_correction_packet,
+    rotate_directives,
+    rotate_rounds_log,
+    unfolded_packets,
+)
+from longgraph.state import normalize_declared_path, parse_run, paths_from_write_set
 
 from tests.support import copy_fixture
 
@@ -248,3 +253,108 @@ def test_rotate_does_not_cap_unfolded_packets() -> None:
     assert archive == ""
     live_ids = [int(m.group(1)) for m in re.finditer(r"^D-(\d+)\b", new, re.M)]
     assert live_ids == list(range(1, 11))
+
+
+def test_open_directive_cap_refuses_append_at_cap(tmp_path: Path) -> None:
+    """M-R2-2: append at OPEN_DIRECTIVE_CAP must not grow the unfolded queue."""
+    packets = "".join(_packet(n) + "\n" for n in range(1, 9))
+    text = _empty_directives(packets)
+    assert len(unfolded_packets(text, "none")) == 8
+    refused = append_correction_packet(
+        text,
+        _packet(9),
+        watermark="none",
+        open_directive_cap=8,
+    )
+    assert refused == text
+    assert [ident for ident, _ in unfolded_packets(refused, "none")] == list(range(1, 9))
+
+    under = append_correction_packet(
+        _empty_directives("".join(_packet(n) + "\n" for n in range(1, 8))),
+        _packet(8),
+        watermark="none",
+        open_directive_cap=8,
+    )
+    assert [ident for ident, _ in unfolded_packets(under, "none")] == list(range(1, 9))
+
+    run_dir = _write_run(
+        tmp_path,
+        ledger=_ledger(
+            item="GAP-010 lane docs",
+            write_set="docs/lane-policy.md",
+            next_item="GAP-010 lane docs",
+            gate="n/a",
+            folded="none",
+        ),
+        directives=_empty_directives(packets),
+        ops=(
+            "max_rounds: 20\n"
+            "max_retries: 3\n"
+            "KEEP_ROUNDS: 5\n"
+            "OPEN_DIRECTIVE_CAP: 8\n"
+        ),
+    )
+    host = MockHost()
+    runner = Runner(
+        run_dir,
+        host=host,
+        gates=GateRunner(default=False),
+        workspace=tmp_path / "ws",
+    )
+    runner.run(steps=1)
+    assert "supervisor" in host.invocations
+    live = (run_dir / "directives.md").read_text(encoding="utf-8")
+    live_ids = [int(m.group(1)) for m in re.finditer(r"^D-(\d+)\b", live, re.M)]
+    # Red gate: no fold, so rotate-before-append cannot make room. Refuse.
+    assert live_ids == list(range(1, 9))
+    assert "Last completed tick: mock" in live
+
+
+def test_pending_audit_blocks_normalized_audit_surface_overlap(tmp_path: Path) -> None:
+    """M-ADV-1: `migrations/../migrations/drop_blob.sql` overlaps the audit surface."""
+    assert (
+        normalize_declared_path("migrations/../migrations/drop_blob.sql")
+        == "migrations/drop_blob.sql"
+    )
+    assert set(paths_from_write_set("migrations/../migrations/drop_blob.sql")) == {
+        "migrations/drop_blob.sql"
+    }
+
+    ledger = _ledger(
+        item="GAP-010 continue the migration drop",
+        write_set="migrations/../migrations/drop_blob.sql",
+        next_item="GAP-010 continue the migration drop",
+        gate="pending-audit",
+        audit_surface="migrations/drop_blob.sql",
+    )
+    run_dir = _write_run(tmp_path, ledger=ledger, directives=_empty_directives())
+    workspace = tmp_path / "ws"
+    host = MockHost()
+    runner = Runner(run_dir, host=host, gates=GateRunner(default=True), workspace=workspace)
+    runner.run(steps=1)
+    assert runner.stopped_reason == "pending-audit"
+    assert runner.advancement_blocked is True
+    assert "executor" not in host.invocations
+    assert not (workspace / "migrations" / "drop_blob.sql").exists()
+
+    # Normalized disjoint lane work still continues.
+    lane = _write_run(
+        tmp_path / "lane",
+        ledger=_ledger(
+            item="GAP-011 lane docs (disjoint from the audit surface)",
+            write_set="docs/../docs/lane-policy.md",
+            next_item="M3 (owner-only: drop the blob column)",
+            gate="pending-audit",
+            audit_surface="migrations/drop_blob.sql",
+        ),
+        directives=_empty_directives(),
+    )
+    lane_ws = tmp_path / "lane-ws"
+    lane_host = MockHost()
+    lane_runner = Runner(
+        lane, host=lane_host, gates=GateRunner(default=True), workspace=lane_ws
+    )
+    lane_runner.run(steps=1)
+    assert lane_runner.stopped_reason != "pending-audit"
+    assert "executor" in lane_host.invocations
+    assert (lane_ws / "docs" / "lane-policy.md").is_file()

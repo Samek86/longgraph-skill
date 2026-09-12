@@ -22,6 +22,15 @@ may read `0.3.0-beta` while no matching tag exists.
 - [Known issues](KNOWN_ISSUES.md) — soak / DualTimer timer-only /
   deferred telemetry residuals.
 
+### Fixed
+
+- D2 coding Majors: `_parse_owner_blocked` skips resolved/closed rows
+  (M-R2-1 / M-S3-1); `append_correction_packet` refuses at
+  `OPEN_DIRECTIVE_CAP` (M-R2-2 / M-S3-2); pending-audit overlap uses
+  normalized paths (prior M-ADV-1); live `owner_blocked` binds without
+  a slice token (prior M-ADV-2 / CONTRACT §1.6). M-R2-3 DualTimer
+  soak stays owner evidence.
+
 ## [0.3.0-beta] — planned string (untagged)
 
 Version in `runner/pyproject.toml`. **No git tag is cut from this tree.**

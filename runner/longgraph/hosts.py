@@ -239,7 +239,12 @@ class MockHost(Host):
             "Verify: n/a\n"
             "Stop: mock only\n"
         )
-        updated = append_correction_packet(updated, packet)
+        updated = append_correction_packet(
+            updated,
+            packet,
+            watermark=watermark,
+            open_directive_cap=caps.open_directive_cap,
+        )
         self.writer.write("supervisor", path, updated)
         return NodeResult(ok=True, message="mock supervisor", writes=["directives.md"])
 

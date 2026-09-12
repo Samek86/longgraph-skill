@@ -32,7 +32,8 @@ Register-then-defer side gaps.
 **A6 — Default-FAIL close (CONTRACT §1.6).** Close is a **gate re-pass**
 after an applied write-set (or resume-Verify). Ignore `NodeResult.ok`.
 Ignore model "DONE". Empty Verify fails (no close). `n/a` Verify skips
-the gate and close. Live Current-slice `owner_blocked` skips write-set
+the gate and close. Live Current-slice `owner_blocked` (any live
+`OB-xxx` for this run — no slice-token match required) skips write-set
 and close. Emit-only / timer-only / no-op ticks never close. A red gate
 leaves the item open. Green close rewrites the live scoreboard.
 Product Verify/smoke is a fail-closed subprocess (`cwd` = workspace).
@@ -46,8 +47,9 @@ write-set.
 **A8 — Pending-audit blocks advancement.** `milestone_gate: pending-audit`
 forbids starting the next milestone's write-set or flipping the gate to
 `passed` without an acceptance directive (`ACCEPT-GATE` / first-line verb
-`accept-gate`). Disjoint registered lane work may continue. An `M\d+`
-token in `next_item` or a lane `Item` is not a run stop.
+`accept-gate`). Disjoint registered lane work may continue. Write-set /
+audit-surface overlap uses normalized paths (`.` / `..` cannot dodge).
+An `M\d+` token in `next_item` or a lane `Item` is not a run stop.
 
 **A9 — Hard budgets.** `max_rounds` stops the run (not a close).
 `max_retries` stops retries on one item (not a close).
@@ -149,3 +151,7 @@ Exact test names. Do not add the banned aliases
 | 37 | `test_executor_folds_directives_and_advances_watermark` | A2 — applied path folds live corrections and advances the watermark |
 | 38 | `test_rounds_log_rotates_golden_round_sections` | §1.7 — `### Round N` (golden fixture shape) rotates |
 | 39 | `test_public_claims_mapped_tests_exist` | Ship-S — every P1–P10 backtick test name is in the collected suite |
+| 40 | `test_resolved_owner_blocked_does_not_over_block` | A6 — resolved/closed OB rows are not live |
+| 41 | `test_owner_blocked_applies_without_slice_token` | A6 — live OB binds without an `OB-xxx` token in the slice |
+| 42 | `test_open_directive_cap_refuses_append_at_cap` | §2 — supervisor append refuses at `OPEN_DIRECTIVE_CAP` |
+| 43 | `test_pending_audit_blocks_normalized_audit_surface_overlap` | A8 — `a/../a/file` cannot dodge the audit surface |
