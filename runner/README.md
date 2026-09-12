@@ -80,7 +80,8 @@ Contributor dry-run (DISTRIBUTION S4): [`docs/ship/DOCS-DRY-RUN.md`](../docs/shi
 
 Executor write-set paths resolve inside the workspace and cannot clobber
 `run_dir` scoreboard files (`ledger.md`, `directives.md`, `ops.md`,
-`status.json`); runner close remains the only ledger writer.
+`status.json`) via relative escape, symlink, or hardlink/alias; runner
+close remains the only ledger writer.
 `GrokBotDualTimerHost` schedules two independent timers (executor +
 supervisor) with no wake edge between them. A terminal ledger stops each
 node's timer without reseeding; scout ticks are a no-op. Close is gate
@@ -99,9 +100,10 @@ hosts do not drive supervisor/scout from the executor branch.
 
 Rounds log and live Corrections are bounded and archived. Older `- R…`
 lines **and** `### Round N` sections rotate into `archive/rounds.md`
-(`KEEP_ROUNDS`, default 5). On an applied executor tick, live corrections
-above `Last directive folded` are folded (apply or no-op) and the
-watermark advances in the same ledger write as the round. Folded
+(`KEEP_ROUNDS`, default 5). On an applied executor tick (any Host that
+sets `NodeResult.applied`), live corrections above `Last directive folded`
+are folded (apply or no-op) and the watermark advances. Close may fold
+again; a second pass is a no-op. Folded
 corrections then rotate into `archive/directives.md` at that watermark
 before the supervisor appends. `OPEN_DIRECTIVE_CAP` (default 8) is
 append discipline — the append helper refuses once the unfolded queue

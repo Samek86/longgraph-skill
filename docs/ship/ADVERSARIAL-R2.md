@@ -200,7 +200,7 @@ P1–P10 mapped tests that **do** exist on this tip and were spot-checked:
 |---|---|---|
 | P1 | Close is gate re-pass; ignore `NodeResult.ok` / `DONE` | `test_done_requires_gate_repass` |
 | P2 | Green close retires the scoreboard; re-close idempotent | `test_close_retires_scoreboard` |
-| P3 | Write-set stays in workspace; no `../ledger.md` clobber | `test_write_set_cannot_escape_workspace` `test_executor_cannot_clobber_ledger_via_relpath` |
+| P3 | Write-set stays in workspace; no `../ledger.md` / hardlink alias clobber | `test_write_set_cannot_escape_workspace` `test_executor_cannot_clobber_ledger_via_relpath` `test_executor_cannot_clobber_scoreboard_via_hardlink` |
 | P4 | Fail-closed subprocess Verify/smoke; `GateRunner()` never defaults pass | `test_subprocess_verify_red_blocks_close` `test_subprocess_verify_green_allows_close` `test_cli_default_gate_is_fail_closed` |
 | P5 | Dual timers, no wake, write isolation, no serial peer tick | `test_dual_timer_no_cross_wake` `test_no_peer_wakeup_api` `test_supervisor_cannot_write_ledger` `test_executor_cannot_write_directives` `test_grok_bot_host_does_not_serial_tick_peers` |
 | P6 | Missing/incomplete findings scout-only; live `owner_blocked` skips write/close | `test_blocked_on_skips_executor_until_findings` `test_owner_blocked_skips_write_set_and_close` (+ R2 escape test) |

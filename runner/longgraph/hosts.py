@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -49,13 +50,22 @@ class NodeResult:
     applied: bool = False
 
 
+def _same_file(left: Path | str, right: Path | str) -> bool:
+    """True when both paths exist and share a device+inode (hardlink/alias)."""
+    try:
+        return os.path.samefile(left, right)
+    except OSError:
+        return False
+
+
 class EdgeWriter:
     """Enforces A1–A3 / A14 at the write gate.
 
     Destinations are resolved. Host write-set must stay ``relative_to``
     workspace; named edge files must stay ``relative_to`` run_dir.
     Executor write-set cannot resolve to run_dir ``ledger.md`` /
-    ``directives.md`` / ``ops.md`` / ``status.json``. Runner close
+    ``directives.md`` / ``ops.md`` / ``status.json``, and cannot
+    alias those files via symlink or hardlink. Runner close
     (``write_set=False``) remains the only legitimate ledger writer.
     """
 
@@ -78,10 +88,25 @@ class EdgeWriter:
 
     def _protected_run_file(self, resolved: Path) -> str | None:
         rel = self._run_rel(resolved)
-        if rel is None or len(rel.parts) != 1:
-            return None
-        name = rel.parts[0]
-        return name if name in _PROTECTED_RUN_FILES else None
+        if rel is not None and len(rel.parts) == 1:
+            name = rel.parts[0]
+            if name in _PROTECTED_RUN_FILES:
+                return name
+        return self._aliased_protected_run_file(resolved)
+
+    def _aliased_protected_run_file(self, dest: Path) -> str | None:
+        """Catch hardlink / symlink / same-inode aliases to scoreboard files.
+
+        ``Path.resolve`` follows a symlink, so a workspace link to
+        ``run_dir/ledger.md`` already fails ``relative_to`` or the
+        resolved-name check. A hardlink keeps a workspace path and
+        shares the inode — deny that too.
+        """
+        for name in _PROTECTED_RUN_FILES:
+            target = self.run_dir / name
+            if _same_file(dest, target):
+                return name
+        return None
 
     def _is_directives_edge(self, resolved: Path) -> bool:
         rel = self._run_rel(resolved)
@@ -97,6 +122,7 @@ class EdgeWriter:
         *,
         write_set: bool | None = None,
     ) -> None:
+        raw = Path(path)
         resolved = _as_resolved(path)
         if write_set is None:
             write_set = node == "executor"
@@ -105,9 +131,11 @@ class EdgeWriter:
             if node != "executor":
                 raise WriteDenied("only executor applies a write-set")
             self._relative_to(resolved, self.workspace)
-            protected = self._protected_run_file(resolved)
-            if protected is not None:
-                raise WriteDenied(f"executor write-set cannot clobber {protected}")
+            # Check the resolved dest and the raw path (hardlink name).
+            for candidate in (resolved, raw):
+                protected = self._protected_run_file(candidate)
+                if protected is not None:
+                    raise WriteDenied(f"executor write-set cannot clobber {protected}")
         else:
             self._relative_to(resolved, self.run_dir)
 
@@ -141,9 +169,14 @@ class Host:
     `owns_timers` is True when this Host drives independent per-node timers.
     The Runner must not serial-tick supervisor/scout from the executor branch
     for those hosts (MockHost keeps the coupled test loop).
+
+    `applies_write_set` is True when this Host can apply a work write-set.
+    MockHost is treated as applied-work even without the flag. Emit-only
+    and timer-only hosts leave it false.
     """
 
     owns_timers: bool = False
+    applies_write_set: bool = False
 
     def invoke(self, node: str, prompt: str, ctx: dict[str, Any]) -> NodeResult:
         raise NotImplementedError
@@ -151,6 +184,8 @@ class Host:
 
 class MockHost(Host):
     """No-model host: executor applies a write-set map; supervisor/scout stay isolated."""
+
+    applies_write_set = True
 
     def __init__(
         self,

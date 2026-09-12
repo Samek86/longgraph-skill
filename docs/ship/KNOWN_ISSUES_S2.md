@@ -40,6 +40,22 @@ literal `OB-xxx` token in the slice text (CONTRACT §1.6). Resolved
 rows stay unblocked (M-R2-1).
 Test: `test_owner_blocked_applies_without_slice_token`.
 
+## Tip (fixed after D2)
+
+### M-TIP-1 — workspace hardlink alias clobber — FIXED
+
+Write-set cannot clobber `run_dir` scoreboard files via hardlink or
+symlink alias. Symlink deny already existed (`resolve` +
+`relative_to`); hardlink/inode alias is now denied too.
+Test: `test_executor_cannot_clobber_scoreboard_via_hardlink`.
+
+### M-TIP-2 — ACCEPT-GATE fold after any applied path — FIXED
+
+Fold is runner-owned after `NodeResult.applied`. Same-tick
+next-milestone unblock stays on the applied-work Host path.
+Emit/timer hosts still do not apply (see M-R2-3).
+Test: `test_accept_gate_folds_after_applied_non_mock_host`.
+
 ## Major (open)
 
 ### M-R2-3 — DualTimer Host is timer-only

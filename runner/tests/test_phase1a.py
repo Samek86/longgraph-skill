@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -239,4 +240,74 @@ def test_executor_cannot_clobber_ledger_via_relpath(tmp_path: Path) -> None:
         runner.run(steps=1)
     assert ledger.read_text(encoding="utf-8") == after_rewrite
     assert "tampered-ledger" not in ledger.read_text(encoding="utf-8")
+    assert "GAP-002" not in runner.closed_items
+
+
+def _link_or_skip(src: Path, dest: Path, *, kind: str) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if kind == "hard":
+            os.link(src, dest)
+        else:
+            dest.symlink_to(src)
+    except OSError as exc:
+        pytest.skip(f"{kind}link unsupported here: {exc}")
+
+
+def test_executor_cannot_clobber_scoreboard_via_hardlink(tmp_path: Path) -> None:
+    """M-TIP-1: workspace hardlink/symlink aliases cannot clobber run_dir edges."""
+    run_dir = copy_fixture("add-tests-to-cli", tmp_path)
+    workspace = run_dir / "workspace"
+    workspace.mkdir(parents=True, exist_ok=True)
+    writer = EdgeWriter(run_dir, workspace)
+    ctx = {
+        "item_id": "GAP-002",
+        "slice": None,
+        "run_dir": run_dir,
+        "workspace": workspace,
+    }
+
+    symlink_alias = workspace / "sym-ledger.md"
+    _link_or_skip(run_dir / "ledger.md", symlink_alias, kind="sym")
+    ledger_before = (run_dir / "ledger.md").read_text(encoding="utf-8")
+    with pytest.raises(WriteDenied):
+        MockHost(writer, write_map={"GAP-002": {"sym-ledger.md": "tampered-via-symlink\n"}}).invoke(
+            "executor", "", ctx
+        )
+    assert (run_dir / "ledger.md").read_text(encoding="utf-8") == ledger_before
+    assert "tampered-via-symlink" not in (run_dir / "ledger.md").read_text(encoding="utf-8")
+
+    for name, payload in (
+        ("ledger.md", "tampered-via-hardlink\n"),
+        ("ops.md", "tampered-ops-hardlink\n"),
+        ("status.json", "tampered-status-hardlink\n"),
+        ("directives.md", "tampered-directives-hardlink\n"),
+    ):
+        alias = workspace / f"hard-{name}"
+        before = (run_dir / name).read_text(encoding="utf-8")
+        _link_or_skip(run_dir / name, alias, kind="hard")
+        host = MockHost(writer, write_map={"GAP-002": {f"hard-{name}": payload}})
+        with pytest.raises(WriteDenied):
+            host.invoke("executor", "", ctx)
+        assert (run_dir / name).read_text(encoding="utf-8") == before
+        assert payload not in (run_dir / name).read_text(encoding="utf-8")
+
+    # Runner write-set path: Current-slice names the hardlink alias.
+    alias = workspace / "scoreboard-alias.md"
+    if not alias.exists():
+        _link_or_skip(run_dir / "ledger.md", alias, kind="hard")
+    before = (run_dir / "ledger.md").read_text(encoding="utf-8")
+    (run_dir / "ledger.md").write_text(
+        before.replace(
+            "Write set: tests/test_dates.py (and minimal parser fix under date util if required by Done when)",
+            "Write set: scoreboard-alias.md",
+        ),
+        encoding="utf-8",
+    )
+    after_rewrite = (run_dir / "ledger.md").read_text(encoding="utf-8")
+    runner = Runner(run_dir, host=MockHost(), gates=GateRunner(default=True), workspace=workspace)
+    with pytest.raises(WriteDenied):
+        runner.run(steps=1)
+    assert (run_dir / "ledger.md").read_text(encoding="utf-8") == after_rewrite
+    assert "tampered" not in (run_dir / "ledger.md").read_text(encoding="utf-8")
     assert "GAP-002" not in runner.closed_items

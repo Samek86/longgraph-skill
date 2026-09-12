@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 from longgraph.gates import GateRunner
-from longgraph.hosts import MockHost
+from longgraph.hosts import Host, MockHost, NodeResult
 from longgraph.nodes import Runner
 from longgraph.rotate import (
     append_correction_packet,
@@ -169,6 +169,44 @@ def test_acceptance_directive_releases_pending_audit(tmp_path: Path) -> None:
     assert runner.stopped_reason != "pending-audit"
     assert "executor" in host.invocations
     assert (workspace / "migrations" / "drop_blob.sql").is_file()
+    state = parse_run(run_dir)
+    assert state.milestone_gate == "passed"
+    assert state.last_directive_folded == "D-004"
+
+
+class _AppliedLaneHost(Host):
+    """Non-MockHost that applies one workspace write-set. Used for M-TIP-2."""
+
+    def invoke(self, node: str, prompt: str, ctx: dict) -> NodeResult:
+        _ = prompt
+        if node != "executor":
+            return NodeResult(ok=True, message="peer no-op", applied=False)
+        writer = ctx["writer"]
+        rel = "docs/lane-policy.md"
+        dest = Path(ctx["workspace"]) / rel
+        writer.write("executor", dest, "# lane\n", write_set=True)
+        return NodeResult(ok=True, message="applied lane", writes=[rel], applied=True)
+
+
+def test_accept_gate_folds_after_applied_non_mock_host(tmp_path: Path) -> None:
+    """M-TIP-2: ACCEPT-GATE fold is runner-owned after any applied path."""
+    ledger = _ledger(
+        item="GAP-010 lane docs (disjoint from the audit surface)",
+        write_set="docs/lane-policy.md",
+        next_item="M3 (owner-only: drop the blob column)",
+        gate="pending-audit",
+        folded="D-003",
+        audit_surface="migrations/drop_blob.sql",
+    )
+    directives = _empty_directives(
+        _packet(4, "accept", "ACCEPT-GATE — flip Milestone gate to passed")
+    )
+    run_dir = _write_run(tmp_path, ledger=ledger, directives=directives)
+    workspace = tmp_path / "ws"
+    host = _AppliedLaneHost()
+    runner = Runner(run_dir, host=host, gates=GateRunner(default=True), workspace=workspace)
+    runner.run(steps=1)
+    assert (workspace / "docs" / "lane-policy.md").is_file()
     state = parse_run(run_dir)
     assert state.milestone_gate == "passed"
     assert state.last_directive_folded == "D-004"

@@ -309,8 +309,13 @@ class Runner:
             self.writer.write("supervisor", path, new_text, write_set=False)
 
     def _applied_work_path(self) -> bool:
-        """MockHost is the coupled applied-work path. Emit/timer hosts do not fold."""
-        return isinstance(self.host, MockHost)
+        """True when this Host can apply a work write-set.
+
+        Pre-apply ACCEPT-GATE release (same-tick next-milestone unblock)
+        stays on this path. Emit/timer hosts never apply. After any
+        ``NodeResult.applied`` tick the runner folds regardless of Host.
+        """
+        return bool(getattr(self.host, "applies_write_set", False))
 
     def _persist_directive_fold(self, state: RunState) -> RunState:
         """Write ACCEPT-GATE / watermark onto the ledger. Executor is the writer."""
@@ -571,6 +576,8 @@ class Runner:
                     self._save_status(status, state.run_status)
                     continue
                 set_last_attempt(status, key, "write")
+                # Runner-owned fold after any applied path (not MockHost-only).
+                state = self._persist_directive_fold(state)
 
             gate = self.gates.run(verify_cmd, self.workspace)
             set_last_attempt(status, key, "verify")

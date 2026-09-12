@@ -24,6 +24,20 @@ when the unfolded queue is at the cap. Product DualTimer does not
 append corrections itself (timer-only).
 Test: `test_open_directive_cap_refuses_append_at_cap`.
 
+## Tip (fixed after D2)
+
+### M-TIP-1 — workspace hardlink alias clobber — FIXED
+
+Same hole class as S3-01 / P3, plus inode alias. Write-set cannot
+clobber scoreboard files via hardlink or symlink.
+Test: `test_executor_cannot_clobber_scoreboard_via_hardlink`.
+
+### M-TIP-2 — ACCEPT-GATE fold after any applied path — FIXED
+
+Runner folds after any applied write-set. DualTimer remains
+timer-only (M-S3-3) and does not apply, so it does not fold.
+Test: `test_accept_gate_folds_after_applied_non_mock_host`.
+
 ## Major (open)
 
 ### M-S3-3 — DualTimer Host is timer-only
