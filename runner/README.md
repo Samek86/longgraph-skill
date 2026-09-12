@@ -112,6 +112,7 @@ from `ops.md` when present. A live `ACCEPT-GATE` correction (or first-line
 verb `accept-gate`) is the only runner path that flips
 `milestone_gate: pending-audit` to `passed`. Disjoint registered lane
 work may continue while the gate is pending. Write-set / audit-surface
-overlap uses normalized paths (`.` / `..` cannot dodge the surface).
+overlap uses normalized paths (`.` / `..` cannot dodge the surface) and
+denies a workspace hardlink or symlink alias to a surface dest.
 
 `longgraph-dev-continue` is DEV-only and must not appear in product Host paths.

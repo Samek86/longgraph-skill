@@ -1,13 +1,15 @@
 # Known issues
 
 Residuals after Phase 0–1c, DISTRIBUTION H0–H2, the D2 coding
-closeout, the S5 support-surface freeze, and the tip containment
-pass (M-TIP-1 / M-TIP-2). D1 closeout binds public claims to CI.
+closeout, the S5 support-surface freeze, the tip containment pass
+(M-TIP-1 / M-TIP-2), and the tip re-pass (C-TIP-3). D1 closeout
+binds public claims to CI.
 D2 coding Majors M-R2-1 / M-R2-2 (and the prior audit-path /
 OB-token holes) are fixed in this tree; live DualTimer soak
 (M-R2-3) is still owner evidence. See
 [public claims](docs/ship/PUBLIC_CLAIMS.md),
 [support surface](docs/ship/SUPPORT.md),
+[`docs/ship/ADVERSARIAL-TIP.md`](docs/ship/ADVERSARIAL-TIP.md),
 [`docs/ship/KNOWN_ISSUES_S2.md`](docs/ship/KNOWN_ISSUES_S2.md), and
 [`docs/runner/CONTRACT.md`](docs/runner/CONTRACT.md).
 
@@ -32,6 +34,14 @@ packet regardless of Host. Other packets still fold on close.
 Emit-only / timer-only hosts still never apply, so they never fold
 — that is a Host capability limit, not a forged pass.
 Test: `test_accept_gate_folds_after_applied_non_mock_host`.
+
+### C-TIP-3 — pending-audit audit-surface inode alias — FIXED
+
+A lane write-set that hardlinks or symlinks to a Pending promotion
+`Audit surface:` dest is the same file. Overlap now uses
+`os.path.samefile` / `Path.resolve` in addition to normalized path
+spelling (C-TIP-1).
+Test: `test_pending_audit_blocks_audit_surface_hardlink_alias`.
 
 ## D2 blocked — soak / DualTimer capability
 
@@ -79,5 +89,6 @@ directive fold).
 
 ## Owner-only
 
-Git tags, GitHub Releases, and live DualTimer product soaks are
-owner-only. Agents must not create tags.
+New git tags, GitHub Releases, and live DualTimer product soaks are
+owner-only. Agents must not create tags. Annotated tag `0.3.0-beta`
+and its GitHub prerelease already exist (owner-cut at `eeb7591`).

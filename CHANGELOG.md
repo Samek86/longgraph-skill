@@ -6,9 +6,10 @@ are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-**Git tags and GitHub Releases are owner-only.** This tree does not create
-them. The SemVer string in [`runner/pyproject.toml`](runner/pyproject.toml)
-may read `0.3.0-beta` while no matching tag exists.
+**New git tags and GitHub Releases are owner-only.** Agents must not
+create them. Annotated tag `0.3.0-beta` and its GitHub prerelease
+already exist at `eeb7591` (owner-cut). This tree does not cut further
+tags.
 
 ## [Unreleased]
 
@@ -27,9 +28,14 @@ may read `0.3.0-beta` while no matching tag exists.
   two Pythons. Meta-tests: `test_support_surface_doc_exists`,
   `test_ci_runner_matrix_covers_supported_python`,
   `test_support_hosts_match_cli`.
+- Tip re-pass evidence: [ADVERSARIAL-TIP.md](docs/ship/ADVERSARIAL-TIP.md)
+  on tip `eeb7591`. Meta-test `test_adversarial_tip_doc_exists`.
 
 ### Fixed
 
+- C-TIP-3: `pending-audit` blocks a workspace hardlink or symlink
+  alias to the audit surface (same file as a declared `Audit surface:`
+  dest). Path-spelling overlap (C-TIP-1) already existed.
 - M-TIP-1: executor write-set cannot clobber `run_dir` scoreboard
   files via workspace hardlink or symlink alias (`os.path.samefile`).
   Relative-escape and symlink-via-`resolve` deny already existed.
@@ -45,9 +51,11 @@ may read `0.3.0-beta` while no matching tag exists.
   a slice token (prior M-ADV-2 / CONTRACT §1.6). M-R2-3 DualTimer
   soak stays owner evidence.
 
-## [0.3.0-beta] — planned string (untagged)
+## [0.3.0-beta] — 2026-09-12 (owner-cut prerelease)
 
-Version in `runner/pyproject.toml`. **No git tag is cut from this tree.**
+Version in `runner/pyproject.toml`. Annotated tag `0.3.0-beta` points at
+`eeb759164f42b5ceb5fbeb25405a027286e3b93a`. New tags and GitHub
+Releases remain owner-only; agents must not create them.
 
 ### Added
 
@@ -85,5 +93,5 @@ Version in `runner/pyproject.toml`. **No git tag is cut from this tree.**
 - Close remains **Default-FAIL**. Emit-only and timer-only ticks never
   close. DualTimer Host does not apply write-sets.
 
-[Unreleased]: https://github.com/Samek86/longgraph-skill/compare/main...HEAD
-[0.3.0-beta]: https://github.com/Samek86/longgraph-skill/commits/main
+[Unreleased]: https://github.com/Samek86/longgraph-skill/compare/0.3.0-beta...HEAD
+[0.3.0-beta]: https://github.com/Samek86/longgraph-skill/releases/tag/0.3.0-beta

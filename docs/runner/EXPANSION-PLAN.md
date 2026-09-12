@@ -278,6 +278,7 @@ LangGraph, or live DualTimer soak.
 43. `test_pending_audit_blocks_normalized_audit_surface_overlap` (D2 M-ADV-1 — path normalize)
 44. `test_executor_cannot_clobber_scoreboard_via_hardlink` (M-TIP-1 — no hardlink/symlink alias clobber)
 45. `test_accept_gate_folds_after_applied_non_mock_host` (M-TIP-2 — ACCEPT-GATE fold after any applied path)
+46. `test_pending_audit_blocks_audit_surface_hardlink_alias` (C-TIP-3 — no hardlink/symlink audit-surface dodge)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 
