@@ -8,6 +8,8 @@ Tip production **mock N=50** evidence is in-repo:
 
 - [`tip-5de40a9-n50-mock/`](tip-5de40a9-n50-mock/) — tip `5de40a9`,
   `host=mock`, N=50, three golden fixtures. Compact traces only.
+  Valid for post-soak tip `f2f493b` (docs-only soak commit; engine
+  unchanged vs `5de40a9`). See [`../D2-GO-NOGO.md`](../D2-GO-NOGO.md).
 
 Live DualTimer multi-day soak remains owner-only.
 

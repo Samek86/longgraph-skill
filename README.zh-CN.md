@@ -230,10 +230,11 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先
 | [宿主 references](skills/loop-graph/references) | 每个宿主一份、按需加载的运行事实 owner |
 | [完整示例](skills/loop-graph/examples) | 公开 Git 自迭代 + 虚构 ledger，展示闸门运作 |
 | [公开 / 私有边界](docs/public-private-boundary.md) | 什么可以进公开树，什么必须留在项目本地 |
-| [Runner CLI](runner/README.md) | 已编译 run 目录的引擎 — `--host prompt-only`（安全默认）、`grok-bot` DualTimer、`mock` 仅测试。版本字符串 `0.3.0-beta`（未打 tag） |
+| [Runner CLI](runner/README.md) | 已编译 run 目录的引擎 — `--host prompt-only`（安全默认）、`grok-bot` DualTimer、`mock` 仅测试。版本字符串 `0.4.0-rc.1`（候选；须由 owner 打 tag） |
 | [公开主张](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 绑定到具名 pytest（不是营销文案） |
-| [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 要点；tag 仅限 owner |
-| [已知问题](KNOWN_ISSUES.md) | D2 编码 Major 已关闭；soak / DualTimer 仅定时器 / 遥测残留 |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 包：编码证据 READY；发布须等 owner tag + ack |
+| [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候选；新 tag 仅限 owner |
+| [已知问题](KNOWN_ISSUES.md) | tip `f2f493b` / mock N=50 已完成；DualTimer soak 与 `0.4.0-rc.1` tag 仍属 owner |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4：陌生人按 README 在夹具副本上跑 mock + prompt-only |
 | [Support surface](docs/ship/SUPPORT.md) | S5：CLI host + Python 3.11/3.12 + ubuntu-latest；CI 矩阵绑定 |
 | [SECURITY.md](SECURITY.md) | 禁止工作区逃逸、夹具不含密钥、runner 不得 `git push` |

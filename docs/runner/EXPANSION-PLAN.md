@@ -229,6 +229,16 @@ cases are indexed in
 the collected suite. Soak / tag / Release stay owner-only. No ApiHost,
 LangGraph, or live DualTimer soak.
 
+### DISTRIBUTION R — Release engineering (after S + D2 coding)
+
+Version string `0.4.0-rc.1` in `runner/pyproject.toml`. Go/No-Go
+checklist: [`docs/ship/D2-GO-NOGO.md`](../ship/D2-GO-NOGO.md).
+S exit allows `0.4.0` or `1.0.0-rc.1`; this tree uses `rc.1` so it
+does not claim stable without an owner tag. The `0.4.0-rc.1` tag
+does **not** exist. New tags, GitHub Releases, live DualTimer soak,
+and the D2 publish ack stay owner-only. No ApiHost or Phase 2
+prompt compiler.
+
 ---
 
 ## Merge-gate tests (exact names — Phase ≤1c)
@@ -279,6 +289,8 @@ LangGraph, or live DualTimer soak.
 44. `test_executor_cannot_clobber_scoreboard_via_hardlink` (M-TIP-1 — no hardlink/symlink alias clobber)
 45. `test_accept_gate_folds_after_applied_non_mock_host` (M-TIP-2 — ACCEPT-GATE fold after any applied path)
 46. `test_pending_audit_blocks_audit_surface_hardlink_alias` (C-TIP-3 — no hardlink/symlink audit-surface dodge)
+47. `test_d2_go_nogo_doc_exists` (R — D2 Go/No-Go names tip SHA / soak path / owner-only tag)
+48. `test_runner_version_is_040_rc1` (R — `runner/pyproject.toml` is `0.4.0-rc.1`)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

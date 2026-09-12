@@ -1,11 +1,13 @@
 # Ship-D2 tip re-pass (eeb7591)
 
-Main tip is now `5de40a9`
+Main tip is now `f2f493b` (`docs(ship): tip mock soak N=50 evidence pack`)
+after PR #23. Engine / Critical=0 tip remains `5de40a9`
 (`fix(runner): tip re-pass + C-TIP-3 audit-surface inode alias`) after
-PR #22. This pack's basis SHA remains `eeb7591`; C-TIP-3 closed on the
-same-PR stack. Critical=0. Mock N=50 tick evidence:
+PR #22 — `f2f493b` is docs-only relative to that engine. This pack's
+basis SHA remains `eeb7591`; C-TIP-3 closed on the same-PR stack.
+Critical=0. Mock N=50 tick evidence:
 [`soak/tip-5de40a9-n50-mock/`](soak/tip-5de40a9-n50-mock/). Live DualTimer
-soak remains owner-only.
+soak remains owner-only. Go/No-Go: [`D2-GO-NOGO.md`](D2-GO-NOGO.md).
 
 Hostile source review of the runner on **basis SHA**
 `eeb759164f42b5ceb5fbeb25405a027286e3b93a`
