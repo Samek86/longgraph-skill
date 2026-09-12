@@ -45,12 +45,16 @@ Test: `test_pending_audit_blocks_audit_surface_hardlink_alias`.
 
 ## D2 blocked — soak / DualTimer capability
 
+**Mock N=50 tick evidence is in-repo** for tip `5de40a9`:
+[`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
+Protocol: [`docs/ship/SOAK.md`](docs/ship/SOAK.md).
+
 No multi-day soak on live DualTimer product agents (M-R2-3 /
 M-S3-3). Coding Majors from Ship-S2 / S3 that this tree can close
 are closed: resolved OB rows are not live; `OPEN_DIRECTIVE_CAP`
 refuses append-at-cap; pending-audit overlap uses normalized paths;
 live OBs bind without a slice token. This tree does not fabricate
-soak logs.
+DualTimer soak logs. That residual stays owner evidence.
 
 ## Support surface — Linux + Python 3.11/3.12 only
 
@@ -92,3 +96,5 @@ directive fold).
 New git tags, GitHub Releases, and live DualTimer product soaks are
 owner-only. Agents must not create tags. Annotated tag `0.3.0-beta`
 and its GitHub prerelease already exist (owner-cut at `eeb7591`).
+Mock N=50 tick evidence for tip `5de40a9` is already in-repo (see
+above); that does not satisfy the DualTimer residual.

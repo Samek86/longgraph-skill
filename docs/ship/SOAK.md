@@ -87,23 +87,35 @@ close. That is expected and still a valid scoreboard-safety soak.
 |---|---|---|
 | Protocol (this file) | [`docs/ship/SOAK.md`](SOAK.md) | committed |
 | Templates | [`docs/ship/soak/README.md`](soak/README.md), [`docs/ship/soak/EVIDENCE_TEMPLATE.md`](soak/EVIDENCE_TEMPLATE.md) | committed |
-| Live run | `.longgraph-ship/soak/<run-id>/` | **gitignored** |
+| Tip mock N=50 (this tree) | [`docs/ship/soak/tip-5de40a9-n50-mock/`](soak/tip-5de40a9-n50-mock/) | **committed** (SUMMARY + compact traces) |
+| Live scratch | `.longgraph-ship/soak/<run-id>/` | **gitignored** |
 
-Each live run writes `SUMMARY.md` + `summary.json` plus per-fixture traces
+Each harness run writes `SUMMARY.md` + `summary.json` plus per-fixture traces
 (`ticks.jsonl` or `emit.txt`, `final-status.json`). Isolated work trees are
-deleted after the run.
+deleted after the run. Do not commit those work trees.
+
+**Mock N=50 tick evidence is in-repo** at
+[`soak/tip-5de40a9-n50-mock/`](soak/tip-5de40a9-n50-mock/) for tip
+`5de40a9`. That pack is the D2 tick-budget close for `host=mock`. A live
+DualTimer multi-day / ≥24h wall-clock soak remains **owner-only** (do not
+fabricate DualTimer logs).
 
 ---
 
 ## Attach for D2 Go/No-Go
 
-1. Run production soak (`--rounds 50` or documented ≥24h).
-2. Keep `.longgraph-ship/soak/<run-id>/SUMMARY.md` and `summary.json`.
-3. Attach those two files (or a short link to the run-id directory) on the D2
-   review. Do not commit large live trees.
-4. State fixture names, N (or wall-clock), host, and the five zero-counts.
+1. Production tick budget: `--rounds 50` on `mock` (this tree already has
+   that pack), **or** a documented ≥24h owner wall-clock run.
+2. Point reviewers at
+   [`docs/ship/soak/tip-5de40a9-n50-mock/SUMMARY.md`](soak/tip-5de40a9-n50-mock/SUMMARY.md)
+   (and `summary.json`). Scratch copies may still land under
+   `.longgraph-ship/soak/<run-id>/`.
+3. State fixture names, N (or wall-clock), host, and the zero-counts
+   including `max_rounds` clean.
+4. Do not treat a CI smoke (`N=2` / `N=5`) as D2 evidence.
 
-Do not treat a CI smoke (`N=2` / `N=5`) as D2 evidence.
+CI gates the committed tip pack via `test_tip_soak_evidence_pack_exists`
+(file + field checks; it does **not** re-run 50 ticks).
 
 ---
 

@@ -14,8 +14,9 @@ Negative battery (Ship-S3): [`docs/ship/NEGATIVE-BATTERY.md`](../docs/ship/NEGAT
 Distribution string: `0.3.0-beta` (in `pyproject.toml`; **not tagged**
 from this tree). This is **Ship-S / S5** after H2 and D1 closeout.
 GitHub Release stays owner-only. Multi-fixture soak harness (Ship-S1):
-[`docs/ship/SOAK.md`](../docs/ship/SOAK.md). Production D2 evidence is
-attached from a later soak run, not from a CI smoke.
+[`docs/ship/SOAK.md`](../docs/ship/SOAK.md). Tip mock N=50 tick evidence
+is in [`docs/ship/soak/tip-5de40a9-n50-mock/`](../docs/ship/soak/tip-5de40a9-n50-mock/).
+Live DualTimer / ≥24h wall-clock soak stays owner-only.
 
 ## Host capability table
 
