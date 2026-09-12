@@ -337,9 +337,11 @@ def test_pending_audit_blocks_normalized_audit_surface_overlap(tmp_path: Path) -
     assert "executor" not in host.invocations
     assert not (workspace / "migrations" / "drop_blob.sql").exists()
 
-    # Normalized disjoint lane work still continues.
+        # Normalized disjoint lane work still continues.
+    lane_root = tmp_path / "lane"
+    lane_root.mkdir()
     lane = _write_run(
-        tmp_path / "lane",
+        lane_root,
         ledger=_ledger(
             item="GAP-011 lane docs (disjoint from the audit surface)",
             write_set="docs/../docs/lane-policy.md",
