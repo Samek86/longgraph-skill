@@ -3,11 +3,13 @@
 Residuals after Phase 0–1c, DISTRIBUTION H0–H2, the D2 coding
 closeout, the S5 support-surface freeze, the tip containment pass
 (M-TIP-1 / M-TIP-2), the tip re-pass (C-TIP-3), and the tip mock
-soak N=50 pack. Main tip is `3824ef4`
-(`3824ef4127f966d1d021695b7e63486830841ef5`) after PR #24. D1
-closeout binds public claims to CI. D2 coding Majors M-R2-1 /
-M-R2-2 (and the prior audit-path / OB-token holes) are fixed in
-this tree; live DualTimer soak (M-R2-3) is still owner evidence.
+soak N=50 pack. Main tip is `a4cce0f`
+(`a4cce0f54fc887e91158dcf630d328f2af709061`) after PR #25
+(history: #24 @ `3824ef4` then #25 reconcile; tag object at tip
+`a4cce0f`). D1 closeout binds public claims to CI. D2 coding
+Majors M-R2-1 / M-R2-2 (and the prior audit-path / OB-token holes)
+are fixed in this tree; live DualTimer soak (M-R2-3) is still
+owner evidence.
 Version `0.4.0-rc.1` is in `runner/pyproject.toml`; tag
 `0.4.0-rc.1` and GitHub prerelease already exist at that tip —
 see [`docs/ship/D2-GO-NOGO.md`](docs/ship/D2-GO-NOGO.md). See also
@@ -51,8 +53,8 @@ Test: `test_pending_audit_blocks_audit_surface_hardlink_alias`.
 
 **Mock N=50 tick evidence is in-repo** for tip `5de40a9`:
 [`docs/ship/soak/tip-5de40a9-n50-mock/`](docs/ship/soak/tip-5de40a9-n50-mock/).
-That pack remains valid for #24 tip `3824ef4` (release-prep
-docs/version/meta; runner engine unchanged). Protocol:
+That pack remains valid for #25 tip `a4cce0f` (docs-only after
+#24 @ `3824ef4`; runner engine unchanged). Protocol:
 [`docs/ship/SOAK.md`](docs/ship/SOAK.md).
 
 No multi-day soak on live DualTimer product agents (M-R2-3 /
@@ -103,7 +105,7 @@ New git tags, GitHub Releases, and live DualTimer product soaks are
 owner-only. Agents must not create tags. Prior tag `0.3.0-beta`
 and its GitHub prerelease already exist (owner-cut at `eeb7591`;
 do not retarget). Lightweight tag `0.4.0-rc.1` and GitHub
-prerelease already exist at `3824ef4`. Mock N=50 tick evidence for
+prerelease already exist at `a4cce0f`. Mock N=50 tick evidence for
 tip `5de40a9` is already in-repo (see above); that does not satisfy
 the DualTimer residual. Coding D2 evidence pack READY; owner D2
 *stable* / non-rc publish ack remains unchecked. rc.1 prerelease

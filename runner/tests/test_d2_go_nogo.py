@@ -8,8 +8,8 @@ from pathlib import Path
 _REPO = Path(__file__).resolve().parents[2]
 _DOC = _REPO / "docs" / "ship" / "D2-GO-NOGO.md"
 _PYPROJECT = _REPO / "runner" / "pyproject.toml"
-_TIP_SHA = "3824ef4"
-_TIP_SHA_FULL = "3824ef4127f966d1d021695b7e63486830841ef5"
+_TIP_SHA = "a4cce0f"
+_TIP_SHA_FULL = "a4cce0f54fc887e91158dcf630d328f2af709061"
 _SOAK_PATH = "soak/tip-5de40a9-n50-mock"
 _VERSION = "0.4.0-rc.1"
 _VERSION_LINE = re.compile(r'^version\s*=\s*"([^"]+)"', re.M)
