@@ -19,7 +19,10 @@ add a fragile SIGKILL test.
 | Empty Verify | Empty / whitespace Verify forges a green close | `test_empty_verify_fails_no_close` |
 | `n/a` Verify | `n/a` is treated as pass | `test_na_verify_skips_gate_and_close` |
 | Missing findings / `blocked-on` | Executor applies a write-set or closes while findings are missing or incomplete | `test_blocked_on_skips_executor_until_findings` |
-| `owner_blocked` | Current-slice live `OB-*` still writes or closes | `test_owner_blocked_skips_write_set_and_close` |
+| `owner_blocked` | Current-slice live `OB-*` still writes or closes | `test_owner_blocked_skips_write_set_and_close` `test_owner_blocked_applies_without_slice_token` |
+| Resolved OB over-block | A resolved/closed OB row skips write-set / close | `test_resolved_owner_blocked_does_not_over_block` |
+| Directive cap | Supervisor append grows the unfolded queue past `OPEN_DIRECTIVE_CAP` | `test_open_directive_cap_refuses_append_at_cap` |
+| Audit-surface dodge | `a/../a/file` write-set skips a `pending-audit` surface | `test_pending_audit_blocks_normalized_audit_surface_overlap` |
 | `max_rounds` | Exhausting the budget forges `completed` / a close | `test_max_rounds_budget` |
 | Emit-only / timer-only no-close | PromptOnlyHost or DualTimer closes without applying a write-set | `test_prompt_only_host_never_closes` `test_dual_timer_host_never_closes` |
 | Terminal no timer recreate | A later DualTimer fire reseeds a deleted task | `test_dual_timer_stays_deleted_after_terminal` |

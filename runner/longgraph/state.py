@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -126,26 +127,14 @@ def findings_status_complete(text: str) -> bool:
 
 
 def current_slice_owner_blocked(state: RunState) -> bool:
-    """True when a live OB-xxx applies to the Current slice / next item."""
-    live = list(state.owner_blocked or [])
-    if not live:
-        return False
-    blob = " ".join(
-        filter(
-            None,
-            [
-                state.current_slice.Item,
-                state.current_slice.get("Write set"),
-                state.current_slice.Context,
-                state.current_slice.Verify,
-                state.current_slice.get("Done when"),
-                state.next_item,
-            ],
-        )
-    )
-    if any(ob in blob for ob in live):
-        return True
-    return derive_item_id(state) in live
+    """True when any live OB-xxx applies to this run's Current slice.
+
+    CONTRACT §1.6: live owner-blocked ids apply to the Current slice of
+    this run. No literal ``OB-xxx`` token is required in the slice text.
+    An empty live list does not block. Resolved/closed rows are not live
+    (see ``_parse_owner_blocked``).
+    """
+    return bool(state.owner_blocked)
 
 
 def derive_item_id(state: RunState) -> str:
@@ -157,13 +146,31 @@ def derive_item_id(state: RunState) -> str:
     return slug or "item"
 
 
+def normalize_declared_path(rel: str) -> str:
+    """Collapse `.` / `..` in a declared write-set or audit-surface path.
+
+    Resolves against a dummy root so ``a/../b`` and ``b`` compare equal
+    via ``relative_to``. Paths that escape the dummy root fall back to
+    ``os.path.normpath`` (they still cannot dodge overlap by spelling).
+    """
+    cleaned = (rel or "").strip().replace("\\", "/")
+    while cleaned.startswith("./"):
+        cleaned = cleaned[2:]
+    if not cleaned:
+        return ""
+    root = Path("/_lg_declared")
+    resolved = (root / cleaned).resolve()
+    try:
+        return resolved.relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return os.path.normpath(cleaned).replace("\\", "/")
+
+
 def paths_from_write_set(write_set: str) -> dict[str, str]:
     found: dict[str, str] = {}
     for match in _FILE_IN_WRITE_SET.finditer(write_set or ""):
-        rel = match.group(1)
-        while rel.startswith("./"):
-            rel = rel[2:]
-        if not rel:
+        rel = normalize_declared_path(match.group(1))
+        if not rel or rel in {".", ".."}:
             continue
         found[rel] = f"# mock write-set for {rel}\n"
     return found
@@ -233,11 +240,15 @@ def _parse_open_gaps(text: str) -> list[str]:
 
 
 def _parse_owner_blocked(text: str) -> list[str]:
+    """Live ``OB-xxx`` ids. Skip resolved/closed rows (same words as gaps)."""
     blocked: list[str] = []
     for line in _section_lines(text, "owner-blocked"):
         match = _OB_ROW.match(line)
-        if match:
-            blocked.append(match.group(1))
+        if not match:
+            continue
+        if _CLOSED_WORDS.search(line):
+            continue
+        blocked.append(match.group(1))
     return blocked
 
 

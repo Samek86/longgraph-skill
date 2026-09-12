@@ -268,7 +268,7 @@ durable run directory; only how you start each tick changes.
 | [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Version string `0.3.0-beta` (untagged) |
 | [Public claims](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 bound to named pytest (not marketing copy) |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 highlights; tag is owner-only |
-| [Known issues](KNOWN_ISSUES.md) | Soak / DualTimer timer-only / telemetry residuals |
+| [Known issues](KNOWN_ISSUES.md) | D2 coding Majors closed; soak / DualTimer timer-only / telemetry residuals |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4: stranger follows README for mock + prompt-only on a fixture copy |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |
 

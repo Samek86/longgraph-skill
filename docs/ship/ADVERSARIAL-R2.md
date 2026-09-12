@@ -86,7 +86,10 @@ The two holes found on the RC tip, with the same-PR close:
 
 ## Major
 
-### M-R2-1 — resolved `OB-xxx` rows stay “live”
+M-R2-1 and M-R2-2 are **FIXED** in the D2 closeout PR (this tree).
+M-R2-3 stays open (capability / soak, not a forged close).
+
+### M-R2-1 — resolved `OB-xxx` rows stay “live” — FIXED
 
 - **Claim.** `owner_blocked` is **live** `OB-xxx` ids. `(none)` /
   empty → `[]`. A resolved row must not keep blocking the Current
@@ -103,8 +106,11 @@ The two holes found on the RC tip, with the same-PR close:
   row that is marked resolved and assert it is absent from
   `state.owner_blocked`. Fail-closed today (over-block), so not a
   forged close.
+- **D2 closeout.** `_parse_owner_blocked` skips `_CLOSED_WORDS`.
+  Tests: `test_parse_owner_blocked_skips_resolved_rows`,
+  `test_resolved_owner_blocked_does_not_over_block`.
 
-### M-R2-2 — `OPEN_DIRECTIVE_CAP` is not enforced on append
+### M-R2-2 — `OPEN_DIRECTIVE_CAP` is not enforced on append — FIXED
 
 - **Claim.** `OPEN_DIRECTIVE_CAP` (default 8) is **append
   discipline**: do not add more unfolded packets once the live
@@ -122,6 +128,9 @@ The two holes found on the RC tip, with the same-PR close:
   `len(unfolded_packets) >= OPEN_DIRECTIVE_CAP`. Keep the
   no-cap-rotate behavior. Product DualTimer does not append
   corrections itself (timer-only).
+- **D2 closeout.** `append_correction_packet` refuses at the cap;
+  MockHost passes watermark + cap after rotate-before-append.
+  Test: `test_open_directive_cap_refuses_append_at_cap`.
 
 ### M-R2-3 — product DualTimer Host is still timer-only
 
@@ -176,8 +185,8 @@ PR’s two new names):
 
 | Contract sentence | Gap |
 |---|---|
-| `owner_blocked` is **live** rows only (resolved/closed skipped) | No test; parser over-includes (M-R2-1) |
-| `OPEN_DIRECTIVE_CAP` refuses a further append | No test; append always succeeds (M-R2-2) |
+| `owner_blocked` is **live** rows only (resolved/closed skipped) | Covered: `test_parse_owner_blocked_skips_resolved_rows` `test_resolved_owner_blocked_does_not_over_block` |
+| `OPEN_DIRECTIVE_CAP` refuses a further append | Covered: `test_open_directive_cap_refuses_append_at_cap` |
 | Folded non-`ACCEPT-GATE` packets record an explicit no-op in the ledger | Watermark advances; no per-packet no-op line |
 | `ownerEscalation` must be present (null or card) | Read path does not validate |
 | `KEEP_ROUNDS` / `keep_rounds` and `OPEN_DIRECTIVE_CAP` / `open_directive_cap` aliases | `parse_rotation_caps` implements both; no dedicated alias test |

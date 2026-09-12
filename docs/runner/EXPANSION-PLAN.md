@@ -272,6 +272,10 @@ LangGraph, or live DualTimer soak.
 37. `test_executor_folds_directives_and_advances_watermark` (H2 M2 — fold)
 38. `test_rounds_log_rotates_golden_round_sections` (H2 M7 — golden `### Round`)
 39. `test_public_claims_mapped_tests_exist` (Ship-S — P1–P10 names stay in the collected suite)
+40. `test_resolved_owner_blocked_does_not_over_block` (D2 M-R2-1 — resolved OB is not live)
+41. `test_owner_blocked_applies_without_slice_token` (D2 M-ADV-2 — live OB binds without a slice token)
+42. `test_open_directive_cap_refuses_append_at_cap` (D2 M-R2-2 — append discipline)
+43. `test_pending_audit_blocks_normalized_audit_surface_overlap` (D2 M-ADV-1 — path normalize)
 
 Banned aliases: `test_golden_next_item_*`, `test_default_fail_until_gate`.
 

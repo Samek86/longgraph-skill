@@ -1,29 +1,30 @@
 # Known issues (Ship-S3 / negative battery)
 
-Residuals after the S3 battery on main tip `f313ed3` plus the two
-Critical fixes in this PR. D2 must not treat “Critical = 0” as
-“no leftovers.” Full battery:
+Residuals after the S3 battery and the D2 closeout PR. D2 must not
+treat “Critical = 0” as “no leftovers.” Full battery:
 [`NEGATIVE-BATTERY.md`](NEGATIVE-BATTERY.md).
 
 This file lives under `docs/ship/` so it does not collide with the
-root `KNOWN_ISSUES.md` on unmerged PR #14.
+root [`KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
+
+## Major (fixed in D2 closeout)
+
+### M-S3-1 — resolved `OB-xxx` rows still parse as live — FIXED
+
+Same hole as M-R2-1. `_parse_owner_blocked` now skips `_CLOSED_WORDS`.
+S3-07 still holds for a **live** Current-slice OB.
+Tests: `test_parse_owner_blocked_skips_resolved_rows`,
+`test_resolved_owner_blocked_does_not_over_block`,
+`test_owner_blocked_skips_write_set_and_close`.
+
+### M-S3-2 — `OPEN_DIRECTIVE_CAP` is not an append gate — FIXED
+
+Same hole as M-R2-2. `append_correction_packet` and MockHost refuse
+when the unfolded queue is at the cap. Product DualTimer does not
+append corrections itself (timer-only).
+Test: `test_open_directive_cap_refuses_append_at_cap`.
 
 ## Major (open)
-
-### M-S3-1 — resolved `OB-xxx` rows still parse as live
-
-`_parse_open_gaps` skips `_CLOSED_WORDS` (`resolved` / `closed` /
-`closure`). `_parse_owner_blocked` does not. A resolved OB row can
-keep skipping write-set and close (fail-closed / over-block, not a
-forged close). S3-07 still holds for a **live** Current-slice OB.
-
-### M-S3-2 — `OPEN_DIRECTIVE_CAP` is not an append gate
-
-The cap is documented as supervisor append discipline. Rotation
-correctly refuses to archive unfolded packets.
-`append_correction_packet` and MockHost still append past the cap.
-Not a forged close; product DualTimer does not append corrections
-itself (timer-only).
 
 ### M-S3-3 — DualTimer Host is timer-only
 

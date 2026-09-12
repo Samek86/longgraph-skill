@@ -105,6 +105,8 @@ def current_slice_is_next_milestone_surface(state: RunState, ledger_text: str = 
     if ledger_text:
         audit = _audit_surface_paths(ledger_text)
         writes = set(paths_from_write_set(write_set))
+        # paths_from_write_set normalizes `.` / `..` so
+        # `migrations/../migrations/drop.sql` cannot dodge the surface.
         if audit and writes & audit:
             return True
     return False

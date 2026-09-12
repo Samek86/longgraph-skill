@@ -77,9 +77,11 @@ register. Product Verify/smoke is a fail-closed subprocess
 (`cwd` = workspace): non-zero exit fails; empty Verify fails; `n/a`
 skips (does not pass). CLI / `longgraph run` does not default
 `GateRunner` to `passed=True`. Empty / `n/a` Verify and live
-Current-slice `owner_blocked` do not close. `blocked-on` with missing
-findings is scout-only (MockHost). DualTimer hosts do not drive
-supervisor/scout from the executor branch.
+Current-slice `owner_blocked` do not close: any live `OB-xxx` applies
+to this run's Current slice (no literal token required). Resolved or
+closed owner-blocked rows are not live and must not over-block.
+`blocked-on` with missing findings is scout-only (MockHost). DualTimer
+hosts do not drive supervisor/scout from the executor branch.
 
 Rounds log and live Corrections are bounded and archived. Older `- R…`
 lines **and** `### Round N` sections rotate into `archive/rounds.md`
@@ -88,10 +90,12 @@ above `Last directive folded` are folded (apply or no-op) and the
 watermark advances in the same ledger write as the round. Folded
 corrections then rotate into `archive/directives.md` at that watermark
 before the supervisor appends. `OPEN_DIRECTIVE_CAP` (default 8) is
-append discipline — it does not archive unfolded packets. Caps are read
+append discipline — the append helper refuses once the unfolded queue
+is at the cap; it does not archive unfolded packets. Caps are read
 from `ops.md` when present. A live `ACCEPT-GATE` correction (or first-line
 verb `accept-gate`) is the only runner path that flips
 `milestone_gate: pending-audit` to `passed`. Disjoint registered lane
-work may continue while the gate is pending.
+work may continue while the gate is pending. Write-set / audit-surface
+overlap uses normalized paths (`.` / `..` cannot dodge the surface).
 
 `longgraph-dev-continue` is DEV-only and must not appear in product Host paths.
