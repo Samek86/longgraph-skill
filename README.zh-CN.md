@@ -76,7 +76,7 @@ Git 复算命令见[自迭代案例](skills/loop-graph/examples/self-iteration-l
 | --- | --- | --- | --- | --- |
 | LangGraph / CrewAI / AutoGen | 是 | 自己写 | 通常有 | 绑框架 / 部署栈 |
 | 单条超长 prompt / 单个 skill | 否 | 无（自评） | 弱（聊天记忆） | 弱——进度跟着会话死 |
-| **longgraph（本仓库）** | **否——纯 Markdown** | **有（监督者节点）** | **有（`ledger.md`）** | **有——文件即 run，重发提示词即可** |
+| **longgraph（本 fork）** | **默认：runner CLI**（`longgraph run`）；技能编译 ≠ 引擎 | **有（监督者节点）** | **有（`ledger.md`）** | **有——文件即 run；AI 执行 CLI** |
 
 相关搜索词：*longgraph skill*、*长周期智能体 skill*、*long-horizon agent skill*、
 *防止 agent 漂移*、*多任务 agent loop*、*中途切换 AI 编程宿主*、
@@ -99,9 +99,12 @@ Git 复算命令见[自迭代案例](skills/loop-graph/examples/self-iteration-l
 - **低负担 owner 裁决** —— 真正需要 owner 的问题会变成简短、有推荐的 A/B/C
   选择题，而不是一份技术作业。
 
-它是 Markdown 提示词，不是编排框架：无需应用运行时、服务端或厂商绑定。
-可作为 **Claude Code 插件**安装，或用 install 脚本 symlink 到 **Codex / Cursor /
-Grok Build**。Grok Build 上的运行节点仍是 prompts-only：两条 `/loop`，不直接拉起。
+技能是 Markdown 政策（编译 / 访谈），不是编排框架。**本 fork 的默认引擎路径是
+runner CLI：** 编译后，宿主 AI 必须显式执行 `longgraph run …`。仅靠技能的
+`/loop` 粘贴**不会**硬化闸门。把 runner 写成「可选」不符合本 fork 的默认。
+Grok Build 仍然**没有 wake 边** — 默认是
+`longgraph run --host prompt-only <run_dir>`（宿主不能跑 shell 时再粘贴发出的
+`/loop` 行）。不要声称 Grok 会在没有 shell 步骤的情况下自动拉起。
 
 ## 多任务 loop 与中途换宿主
 
@@ -135,56 +138,69 @@ Grok Build**。Grok Build 上的运行节点仍是 prompts-only：两条 `/loop`
 
 ## 快速开始
 
-### Claude Code
+**本 fork 的默认路径：** 安装/链接技能（编译 / 政策）→ 安装 runner → 宿主 AI
+**显式执行** `longgraph run …`。仅靠技能的 `/loop` 粘贴不再是第一默认。
+技能不会自动启动引擎，也不会单独硬化闸门。
 
-从 marketplace 安装插件：
+### 1. 克隆本 fork 并链接技能
+
+优先使用本检出。除非你就是要上游 `levi-qiao` 树，否则不要 curl 那边的
+`install.sh`：
+
+```sh
+git clone https://github.com/Samek86/longgraph-skill.git
+cd longgraph-skill
+./install.sh
+```
+
+`./install.sh` 会把 `/longgraph`、`/loop-converge`、`/loop-deliver`、
+`/loop-research` symlink 到会跟随链接的宿主（Codex、Cursor、Grok Build）。
+Claude Code 不加载这些 symlink；那里的插件只负责编译/政策，之后仍须安装 runner：
 
 ```text
-/plugin marketplace add levi-qiao/longgraph-skill
+/plugin marketplace add Samek86/longgraph-skill
 /plugin install longgraph@longgraph-skill
 ```
 
-### Codex、Cursor 或 Grok Build
-
-安装库，并把 `/longgraph`、`/loop-converge`、`/loop-deliver` 与 `/loop-research`
-symlink 到会跟随链接的宿主：
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/levi-qiao/longgraph-skill/main/install.sh | sh
-```
-
-本地克隆时，在仓库根目录运行 `./install.sh`。
-
-在 Grok Build 上搭图：装好后直接 `/longgraph`。两个运行节点仍是 prompts-only，粘编译好的
-`/loop` 行——见 [Grok Build](skills/loop-graph/references/grok.md)。Cursor 与
-shell/cron 同样走 prompts-only 执行——见[宿主兼容性](#宿主兼容性)。
-
-### 设计一次 run
-
-调用 `/longgraph`；它会把清理路由到 `/loop-converge`，把需求交付路由到
-`/loop-deliver`，把证据驱动选型路由到 `/loop-research`。它自动识别当前宿主、先检查
-工作区，只询问无法推断的 owner 决策，再编译 loop-graph run。在 Codex 或 Claude Code
-上选择“直接创建”后，它会在当前宿主启动两个运行节点；选择 prompts-only 才需要手动或
-跨宿主启动（含 Grok Build）。只有确实需要自定义 run 形态时才直接调用 `loop-graph`。
-
-生成期与运行期严格分离：author skill 只编译，不执行。生成的节点遵循
-`.longgraph/<日期-slug>/` 下已固化的本次 run 契约。
-
-### Runner 引擎（可选，5 分钟）
-
-Markdown skill 不需要 Python。可选引擎在 [`runner/`](runner/README.md)，可在新机器上这样核对：
+### 2. 安装 runner（默认引擎）
 
 ```sh
 cd runner
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
-cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
-longgraph run --host prompt-only /tmp/add-tests-to-cli   # 仅 emit；不会 close
-longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先复制
 ```
 
-把结果记入 [docs dry-run](docs/ship/DOCS-DRY-RUN.md)。
+### 3. 设计一次 run（只编译）
+
+调用 `/longgraph`；它会把清理路由到 `/loop-converge`，把需求交付路由到
+`/loop-deliver`，把证据驱动选型路由到 `/loop-research`。它自动识别当前宿主、先检查
+工作区，只询问无法推断的 owner 决策，再编译 loop-graph run。只有确实需要自定义
+run 形态时才直接调用 `loop-graph`。
+
+生成期与运行期严格分离：author skill 只编译，不执行。生成的节点遵循
+`.longgraph/<日期-slug>/` 下已固化的本次 run 契约。
+
+### 4. 默认：运行引擎
+
+编译后（或使用夹具副本后），**智能体必须显式执行** `longgraph run …`。
+不要假设技能会自动启动引擎。宿主能跑 shell 时，**优先 CLI，而不是手工
+`/loop` 粘贴**。
+
+```sh
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+longgraph run --host mock /tmp/add-tests-to-cli          # 本地 apply/verify 环；先复制
+longgraph run --host prompt-only /tmp/add-tests-to-cli   # 发出 DualTimer /loop 块；不会 close
+```
+
+**Grok Build：** 仍然没有 wake 边。默认 =
+`longgraph run --host prompt-only <run_dir>`（或记录发出的 `/loop` 行以便粘贴）。
+不要声称 Grok 会在没有 shell 步骤的情况下自动拉起。见
+[Grok Build](skills/loop-graph/references/grok.md)。
+
+CLI 不可用时的回退才是粘贴发出的 `/loop` 行——见[宿主兼容性](#宿主兼容性)。
+
+把陌生人走通记录到 [docs dry-run](docs/ship/DOCS-DRY-RUN.md)。
 支持的 Host / Python / OS 见 [Support surface](docs/ship/SUPPORT.md)
 （Python 3.11–3.12、`ubuntu-latest`；不宣称 macOS / Windows）。
 
@@ -208,9 +224,9 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ 自动识别宿主并直接创建两个运行节点 |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ 自动识别宿主；能力检查通过后直接创建两个后台运行会话 |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | prompts-only — 两个 `/loop` 任务（执行者 + 监督者），无 wake 边 |
-| [**Cursor**](skills/loop-graph/references/cursor.md) | 仅作为 prompts-only 执行目标 |
-| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 仅作为 prompts-only 执行目标 |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | 默认：AI 执行 `longgraph run --host prompt-only <run_dir>`（无 wake 边；不自动拉起）。手工 `/loop` 粘贴是回退 |
+| [**Cursor**](skills/loop-graph/references/cursor.md) | 默认：AI 执行 `longgraph run --host …`。CLI 不可用时 `/loop` 粘贴才是回退 |
+| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 默认：`longgraph run --host …` |
 
 权威语法、节奏行为、上下文携带模型和宿主 hook 分别维护在
 [按宿主拆分的 reference](skills/loop-graph/references/) 中；生成时只加载选中的宿主。
@@ -230,11 +246,11 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 耦合测试环；先
 | [宿主 references](skills/loop-graph/references) | 每个宿主一份、按需加载的运行事实 owner |
 | [完整示例](skills/loop-graph/examples) | 公开 Git 自迭代 + 虚构 ledger，展示闸门运作 |
 | [公开 / 私有边界](docs/public-private-boundary.md) | 什么可以进公开树，什么必须留在项目本地 |
-| [Runner CLI](runner/README.md) | 已编译 run 目录的引擎 — `--host prompt-only`（安全默认）、`grok-bot` DualTimer、`mock` 仅测试。版本字符串 `0.4.0-rc.1`（prerelease tag 已在 `3824ef4`） |
+| [Runner CLI](runner/README.md) | 已编译 run 目录的**默认引擎** — AI 必须执行 `longgraph run --host …`。`--host prompt-only`（安全 emit）、`grok-bot` DualTimer、`mock` 仅测试。版本 `0.4.0-rc.1` on `main` |
 | [公开主张](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 绑定到具名 pytest（不是营销文案） |
-| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 包：编码证据 READY；rc.1 prerelease 在 `3824ef4`；stable publish ack 与 DualTimer soak 仍属 owner |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 包：编码证据 READY；live `0.4.0-rc.1` on `main`；stable publish ack 与 DualTimer soak 仍属 owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候选；新 tag 仅限 owner |
-| [已知问题](KNOWN_ISSUES.md) | tip `3824ef4` / mock N=50 已完成；DualTimer soak 与 stable publish ack 仍属 owner |
+| [已知问题](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`；DualTimer soak 与 stable publish ack 仍属 owner |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4：陌生人按 README 在夹具副本上跑 mock + prompt-only |
 | [Support surface](docs/ship/SUPPORT.md) | S5：CLI host + Python 3.11/3.12 + ubuntu-latest；CI 矩阵绑定 |
 | [SECURITY.md](SECURITY.md) | 禁止工作区逃逸、夹具不含密钥、runner 不得 `git push` |

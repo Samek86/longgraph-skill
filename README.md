@@ -100,7 +100,7 @@ Reach for longgraph when you need any of:
 | --- | --- | --- | --- | --- |
 | LangGraph / CrewAI / AutoGen | Yes | You build it | Usually yes | Framework-bound; often one deployment stack |
 | One mega-prompt / single skill | No | No (self-check) | Weak (chat memory) | Weak — progress dies with the session |
-| **longgraph (this repo)** | **No — Markdown only** | **Yes (supervisor node)** | **Yes (`ledger.md`)** | **Yes — files are the run; re-send the prompt** |
+| **longgraph (this fork)** | **Default: runner CLI** (`longgraph run`); skill compile ≠ engine | **Yes (supervisor node)** | **Yes (`ledger.md`)** | **Yes — files are the run; AI runs the CLI** |
 
 Also called / related searches: *longgraph skill*, *long-horizon agent skill*,
 *long-running agent skill*, *prevent agent drift*, *multi-task agent loop*,
@@ -126,10 +126,14 @@ disappear from context. longgraph moves the safeguards outside the model’s mem
 - **Low-friction owner decisions** — genuine owner-only calls arrive as a short
   recommended A/B/C choice, not a technical homework assignment.
 
-It is Markdown, not an orchestration framework: no application runtime, server,
-or vendor lock-in. Install as a **Claude Code plugin**, or symlink into **Codex /
-Cursor / Grok Build** (see install script). Runtime nodes on Grok Build stay
-**prompts-only** — two `/loop` pastes, no direct launch.
+The skill is Markdown policy (compile / interview), not an orchestration
+framework. **On this fork the default engine path is the runner CLI:** after
+compile, the host AI must explicitly run `longgraph run …`. Skill-only `/loop`
+paste does **not** harden gates. Calling the runner “optional” is wrong for
+this fork’s default. Grok Build still has **no wake edge** — default is
+`longgraph run --host prompt-only <run_dir>` (or paste of the emitted `/loop`
+lines when the host cannot shell). Grok does not auto-invoke without a shell
+step.
 
 ## Multi-task loops & switching hosts
 
@@ -165,60 +169,72 @@ dialect ([per-host references](skills/loop-graph/references/)) — only the *pro
 
 ## Quick start
 
-### Claude Code
+**Default on this fork:** install/link the skill (compile / policy) → install
+the runner → the host AI **explicitly runs** `longgraph run …`. Skill-only
+`/loop` paste is not the primary default. The skill does not auto-start the
+engine and does not harden gates by itself.
 
-Install the plugin from the marketplace:
+### 1. Clone this fork and link the skill
+
+Prefer this checkout — do not curl upstream `levi-qiao` unless you intend that tree:
+
+```sh
+git clone https://github.com/Samek86/longgraph-skill.git
+cd longgraph-skill
+./install.sh
+```
+
+`./install.sh` symlinks `/longgraph`, `/loop-converge`, `/loop-deliver`, and
+`/loop-research` into hosts whose loaders follow symlinks (Codex, Cursor, Grok
+Build). Claude Code does not load those symlinks; install the plugin there for
+compile/policy, then still install the runner:
 
 ```text
-/plugin marketplace add levi-qiao/longgraph-skill
+/plugin marketplace add Samek86/longgraph-skill
 /plugin install longgraph@longgraph-skill
 ```
 
-### Codex, Cursor, or Grok Build
-
-Install the library and symlink `/longgraph`, `/loop-converge`, `/loop-deliver`, and
-`/loop-research` into hosts whose loaders follow symlinks:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/levi-qiao/longgraph-skill/main/install.sh | sh
-```
-
-From a local clone, run `./install.sh` at the repository root.
-
-Authoring on Grok Build is `/longgraph` after that install. Starting the two runtime
-nodes is still prompts-only: paste the compiled `/loop` lines — see
-[Grok Build](skills/loop-graph/references/grok.md). Cursor and shell/cron use the
-same prompts-only execution path — see [host compatibility](#host-compatibility).
-
-### Design a run
-
-Invoke `/longgraph`; it routes cleanup to `/loop-converge`, requirements to
-`/loop-deliver`, and evidence-led option selection to `/loop-research`. It detects the
-current host, inspects the workspace, and asks only for unresolved owner decisions before
-compiling the run. Choose direct creation on Codex or Claude Code to have it start both
-same-host runtime nodes, or prompts-only for manual/cross-host launch (including Grok
-Build). Use `loop-graph` directly only for a genuinely custom run shape.
-
-Authoring and runtime stay separate: the author skill compiles the work but never
-executes it. Generated nodes follow their frozen run contract under
-`.longgraph/<date-slug>/`.
-
-### Runner engine (optional, 5 minutes)
-
-The Markdown skill needs no Python. The optional engine under
-[`runner/`](runner/README.md) can be checked on a fresh machine:
+### 2. Install the runner (default engine)
 
 ```sh
 cd runner
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
-cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
-longgraph run --host prompt-only /tmp/add-tests-to-cli   # emit-only; does not close
-longgraph run --host mock /tmp/add-tests-to-cli          # coupled test loop; copy first
 ```
 
-Record the result with the [docs dry-run](docs/ship/DOCS-DRY-RUN.md).
+### 3. Design a run (compile only)
+
+Invoke `/longgraph`; it routes cleanup to `/loop-converge`, requirements to
+`/loop-deliver`, and evidence-led option selection to `/loop-research`. It detects the
+current host, inspects the workspace, and asks only for unresolved owner decisions before
+compiling the run. Use `loop-graph` directly only for a genuinely custom run shape.
+
+Authoring and runtime stay separate: the author skill compiles the work but never
+executes it. Generated nodes follow their frozen run contract under
+`.longgraph/<date-slug>/`.
+
+### 4. Default: run the engine
+
+After compile (or using a fixture copy), the **agent MUST explicitly execute**
+`longgraph run …`. Never assume the skill auto-starts the engine. If the host
+can run a shell, **prefer the CLI over manual `/loop` paste**.
+
+```sh
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+longgraph run --host mock /tmp/add-tests-to-cli          # local apply/verify loops; copy first
+longgraph run --host prompt-only /tmp/add-tests-to-cli   # emit DualTimer /loop blocks; does not close
+```
+
+**Grok Build:** still no wake edge. Default =
+`longgraph run --host prompt-only <run_dir>` (or document paste of the emitted
+`/loop` lines). Do not claim Grok auto-invokes without a shell step. See
+[Grok Build](skills/loop-graph/references/grok.md).
+
+Prompt-only paste of emitted `/loop` lines is the fallback when the CLI is
+unavailable — see [host compatibility](#host-compatibility).
+
+Record a stranger walk-through with the [docs dry-run](docs/ship/DOCS-DRY-RUN.md).
 Supported Host / Python / OS: [Support surface](docs/ship/SUPPORT.md)
 (Python 3.11–3.12 on `ubuntu-latest`; macOS / Windows are not claimed).
 
@@ -245,9 +261,9 @@ For the rationale behind every constraint, read
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ detects the host and directly creates both runtime nodes |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ detects the host and directly creates two background runtime sessions when capability checks pass |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | prompts-only — two `/loop` tasks (executor + supervisor), no wake edge |
-| [**Cursor**](skills/loop-graph/references/cursor.md) | prompts-only execution target |
-| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | prompts-only execution target |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | Default: AI runs `longgraph run --host prompt-only <run_dir>` (no wake edge; no auto-invoke). Manual `/loop` paste is fallback |
+| [**Cursor**](skills/loop-graph/references/cursor.md) | Default: AI runs `longgraph run --host …`. `/loop` paste is fallback when CLI unavailable |
+| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | Default: `longgraph run --host …` |
 
 Authoritative syntax, pacing, context carry, and hooks live in separate
 [per-host references](skills/loop-graph/references/), so authoring loads only the selected host. Mid-run host switches reuse the same
@@ -267,11 +283,11 @@ durable run directory; only how you start each tick changes.
 | [Host references](skills/loop-graph/references) | One independently loaded owner for each host's runtime facts |
 | [Worked examples](skills/loop-graph/examples) | Public-Git self-iteration plus fictional ledgers showing gates in action |
 | [Public / private boundary](docs/public-private-boundary.md) | What may enter the public tree vs stay project-local |
-| [Runner CLI](runner/README.md) | Engine for compiled run directories — `--host prompt-only` (safe default), `grok-bot` DualTimer, `mock` tests only. Version string `0.4.0-rc.1` (prerelease tag exists at `3824ef4`) |
+| [Runner CLI](runner/README.md) | **Default engine** for compiled run dirs — AI must run `longgraph run --host …`. `--host prompt-only` (safe emit), `grok-bot` DualTimer, `mock` tests only. Version `0.4.0-rc.1` on `main` |
 | [Public claims](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 bound to named pytest (not marketing copy) |
-| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R pack: coding evidence READY; rc.1 prerelease at `3824ef4`; stable publish ack + DualTimer soak stay owner |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R pack: coding evidence READY; live `0.4.0-rc.1` on `main`; stable publish ack + DualTimer soak stay owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 candidate; new tags are owner-only |
-| [Known issues](KNOWN_ISSUES.md) | Tip `3824ef4` / mock N=50 done; DualTimer soak + stable publish ack stay owner |
+| [Known issues](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`; DualTimer soak + stable publish ack stay owner |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4: stranger follows README for mock + prompt-only on a fixture copy |
 | [Support surface](docs/ship/SUPPORT.md) | S5: CLI hosts + Python 3.11/3.12 + ubuntu-latest; CI matrix bound |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |

@@ -10,6 +10,14 @@ and focused entries that bind only goal-specific rules. All compile the same
 executor, supervisor, ledger, directives, and ops artifacts. Do not execute the
 generated runtime nodes from this authoring skill.
 
+**DEFAULT next step (this fork):** after compile — or after copying a fixture —
+the host AI **must explicitly run** `longgraph run --host …` on that run
+directory. Skill compile does not start the engine and does not harden gates.
+Use `--host mock` for local apply/verify loops; use `--host prompt-only` to
+emit DualTimer `/loop` paste blocks. Manual `/loop` paste is the fallback
+only when the host cannot run a shell. Never assume the skill auto-starts
+the runner.
+
 ## Fit and route
 
 - Use [`loop-converge`](skills/loop-converge/SKILL.md) for multi-round unused

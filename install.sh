@@ -3,13 +3,13 @@
 # `/longgraph` into hosts whose loaders FOLLOW symlinks: Codex, Cursor,
 # and Grok Build.
 # Claude Code does NOT load symlinked skill dirs — install it there as a plugin:
-#   /plugin marketplace add levi-qiao/longgraph-skill  &&  /plugin install longgraph@longgraph-skill
+#   /plugin marketplace add Samek86/longgraph-skill  &&  /plugin install longgraph@longgraph-skill
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/levi-qiao/longgraph-skill/main/install.sh | sh
-#   ./install.sh   # from a local checkout — links that tree
+#   ./install.sh   # from a local checkout of this fork — preferred; links that tree
+#   curl -fsSL https://raw.githubusercontent.com/Samek86/longgraph-skill/main/install.sh | sh
 set -eu
 
-REPO="https://github.com/levi-qiao/longgraph-skill.git"
+REPO="https://github.com/Samek86/longgraph-skill.git"
 CACHE="${LONGGRAPH_CACHE:-$HOME/.local/share/longgraph-skill}"
 PRIMARY="longgraph"
 
@@ -71,6 +71,8 @@ done
 
 echo ""
 echo "✅ Linked for Codex / Cursor / Grok Build — run: /longgraph, /loop-converge, /loop-deliver, or /loop-research"
+echo "ℹ️  Skill compile is policy only. Default next step on this fork: install runner/"
+echo "     (cd runner && pip install -e \".[dev]\") then the AI must run: longgraph run --host …"
 echo "ℹ️  Claude Code does not load symlinked skills; install it there as a plugin:"
-echo "     /plugin marketplace add levi-qiao/longgraph-skill"
+echo "     /plugin marketplace add Samek86/longgraph-skill"
 echo "     /plugin install longgraph@longgraph-skill"

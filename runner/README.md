@@ -3,6 +3,11 @@
 Engine for compiled run directories. The skill library under `skills/` is
 policy only — this package never loads it.
 
+**AI / agent instruction:** always invoke the CLI explicitly
+(`longgraph run --host …`). Do **not** treat skill compile, `/longgraph`,
+or a `/loop` paste as starting the runner. Skill-only is not the default
+engine path on this fork and does not harden gates.
+
 Authority: [`docs/runner/AUTHORITY.md`](../docs/runner/AUTHORITY.md).
 Security: [`SECURITY.md`](../SECURITY.md).
 Ship claims (CI-bound): [`docs/ship/PUBLIC_CLAIMS.md`](../docs/ship/PUBLIC_CLAIMS.md).
@@ -11,15 +16,14 @@ Changelog: [`CHANGELOG.md`](../CHANGELOG.md).
 Residuals: [`KNOWN_ISSUES.md`](../KNOWN_ISSUES.md).
 Negative battery (Ship-S3): [`docs/ship/NEGATIVE-BATTERY.md`](../docs/ship/NEGATIVE-BATTERY.md).
 
-Distribution string: `0.4.0-rc.1` (in `pyproject.toml`). Tag
-`0.4.0-rc.1` and GitHub prerelease exist at `3824ef4`. New tags
-and Releases stay owner-only.
+Distribution string: `0.4.0-rc.1` (in `pyproject.toml`) on `main`.
+Tag `0.4.0-rc.1` and its GitHub prerelease already exist; do not
+chase SHAs. New tags and Releases stay owner-only.
 Go/No-Go: [`docs/ship/D2-GO-NOGO.md`](../docs/ship/D2-GO-NOGO.md).
 Multi-fixture soak harness (Ship-S1):
 [`docs/ship/SOAK.md`](../docs/ship/SOAK.md). Tip mock N=50 tick evidence
-is in [`docs/ship/soak/tip-5de40a9-n50-mock/`](../docs/ship/soak/tip-5de40a9-n50-mock/)
-(valid for #24 tip `3824ef4`; engine tip still `5de40a9`). Live
-DualTimer / ≥24h wall-clock soak stays owner-only.
+is in [`docs/ship/soak/tip-5de40a9-n50-mock/`](../docs/ship/soak/tip-5de40a9-n50-mock/).
+Live DualTimer / ≥24h wall-clock soak stays owner-only.
 
 ## Host capability table
 

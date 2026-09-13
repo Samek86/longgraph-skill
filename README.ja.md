@@ -101,7 +101,7 @@ scout）が、永続的で検査可能なファイルを通じて接続されて
 | --- | --- | --- | --- | --- |
 | LangGraph / CrewAI / AutoGen | はい | 自分で構築 | 通常はい | フレームワーク依存；多くの場合単一のデプロイメントスタック |
 | 一つのメガプロンプト/単一スキル | いいえ | いいえ（自己チェック） | 弱い（チャットメモリ） | 弱い—進捗はセッションとともに消滅 |
-| **longgraph（このリポジトリ）** | **いいえ—Markdownのみ** | **はい（スーパーバイザーノード）** | **はい（`ledger.md`）** | **はい—ファイルが実行；プロンプトを再送信** |
+| **longgraph（このフォーク）** | **デフォルト: runner CLI**（`longgraph run`）；スキルコンパイル ≠ エンジン | **はい（スーパーバイザーノード）** | **はい（`ledger.md`）** | **はい—ファイルが実行；AI が CLI を実行** |
 
 関連検索：*longgraphスキル*、*長期水平線エージェントスキル*、
 *長期実行エージェントスキル*、*エージェントドリフト防止*、*マルチタスクエージェントループ*、
@@ -127,10 +127,13 @@ scout）が、永続的で検査可能なファイルを通じて接続されて
 - **低摩擦の所有者決定**—本物の所有者専用の呼び出しは短い
   推奨されたA/B/C選択として到着し、技術的な宿題の課題ではありません。
 
-これはMarkdownであり、オーケストレーションフレームワークではありません：アプリケーションランタイム、サーバー、
-またはベンダーロックインはありません。**Claude Codeプラグイン**としてインストールするか、**Codex /
-Cursor / Grok Build**にシンボリックリンクを作成します（インストールスクリプトを参照）。Grok Buildのランタイム
-ノードは**プロンプトのみ**のまま—2つの`/loop`ペースト、直接起動なし。
+スキルは Markdown ポリシー（コンパイル / インタビュー）であり、オーケストレーション
+フレームワークではありません。**このフォークのデフォルトエンジン経路は runner CLI
+です:** コンパイル後、ホスト AI は `longgraph run …` を明示的に実行しなければなりません。
+スキルのみの `/loop` ペーストはゲートを強化しません。runner を「オプション」と呼ぶのは
+このフォークのデフォルトとして誤りです。Grok Build は依然として **ウェイクエッジなし** —
+デフォルトは `longgraph run --host prompt-only <run_dir>`（シェル不可時は放出された
+`/loop` 行のペースト）。Grok がシェル手順なしで自動起動するとは主張しないでください。
 
 ## マルチタスクループとホストの切り替え
 
@@ -166,42 +169,71 @@ Cursor / Grok Build**にシンボリックリンクを作成します（イン�
 
 ## クイックスタート
 
-### Claude Code
+**このフォークのデフォルト:** スキルをインストール/リンク（コンパイル / ポリシー）→
+runner をインストール → ホスト AI が `longgraph run …` を**明示的に実行**。
+スキルのみの `/loop` ペーストは第一のデフォルトではありません。スキルはエンジンを
+自動起動せず、それ自体ではゲートを強化しません。
 
-マーケットプレイスからプラグインをインストール：
+### 1. このフォークをクローンし、スキルをリンク
+
+このチェックアウトを優先してください。上流 `levi-qiao` ツリーを意図する場合以外は
+その `install.sh` を curl しないでください：
+
+```sh
+git clone https://github.com/Samek86/longgraph-skill.git
+cd longgraph-skill
+./install.sh
+```
+
+`./install.sh` はシンボリックリンクに従うホスト（Codex、Cursor、Grok Build）へ
+`/longgraph`、`/loop-converge`、`/loop-deliver`、`/loop-research` をリンクします。
+Claude Code はそれらのシンボリックリンクを読み込みません。そこではプラグインは
+コンパイル/ポリシー用で、続けて runner をインストールしてください：
 
 ```text
-/plugin marketplace add levi-qiao/longgraph-skill
+/plugin marketplace add Samek86/longgraph-skill
 /plugin install longgraph@longgraph-skill
 ```
 
-### Codex、Cursor、またはGrok Build
-
-ライブラリをインストールし、シンボリックリンクを作成してローダーが従うホストに`/longgraph`、`/loop-converge`、`/loop-deliver`、
-`/loop-research`を配置します：
+### 2. runner をインストール（デフォルトエンジン）
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/levi-qiao/longgraph-skill/main/install.sh | sh
+cd runner
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python -m pip install -e ".[dev]"
 ```
 
-ローカルクローンから、リポジトリルートで`./install.sh`を実行します。
-
-Grok Buildでのオーサリングは、そのインストール後に`/longgraph`です。2つのランタイム
-ノードを開始するのは依然としてプロンプトのみ：コンパイルされた`/loop`行を貼り付けます—
-[Grok Build](skills/loop-graph/references/grok.md)を参照してください。CursorおよびShell/cronは同じ
-プロンプトのみの実行パスを使用します—[ホスト互換性](#ホスト互換性)を参照してください。
-
-### 実行を設計
+### 3. 実行を設計（コンパイルのみ）
 
 `/longgraph`を呼び出します；クリーンアップを`/loop-converge`に、要件を
 `/loop-deliver`に、証拠主導のオプション選択を`/loop-research`にルーティングします。現在のホストを検出し、
-ワークスペースを検査し、実行をコンパイルする前に未解決の所有者決定のみを尋ねます。CodexまたはClaude Codeでの直接作成を選択して、
-両方の同じホストランタイムノードを開始するか、手動/クロスホスト起動用のプロンプトのみ（Grok
-Buildを含む）を選択します。本当にカスタムな実行形状の場合にのみ`loop-graph`を直接使用してください。
+ワークスペースを検査し、実行をコンパイルする前に未解決の所有者決定のみを尋ねます。本当にカスタムな実行形状の場合にのみ`loop-graph`を直接使用してください。
 
 オーサリングとランタイムは別々のままです：オーサースキルは作業をコンパイルしますが、決して
 実行しません。生成されたノードは、凍結された実行契約に従って
 `.longgraph/<date-slug>/`下に配置されます。
+
+### 4. デフォルト: エンジンを実行
+
+コンパイル後（またはフィクスチャのコピーを使った後）、**エージェントは
+`longgraph run …` を明示的に実行しなければなりません。** スキルがエンジンを
+自動起動すると仮定しないでください。ホストがシェルを使えるなら、**手動
+`/loop` ペーストより CLI を優先**してください。
+
+```sh
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+longgraph run --host mock /tmp/add-tests-to-cli          # ローカル apply/verify ループ；先にコピー
+longgraph run --host prompt-only /tmp/add-tests-to-cli   # DualTimer /loop ブロックを放出；close しない
+```
+
+**Grok Build:** 依然としてウェイクエッジなし。デフォルト =
+`longgraph run --host prompt-only <run_dir>`（または放出された `/loop` 行の
+ペーストを文書化）。Grok がシェル手順なしで自動起動するとは主張しないでください。
+[Grok Build](skills/loop-graph/references/grok.md) を参照してください。
+
+CLI が使えないときのフォールバックは放出された `/loop` 行のペーストです—
+[ホスト互換性](#ホスト互換性)を参照してください。
 
 ## グラフの仕組み
 
@@ -226,9 +258,9 @@ Buildを含む）を選択します。本当にカスタムな実行形状の場
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ ホストを検出し、両方のランタイムノードを直接作成 |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ ホストを検出し、能力チェックが通過すると2つのバックグラウンドランタイムセッションを直接作成 |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | プロンプトのみ—2つの`/loop`タスク（executor + supervisor）、ウェイクエッジなし |
-| [**Cursor**](skills/loop-graph/references/cursor.md) | プロンプトのみ実行ターゲット |
-| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | プロンプトのみ実行ターゲット |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | デフォルト: AI が `longgraph run --host prompt-only <run_dir>` を実行（ウェイクエッジなし；自動起動なし）。手動 `/loop` ペーストはフォールバック |
+| [**Cursor**](skills/loop-graph/references/cursor.md) | デフォルト: AI が `longgraph run --host …` を実行。CLI 不可時は `/loop` ペーストがフォールバック |
+| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | デフォルト: `longgraph run --host …` |
 
 権威ある構文、ペーシング、コンテキストキャリー、およびフックは別々の
 [ホストごとのリファレンス](skills/loop-graph/references/)に存在するため、オーサリングは選択されたホストのみを読み込みます。実行中のホスト切り替えは同じ
@@ -248,11 +280,11 @@ Buildを含む）を選択します。本当にカスタムな実行形状の場
 | [ホストリファレンス](skills/loop-graph/references) | 各ホストのランタイム事実のための一つの独立して読み込まれる所有者 |
 | [実例](skills/loop-graph/examples) | 公開Git自己反復+動作中のゲートを示す架空の台帳 |
 | [公開/プライベート境界](docs/public-private-boundary.md) | 公開ツリーに入る可能性があるものとプロジェクトローカルのままであるもの |
-| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリ用エンジン — `--host prompt-only`（安全なデフォルト）、`grok-bot` DualTimer、`mock` はテスト専用。バージョン文字列 `0.4.0-rc.1`（prerelease tag は `3824ef4` に存在） |
+| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリの**デフォルトエンジン** — AI は `longgraph run --host …` を実行する。`--host prompt-only`（安全な emit）、`grok-bot` DualTimer、`mock` はテスト専用。バージョン `0.4.0-rc.1` on `main` |
 | [公開クレーム](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 を既存 pytest 名に束縛（宣伝文ではない） |
-| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R パック：コーディング証拠 READY；rc.1 prerelease は `3824ef4`；stable publish ack と DualTimer soak は owner |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R パック：コーディング証拠 READY；live `0.4.0-rc.1` on `main`；stable publish ack と DualTimer soak は owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候補。新しい tag は owner のみ |
-| [既知の問題](KNOWN_ISSUES.md) | tip `3824ef4` / mock N=50 済み；DualTimer soak と stable publish ack は owner |
+| [既知の問題](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`；DualTimer soak と stable publish ack は owner |
 | [SECURITY.md](SECURITY.md) | ワークスペース外書き込み拒否、フィクスチャに秘密情報なし、runner は `git push` しない |
 
 ## ガバナンス
