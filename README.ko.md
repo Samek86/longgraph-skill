@@ -85,7 +85,7 @@
 | --- | --- | --- | --- | --- |
 | LangGraph / CrewAI / AutoGen | 예 | 직접 구축 | 일반적으로 예 | 프레임워크 종속; 종종 단일 배포 스택 |
 | 하나의 메가 프롬프트/단일 스킬 | 아니오 | 아니오(자체 확인) | 약함(채팅 메모리) | 약함—진행 상황이 세션과 함께 사라짐 |
-| **longgraph(이 리포지토리)** | **아니오—Markdown만** | **예(슈퍼바이저 노드)** | **예(`ledger.md`)** | **예—파일이 실행; 프롬프트를 재전송** |
+| **longgraph(이 포크)** | **기본: runner CLI** (`longgraph run`); 스킬 컴파일 ≠ 엔진 | **예(슈퍼바이저 노드)** | **예(`ledger.md`)** | **예—파일이 실행; AI가 CLI를 실행** |
 
 관련 검색: *longgraph 스킬*, *장기 수평선 에이전트 스킬*, *장기 실행 에이전트 스킬*, *에이전트 드리프트 방지*, *멀티태스크 에이전트 루프*, *작업 중 AI 코딩 호스트 전환*, *Claude Code 멀티 에이전트 슈퍼바이저*, *Grok Build 에이전트 루프*, *에이전트 원장*, *루프 그래프*, *에이전트를 위한 그래프 엔지니어링*, *클린 컨텍스트 리뷰*.
 
@@ -101,7 +101,13 @@
 - **강제 수렴**—성장이 주기적으로 중지되고, 측정되고, 단순화됩니다.
 - **낮은 마찰의 소유자 결정**—진정한 소유자 전용 호출은 짧은 권장 A/B/C 선택으로 도착하며, 기술적인 숙제 과제가 아닙니다.
 
-이것은 Markdown이며, 오케스트레이션 프레임워크가 아닙니다: 애플리케이션 런타임, 서버 또는 벤더 락인이 없습니다. **Claude Code 플러그인**으로 설치하거나, **Codex / Cursor / Grok Build**에 심볼릭 링크를 생성하세요(설치 스크립트 참조). Grok Build의 런타임 노드는 **프롬프트만** 유지—두 개의 `/loop` 붙여넣기, 직접 실행 없음.
+스킬은 Markdown 정책(컴파일/인터뷰)이며 오케스트레이션 프레임워크가 아닙니다.
+**이 포크의 기본 엔진 경로는 runner CLI입니다:** 컴파일 후 호스트 AI가
+`longgraph run …`을 **명시적으로 실행**해야 합니다. 스킬만의 `/loop` 붙여넣기는
+게이트를 강화하지 않습니다. runner를 “선택 사항”이라고 부르는 것은 이 포크의
+기본값에 맞지 않습니다. Grok Build는 여전히 **웨이크 엣지 없음** — 기본은
+`longgraph run --host prompt-only <run_dir>`(셸을 쓸 수 없을 때는 방출된
+`/loop` 줄 붙여넣기). Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
 
 ## 멀티태스크 루프 및 호스트 전환
 
@@ -129,32 +135,66 @@
 
 ## 빠른 시작
 
-### Claude Code
+**이 포크의 기본값:** 스킬 설치/링크(컴파일/정책) → runner 설치 → 호스트 AI가
+`longgraph run …`을 **명시적으로 실행**. 스킬만의 `/loop` 붙여넣기는 더 이상
+1차 기본 경로가 아닙니다. 스킬은 엔진을 자동 시작하지 않으며, 그 자체로
+게이트를 강화하지 않습니다.
 
-마켓플레이스에서 플러그인 설치:
+### 1. 이 포크를 클론하고 스킬을 링크
+
+이 체크아웃을 우선하세요. 업스트림 `levi-qiao` 트리를 의도한 경우가 아니면
+그 `install.sh`를 curl하지 마세요:
+
+```sh
+git clone https://github.com/Samek86/longgraph-skill.git
+cd longgraph-skill
+./install.sh
+```
+
+`./install.sh`는 심볼릭 링크를 따르는 호스트(Codex, Cursor, Grok Build)에
+`/longgraph`, `/loop-converge`, `/loop-deliver`, `/loop-research`를 연결합니다.
+Claude Code는 그 심볼릭 링크를 로드하지 않습니다. 거기서 플러그인은
+컴파일/정책용이며, 이어서 runner를 설치하세요:
 
 ```text
-/plugin marketplace add levi-qiao/longgraph-skill
+/plugin marketplace add Samek86/longgraph-skill
 /plugin install longgraph@longgraph-skill
 ```
 
-### Codex, Cursor 또는 Grok Build
-
-라이브러리를 설치하고, 심볼릭 링크를 따르는 호스트에 `/longgraph`, `/loop-converge`, `/loop-deliver`, `/loop-research`를 배치하세요:
+### 2. runner 설치 (기본 엔진)
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/levi-qiao/longgraph-skill/main/install.sh | sh
+cd runner
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python -m pip install -e ".[dev]"
 ```
 
-로컬 클론에서, 리포지토리 루트에서 `./install.sh`를 실행하세요.
+### 3. 실행 설계 (컴파일만)
 
-Grok Build에서의 저작은 해당 설치 후 `/longgraph`입니다. 두 런타임 노드를 시작하는 것은 여전히 프롬프트만: 컴파일된 `/loop` 라인을 붙여넣으세요—[Grok Build](skills/loop-graph/references/grok.md)를 참조하세요. Cursor 및 shell/cron은 동일한 프롬프트 전용 실행 경로를 사용합니다—[호스트 호환성](#호스트-호환성)을 참조하세요.
-
-### 실행 설계
-
-`/longgraph`를 호출하세요; 정리를 `/loop-converge`로, 요구 사항을 `/loop-deliver`로, 증거 주도 옵션 선택을 `/loop-research`로 라우팅합니다. 현재 호스트를 감지하고, 워크스페이스를 검사하며, 실행을 컴파일하기 전에 해결되지 않은 소유자 결정만 묻습니다. Codex 또는 Claude Code에서 직접 생성을 선택하여 동일한 호스트 런타임 노드 두 개를 시작하거나, 수동/크로스 호스트 실행용 프롬프트만 선택하세요(Grok Build 포함). 진정으로 커스텀 실행 형태의 경우에만 `loop-graph`를 직접 사용하세요.
+`/longgraph`를 호출하세요; 정리를 `/loop-converge`로, 요구 사항을 `/loop-deliver`로, 증거 주도 옵션 선택을 `/loop-research`로 라우팅합니다. 현재 호스트를 감지하고, 워크스페이스를 검사하며, 실행을 컴파일하기 전에 해결되지 않은 소유자 결정만 묻습니다. 진정으로 커스텀 실행 형태의 경우에만 `loop-graph`를 직접 사용하세요.
 
 저작과 런타임은 별도로 유지됩니다: 저자 스킬은 작업을 컴파일하지만 결코 실행하지 않습니다. 생성된 노드는 `.longgraph/<date-slug>/` 아래의 동결된 실행 계약을 따릅니다.
+
+### 4. 기본: 엔진을 실행
+
+컴파일 후(또는 픽스처 복사본을 사용한 후) **에이전트는 `longgraph run …`을
+명시적으로 실행해야 합니다.** 스킬이 엔진을 자동 시작한다고 가정하지 마세요.
+호스트가 셸을 쓸 수 있으면 **수동 `/loop` 붙여넣기보다 CLI를 우선**하세요.
+
+```sh
+cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+longgraph run --host mock /tmp/add-tests-to-cli          # 로컬 apply/verify 루프; 먼저 복사
+longgraph run --host prompt-only /tmp/add-tests-to-cli   # DualTimer /loop 블록 방출; close 없음
+```
+
+**Grok Build:** 여전히 웨이크 엣지 없음. 기본 =
+`longgraph run --host prompt-only <run_dir>`(또는 방출된 `/loop` 줄 붙여넣기를
+문서화). Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
+[Grok Build](skills/loop-graph/references/grok.md)를 참조하세요.
+
+CLI를 쓸 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니다—
+[호스트 호환성](#호스트-호환성)을 참조하세요.
 
 ## 그래프 작동 방식
 
@@ -174,9 +214,9 @@ Grok Build에서의 저작은 해당 설치 후 `/longgraph`입니다. 두 런�
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ 호스트를 감지하고 두 런타임 노드를 직접 생성 |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ 호스트를 감지하고 기능 검사가 통과되면 두 백그라운드 런타임 세션을 직접 생성 |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | 프롬프트만—두 개의 `/loop` 작업(executor + supervisor), 웨이크 엣지 없음 |
-| [**Cursor**](skills/loop-graph/references/cursor.md) | 프롬프트 전용 실행 대상 |
-| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 프롬프트 전용 실행 대상 |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | 기본: AI가 `longgraph run --host prompt-only <run_dir>` 실행(웨이크 엣지 없음; 자동 기동 없음). 수동 `/loop` 붙여넣기는 폴백 |
+| [**Cursor**](skills/loop-graph/references/cursor.md) | 기본: AI가 `longgraph run --host …` 실행. CLI를 쓸 수 없을 때 `/loop` 붙여넣기가 폴백 |
+| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 기본: `longgraph run --host …` |
 
 권위 있는 구문, 페이싱, 컨텍스트 캐리 및 후크는 별도의 [호스트별 참조](skills/loop-graph/references/)에 있으므로, 저작은 선택된 호스트만 로드합니다. 실행 중 호스트 전환은 동일한 지속적인 실행 디렉토리를 재사용합니다; 각 틱을 시작하는 방법만 변경됩니다.
 
@@ -194,11 +234,11 @@ Grok Build에서의 저작은 해당 설치 후 `/longgraph`입니다. 두 런�
 | [호스트 참조](skills/loop-graph/references) | 각 호스트의 런타임 사실을 위한 하나의 독립적으로 로드된 소유자 |
 | [실제 예제](skills/loop-graph/examples) | 공개 Git 자체 반복+작동 중인 게이트를 보여주는 가상 원장 |
 | [공개/개인 경계](docs/public-private-boundary.md) | 공개 트리에 들어갈 수 있는 것과 프로젝트 로컬로 남아 있는 것 |
-| [Runner CLI](runner/README.md) | 컴파일된 run 디렉터리 엔진 — `--host prompt-only`(안전 기본값), `grok-bot` DualTimer, `mock`은 테스트 전용. 버전 문자열 `0.4.0-rc.1`(prerelease 태그는 `3824ef4`에 존재) |
+| [Runner CLI](runner/README.md) | 컴파일된 run 디렉터리의 **기본 엔진** — AI가 `longgraph run --host …`를 실행해야 함. `--host prompt-only`(안전 emit), `grok-bot` DualTimer, `mock`은 테스트 전용. 버전 `0.4.0-rc.1` on `main` |
 | [공개 주장](docs/ship/PUBLIC_CLAIMS.md) | P1–P10을 기존 pytest 이름에 묶음(마케팅 문구 아님) |
-| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 팩: 코딩 증거 READY; rc.1 prerelease는 `3824ef4`; stable publish ack와 DualTimer soak는 owner |
+| [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 팩: 코딩 증거 READY; live `0.4.0-rc.1` on `main`; stable publish ack와 DualTimer soak는 owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 후보. 새 태그는 owner 전용 |
-| [알려진 문제](KNOWN_ISSUES.md) | tip `3824ef4` / mock N=50 완료; DualTimer soak와 stable publish ack는 owner |
+| [알려진 문제](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`; DualTimer soak와 stable publish ack는 owner |
 | [SECURITY.md](SECURITY.md) | 워크스페이스 탈출 거부, 픽스처에 비밀 없음, runner는 `git push` 하지 않음 |
 
 ## 거버넌스

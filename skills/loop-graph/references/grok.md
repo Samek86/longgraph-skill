@@ -2,6 +2,21 @@
 
 Read only for nodes hosted in **Grok Build** (xAI’s agent TUI / CLI host).
 
+## DEFAULT next step
+
+Still **no wake edge**. Grok does **not** auto-invoke the engine.
+
+If the host can run a shell, **prefer the CLI** over manual paste:
+
+```sh
+longgraph run --host prompt-only {{RUN_DIR}}
+```
+
+That emits the two DualTimer `/loop` lines below. Document paste of those
+emitted lines when the owner must start them by hand. Manual `/loop` paste
+without `longgraph run` is the fallback only when the CLI is unavailable.
+Do not treat skill compile as starting the runner.
+
 ## Runtime shape
 
 Two `/loop` tasks, two timers, no wake edge between them.

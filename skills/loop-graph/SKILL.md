@@ -120,7 +120,7 @@ unverifiable:
 1. **North Star and proof**, only when the request does not already imply a checkable outcome. Offer one concise recommended wording.
 2. **Authority**, only where not already stated. Recommended default: local edits and verification allowed; no push, destructive git, production/remote mutation, secret or real-data exposure, unbounded spend, or lowering an acceptance bar. Ask whether commits are allowed only when the run needs them. When the run performs metered or expensive work, put the actual numbers in `ops.md` — "spend beyond budget" is an owner-only tripwire, and an undeclared budget makes it unenforceable. Say what each gate actually costs: money, wall-clock, or risk. A gate that costs only time is batched, not rationed — a cap that puts a whole area of the work out of reach is a scope decision wearing a budget's clothes, and it belongs in the scope answer instead.
 3. **Milestones**, only when two materially different decompositions exist. Present the recommended phase split and exit checks as A; offer B only when it changes the outcome or risk. Single goal means no milestone question. Sequence so the smallest slice that unblocks the main line comes first: a large enabling refactor placed ahead of the delivery milestone concentrates risk and delays every proof behind it. Split such a milestone into the narrow unblocking part and a remainder that runs alongside the main line instead of in front of it.
-4. **Launch mode**, unless the user already chose it: **A (Recommended) — create both runtime nodes here on the detected Codex or Claude Code host**; **B — print copy-ready prompts only**. Ask target hosts only for B or when the user explicitly requests a cross-host run.
+4. **Launch mode**, unless the user already chose it: **A (Recommended) — the host AI runs `longgraph run --host …` on the compiled run dir** (prefer CLI whenever the host can shell); **B — create both runtime nodes here** only on detected Codex or Claude Code when the owner explicitly wants host-native sessions; **C — print copy-ready `/loop` prompts only** when the CLI is unavailable. Ask target hosts only for C or when the user explicitly requests a cross-host run.
 
 Do not ask for repo paths, branches, host, test commands, red lines, or cadences when they are discoverable. If a gate is missing or ambiguous after inspection, propose the narrowest credible command and ask one A/B choice. Long-horizon loop-graph runs include the supervisor by default; ask whether to omit it only when its value is genuinely doubtful.
 
@@ -143,7 +143,7 @@ Reply with: A / B / C
 
 Use at most three mutually exclusive options. Put the safest reversible option first unless evidence clearly favors another. Translate technical evidence into consequences; place paths, commands, and jargon in an optional `Technical note` after the choices. Never end with "what do you think?" or make the owner invent option D. If no answer arrives, the run holds at the safe no-change state.
 
-**Host and cadence.** Infer the current authoring host from system context and callable tools. Codex and Claude Code are the supported direct-launch planners. When A is chosen, place both runtime nodes on that detected host and read only its reference; do not ask about or print other-host syntax. When B or an explicit cross-host request is chosen, read one reference per selected node:
+**Host and cadence.** Infer the current authoring host from system context and callable tools. When the host can run a shell, the default next step is `longgraph run --host …` (A) — read the selected host reference only for dialect facts, not as a substitute for the CLI. Codex and Claude Code remain the supported direct-launch planners for B (host-native sessions). When C or an explicit cross-host request is chosen, read one reference per selected node:
 
 - [Claude Code](references/claude-code.md)
 - [Codex](references/codex.md)
@@ -202,14 +202,35 @@ Decide from context what you reasonably can and state the assumption; anything g
 - Render [`templates/handoff.md`](templates/handoff.md) only as the chat response. It is a presentation template, not a runtime artifact: never save `handoff.md` in the run directory. Delete its supervisor section and the `To steer` line when no supervisor was selected.
 - Keep hot files lean: current state, unresolved rows, recent rounds, and unconsumed directives only.
 
-**Step 3 — Deliver without making the owner discover the workflow.** Offer only when the user has not already chosen:
+**Step 3 — Deliver without making the owner discover the workflow.**
 
-- **A (Recommended) — create both nodes here** when the detected host is Codex or Claude Code.
-- **B — prompts only** when the owner will launch elsewhere.
+**DEFAULT next step (this fork):** if the host can run a shell, the AI **must
+explicitly execute** `longgraph run --host …` on the compiled run directory
+(copy a fixture first when using `runner/tests/fixtures/`). Skill compile is
+policy only — it does not start the runner and does not harden gates.
+`--host mock` is the local apply/verify loop; `--host prompt-only` emits
+DualTimer `/loop` paste blocks (Grok Build default; still no wake edge).
+Manual paste of those emitted `/loop` lines is the fallback when the CLI is
+unavailable. Never assume the skill auto-starts the engine, and do not claim
+Grok auto-invokes without a shell step.
 
-Never end at "files generated." End with the exact next action and copy-ready prompt(s).
+Offer only when the user has not already chosen:
 
-- **Create both nodes here:** treat the user's A choice as authorization to create the two in-scope runtime sessions. Follow the selected reference's ordered capability check and creation protocol. Use the current project/checkout; do not create a cross-host prompt or silently switch to worktrees. Verify both nodes started, and report their IDs, both cadences, and how to stop them. Do not ask for a second confirmation.
+- **A (Recommended) — run the engine** when the host can execute
+  `longgraph run --host …` (prefer CLI over paste).
+- **B — create both nodes here** when the detected host is Codex or Claude Code
+  and the owner explicitly wants host-native sessions instead of the CLI.
+- **C — prompts only** when the owner will launch elsewhere and the CLI is
+  unavailable.
+
+Never end at "files generated." End with the exact next action (`longgraph run
+--host …` on the run dir, or copy-ready prompt(s) as fallback).
+
+- **Run the engine:** treat the user's A choice as authorization to execute
+  `longgraph run --host …` on the compiled run dir (copy fixtures first). Prefer
+  `--host mock` for local apply/verify; `--host prompt-only` when only emitting
+  DualTimer paste blocks. Do not assume compile already started the runner.
+- **Create both nodes here:** treat the user's B choice as authorization to create the two in-scope runtime sessions. Follow the selected reference's ordered capability check and creation protocol. Use the current project/checkout; do not create a cross-host prompt or silently switch to worktrees. Verify both nodes started, and report their IDs, both cadences, and how to stop them. Do not ask for a second confirmation.
 - **Prompts only:** render the completed [`templates/handoff.md`](templates/handoff.md) in chat without persisting it. It must say how many sessions/tasks/processes to open, where each prompt goes, what continues automatically, how it stops, and how to steer. Never ask the owner to write host IDs or create a timer the compiled node already owns.
 - Never leave `{{PLACEHOLDER}}` text or tell the owner merely to "start the loop." Keep executor and supervisor in separate contexts; use a cheap/fast executor and a strong supervisor when available.
 
