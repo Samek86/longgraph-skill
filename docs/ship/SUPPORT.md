@@ -25,7 +25,7 @@ each axis on **one** row. Values that CI binds stay in backticks.
 | --- | --- |
 | CLI hosts | `prompt-only` `grok-bot` `mock` |
 | Python | `3.11` `3.12` |
-| OS | `ubuntu-latest` |
+| OS | `ubuntu-latest` `windows-latest` |
 
 ## CLI hosts
 
@@ -50,11 +50,21 @@ green. Do not invent 3.13 in this table.
 
 ## OS
 
-CI and product claims: **`ubuntu-latest` (Linux)** only.
+CI and product claims: **`ubuntu-latest` (Linux)** and
+**`windows-latest` (Windows native)**.
 
-macOS and Windows are **not** in the runner matrix and are **not**
-supported. A README venv hint that mentions `Scripts\activate` is a
-shell path, not a platform claim.
+Windows is native CPython under PowerShell or cmd — not WSL-only.
+Install from `runner/` with `pip install -e ".[dev]"` and invoke
+`longgraph run …`. Workspace / findings / audit-surface containment
+stays **fail-closed** across drives and NTFS case-folding. Junctions
+and symlinks (when the OS can create them) are aliases; tests skip a
+link type only when the platform cannot create it.
+
+macOS is **not** in the runner matrix and is **not** supported.
+
+`true` / `false` Verify placeholders are portable (no `/bin/true`).
+Other Verify/smoke strings run via the process shell (`cmd.exe` on
+Windows). This freeze does **not** claim DualTimer live soak on any OS.
 
 ## Explicit non-support / limits
 
@@ -78,5 +88,5 @@ shell path, not a platform claim.
 | Check | Pytest |
 | --- | --- |
 | Doc exists and freezes the three axes | `test_support_surface_doc_exists` |
-| Workflow runner matrix covers supported Python | `test_ci_runner_matrix_covers_supported_python` |
+| Workflow runner matrix covers supported Python and OS | `test_ci_runner_matrix_covers_supported_python` |
 | SUPPORT.md host list matches CLI `HOST_CHOICES` | `test_support_hosts_match_cli` |

@@ -42,12 +42,13 @@ Live DualTimer / ≥24h wall-clock soak stays owner-only.
 |---|---|
 | CLI `--host` | `prompt-only` (safe default), `grok-bot` (DualTimer, timer-only), `mock` (tests only) |
 | Python | 3.11, 3.12 |
-| OS | ubuntu-latest (Linux) |
+| OS | ubuntu-latest (Linux), windows-latest (Windows native) |
 
 Full freeze + explicit non-support:
-[`docs/ship/SUPPORT.md`](../docs/ship/SUPPORT.md). macOS / Windows and
-Python 3.13+ are not matrix-proven and are not supported. The venv
-`Scripts\activate` hint below is a shell path, not a platform claim.
+[`docs/ship/SUPPORT.md`](../docs/ship/SUPPORT.md). macOS and
+Python 3.13+ are not matrix-proven and are not supported. Windows is
+native CPython (PowerShell / cmd), not WSL-only. DualTimer live soak
+is not claimed.
 
 Close is **Default-FAIL**: gate re-pass after an applied write-set. Emit-only
 and timer-only ticks never close. Product Verify/smoke is a fail-closed
@@ -59,6 +60,16 @@ subprocess (`cwd` = workspace).
 cd runner
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python -m pip install -e ".[dev]"
+python -m pytest
+```
+
+PowerShell (Windows native):
+
+```powershell
+cd runner
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
 python -m pytest
 ```
@@ -82,6 +93,17 @@ longgraph run --host mock /tmp/add-tests-to-cli
 
 longgraph status /tmp/add-tests-to-cli
 longgraph stop /tmp/add-tests-to-cli
+```
+
+PowerShell (Windows native) — AI must still run `longgraph run` explicitly:
+
+```powershell
+Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
+longgraph run --host prompt-only $env:TEMP\add-tests-to-cli
+longgraph run --host grok-bot $env:TEMP\add-tests-to-cli
+longgraph run --host mock $env:TEMP\add-tests-to-cli
+longgraph status $env:TEMP\add-tests-to-cli
+longgraph stop $env:TEMP\add-tests-to-cli
 ```
 
 Contributor dry-run (DISTRIBUTION S4): [`docs/ship/DOCS-DRY-RUN.md`](../docs/ship/DOCS-DRY-RUN.md).

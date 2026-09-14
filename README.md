@@ -203,6 +203,15 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
 ```
 
+PowerShell (Windows native):
+
+```powershell
+cd runner
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+```
+
 ### 3. Design a run (compile only)
 
 Invoke `/longgraph`; it routes cleanup to `/loop-converge`, requirements to
@@ -226,6 +235,14 @@ longgraph run --host mock /tmp/add-tests-to-cli          # local apply/verify lo
 longgraph run --host prompt-only /tmp/add-tests-to-cli   # emit DualTimer /loop blocks; does not close
 ```
 
+PowerShell (Windows native) — the agent **MUST** still execute `longgraph run …`:
+
+```powershell
+Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
+longgraph run --host mock $env:TEMP\add-tests-to-cli
+longgraph run --host prompt-only $env:TEMP\add-tests-to-cli
+```
+
 **Grok Build:** still no wake edge. Default =
 `longgraph run --host prompt-only <run_dir>` (or document paste of the emitted
 `/loop` lines). Do not claim Grok auto-invokes without a shell step. See
@@ -236,7 +253,8 @@ unavailable — see [host compatibility](#host-compatibility).
 
 Record a stranger walk-through with the [docs dry-run](docs/ship/DOCS-DRY-RUN.md).
 Supported Host / Python / OS: [Support surface](docs/ship/SUPPORT.md)
-(Python 3.11–3.12 on `ubuntu-latest`; macOS / Windows are not claimed).
+(Python 3.11–3.12 on `ubuntu-latest` and `windows-latest`; macOS is not
+claimed). DualTimer live soak is not claimed.
 
 ## How the graph works
 
@@ -289,7 +307,7 @@ durable run directory; only how you start each tick changes.
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 candidate; new tags are owner-only |
 | [Known issues](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`; DualTimer soak + stable publish ack stay owner |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4: stranger follows README for mock + prompt-only on a fixture copy |
-| [Support surface](docs/ship/SUPPORT.md) | S5: CLI hosts + Python 3.11/3.12 + ubuntu-latest; CI matrix bound |
+| [Support surface](docs/ship/SUPPORT.md) | S5: CLI hosts + Python 3.11/3.12 + ubuntu-latest / windows-latest; CI matrix bound |
 | [SECURITY.md](SECURITY.md) | Workspace escape denied, no secrets in fixtures, runner does not `git push` |
 
 ## Governance

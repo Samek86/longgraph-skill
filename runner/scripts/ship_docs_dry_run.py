@@ -9,6 +9,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import tempfile
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
 from io import StringIO
@@ -72,9 +73,16 @@ def main() -> int:
         sys.path.insert(0, str(_RUNNER))
     from longgraph.state import parse_run
 
-    work = Path(os.environ.get("LONGGRAPH_DOCS_DRY_RUN_WORK") or "").resolve()
-    if not work.is_dir():
-        work = Path(os.environ.get("TMPDIR", "/tmp")) / "longgraph-docs-dry-run-inline"
+    raw_work = (os.environ.get("LONGGRAPH_DOCS_DRY_RUN_WORK") or "").strip()
+    work = Path(raw_work).resolve() if raw_work else Path()
+    if not raw_work or not work.is_dir():
+        tmp = (
+            os.environ.get("TMPDIR")
+            or os.environ.get("TEMP")
+            or os.environ.get("TMP")
+            or tempfile.gettempdir()
+        )
+        work = Path(tmp) / "longgraph-docs-dry-run-inline"
         work.mkdir(parents=True, exist_ok=True)
 
     committed_before = _fingerprint(_FIXTURE)
@@ -140,7 +148,10 @@ def main() -> int:
     print(f"- `longgraph run --host mock`: {'pass' if mock_ok else 'FAIL'} (rc={rc_mock}, fail-closed, no close)")
     print(f"- committed fixtures unchanged: {'pass' if committed_ok else 'FAIL'}")
     print(f"- pass/fail: {'pass' if passed else 'FAIL'}")
-    print(f"- time: {elapsed:.1f}s (UTC {started.strftime('%Y-%m-%dT%H:%M:%SZ')} → {ended.strftime('%Y-%m-%dT%H:%M:%SZ')})")
+    print(
+        f"- time: {elapsed:.1f}s (UTC {started.strftime('%Y-%m-%dT%H:%M:%SZ')} -> "
+        f"{ended.strftime('%Y-%m-%dT%H:%M:%SZ')})"
+    )
     print(f"- SHA: `{_git_sha()}`")
     return 0 if passed else 1
 

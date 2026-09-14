@@ -202,7 +202,8 @@ CLI 不可用时的回退才是粘贴发出的 `/loop` 行——见[宿主兼容
 
 把陌生人走通记录到 [docs dry-run](docs/ship/DOCS-DRY-RUN.md)。
 支持的 Host / Python / OS 见 [Support surface](docs/ship/SUPPORT.md)
-（Python 3.11–3.12、`ubuntu-latest`；不宣称 macOS / Windows）。
+（Python 3.11–3.12、`ubuntu-latest` 与 `windows-latest` 原生；不宣称 macOS）。
+DualTimer 实机 soak 不在此宣称。
 
 ## 这张图怎么运行
 
@@ -252,7 +253,7 @@ CLI 不可用时的回退才是粘贴发出的 `/loop` 行——见[宿主兼容
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候选；新 tag 仅限 owner |
 | [已知问题](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`；DualTimer soak 与 stable publish ack 仍属 owner |
 | [Docs dry-run](docs/ship/DOCS-DRY-RUN.md) | S4：陌生人按 README 在夹具副本上跑 mock + prompt-only |
-| [Support surface](docs/ship/SUPPORT.md) | S5：CLI host + Python 3.11/3.12 + ubuntu-latest；CI 矩阵绑定 |
+| [Support surface](docs/ship/SUPPORT.md) | S5：CLI host + Python 3.11/3.12 + ubuntu-latest / windows-latest；CI 矩阵绑定 |
 | [SECURITY.md](SECURITY.md) | 禁止工作区逃逸、夹具不含密钥、runner 不得 `git push` |
 
 ## 治理

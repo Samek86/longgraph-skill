@@ -19,7 +19,8 @@ _TICK = re.compile(r"`([^`]+)`")
 _REQUIRED_AXES = ("CLI hosts", "Python", "OS")
 _REQUIRED_HOSTS = frozenset({"prompt-only", "grok-bot", "mock"})
 _REQUIRED_PYTHON = frozenset({"3.11", "3.12"})
-_REQUIRED_OS = frozenset({"ubuntu-latest"})
+_REQUIRED_OS = frozenset({"ubuntu-latest", "windows-latest"})
+_MATRIX_OS = re.compile(r"^\s+os:\s*\[([^\]]+)\]", re.M)
 _NON_SUPPORT = (
     "LangGraph",
     "wake",
@@ -58,6 +59,13 @@ def parse_runner_python_matrix(workflow: str) -> set[str]:
     return set(_MATRIX_ITEM.findall(found.group(1)))
 
 
+def parse_runner_os_matrix(workflow: str) -> set[str]:
+    block = runner_job_block(workflow)
+    found = _MATRIX_OS.search(block)
+    assert found, "runner job has no os matrix"
+    return set(_MATRIX_ITEM.findall(found.group(1)))
+
+
 def test_support_surface_doc_exists() -> None:
     assert _SUPPORT_MD.is_file(), f"missing {_SUPPORT_MD}"
     text = _SUPPORT_MD.read_text(encoding="utf-8")
@@ -84,10 +92,16 @@ def test_ci_runner_matrix_covers_supported_python() -> None:
     )
 
     block = runner_job_block(workflow)
+    os_matrix = parse_runner_os_matrix(workflow)
+    assert os_matrix == _REQUIRED_OS, f"runner os matrix {sorted(os_matrix)}"
+    assert set(support["OS"]) == os_matrix, (
+        "SUPPORT.md OS and validate.yml runner matrix drifted: "
+        f"doc={sorted(support['OS'])} ci={sorted(os_matrix)}"
+    )
     assert "ubuntu-latest" in block
+    assert "windows-latest" in block
     assert "macos-" not in block
-    assert "windows-" not in block
-    assert set(support["OS"]) == _REQUIRED_OS
+    assert "runs-on: ${{ matrix.os }}" in block
 
     pyproject = _PYPROJECT.read_text(encoding="utf-8")
     assert 'requires-python = ">=3.11"' in pyproject

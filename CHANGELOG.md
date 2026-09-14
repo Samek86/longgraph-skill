@@ -19,6 +19,24 @@ Further work after the `0.4.0-rc.1` candidate lands here. Tag
 Owner D2 *stable* / non-rc publish ack is **not** done. Live DualTimer
 soak (M-R2-3) remains owner-only.
 
+### Added
+
+- Windows native runner support (PowerShell / cmd, not WSL-only).
+  S5 OS freeze is now `ubuntu-latest` + `windows-latest`; the validate
+  `runner` job is an OS × Python 3.11/3.12 matrix. Portable `true` /
+  `false` Verify tokens; fail-closed path containment across drives,
+  NTFS case-fold, and junction/symlink aliases.
+
+### Fixed
+
+- Runner gates no longer depend on `/bin/true` / `/bin/false`.
+- Declared-path normalization uses a drive-aware dummy root.
+- Docs dry-run / soak tests drive the Python entries so Windows CI
+  does not require a bash wrapper.
+- Python 3.11 parse: `_node_pointer` no longer puts a backslash inside
+  an f-string expression. Windows console: dry-run time line is ASCII;
+  fixture rewrites keep `encoding="utf-8"`.
+
 ## [0.4.0-rc.1] — 2026-09-12 (prerelease; tag exists at `a4cce0f`)
 
 Version in `runner/pyproject.toml`. **Coding D2 evidence pack READY.**

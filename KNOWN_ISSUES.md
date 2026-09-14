@@ -64,12 +64,14 @@ refuses append-at-cap; pending-audit overlap uses normalized paths;
 live OBs bind without a slice token. This tree does not fabricate
 DualTimer soak logs. That residual stays owner evidence.
 
-## Support surface — Linux + Python 3.11/3.12 only
+## Support surface — Linux + Windows native + Python 3.11/3.12
 
-CI and product claims are **`ubuntu-latest` (Linux)** plus Python
-**3.11 and 3.12**. `requires-python = ">=3.11"` is the install floor;
-3.13+ and macOS / Windows are not matrix-proven and are not
-supported. This freeze is not soak evidence.
+CI and product claims are **`ubuntu-latest` (Linux)** and
+**`windows-latest` (Windows native)** plus Python **3.11 and 3.12**.
+`requires-python = ">=3.11"` is the install floor; 3.13+ and macOS are
+not matrix-proven and are not supported. Windows is native CPython
+(PowerShell / cmd), not WSL-only. This freeze is not DualTimer soak
+evidence.
 
 ## DualTimer Host is timer-only
 

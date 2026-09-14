@@ -50,7 +50,7 @@ published stable release.
 | Adversarial Critical=0 | **MET** | [`ADVERSARIAL-TIP.md`](ADVERSARIAL-TIP.md) — Critical remaining **0**; C-TIP-3 fixed on #22 @ `5de40a9` |
 | Mock soak N≥50 | **MET** | [`soak/tip-5de40a9-n50-mock/`](soak/tip-5de40a9-n50-mock/) — `host=mock`, N=50, pass. Protocol: [`SOAK.md`](SOAK.md). Valid for #25 tip `a4cce0f` (docs + version/meta only after engine tip `5de40a9`; #24 @ `3824ef4` then #25 reconcile). |
 | Public claims P1–P10 CI-bound | **MET** | [`PUBLIC_CLAIMS.md`](PUBLIC_CLAIMS.md) |
-| Support surface S5 | **MET** | [`SUPPORT.md`](SUPPORT.md) — CLI hosts `prompt-only` / `grok-bot` / `mock`; Python 3.11 / 3.12; `ubuntu-latest` |
+| Support surface S5 | **MET** | [`SUPPORT.md`](SUPPORT.md) — CLI hosts `prompt-only` / `grok-bot` / `mock`; Python 3.11 / 3.12; `ubuntu-latest` / `windows-latest` |
 | S3 negative battery | **MET** | [`S3_NEGATIVE_BATTERY.md`](S3_NEGATIVE_BATTERY.md), [`NEGATIVE-BATTERY.md`](NEGATIVE-BATTERY.md) |
 | SECURITY red lines | **MET** | [`SECURITY.md`](../../SECURITY.md) — workspace escape denied, no secrets in fixtures, runner must not `git push` |
 | CHANGELOG + residuals | **MET** | [`CHANGELOG.md`](../../CHANGELOG.md), [`KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md) |

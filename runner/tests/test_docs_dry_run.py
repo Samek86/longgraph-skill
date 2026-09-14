@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -101,14 +102,19 @@ def test_docs_dry_run_mock_and_prompt_only(tmp_path: Path, capsys: pytest.Captur
 
 def test_docs_dry_run_harness_script(tmp_path: Path) -> None:
     script = _REPO / "runner" / "scripts" / "ship-docs-dry-run.sh"
+    script_py = _REPO / "runner" / "scripts" / "ship_docs_dry_run.py"
     assert script.is_file()
+    assert script_py.is_file()
     committed_before = _fingerprint(_FIXTURE)
     env = os.environ.copy()
     env["TMPDIR"] = str(tmp_path)
+    env["TEMP"] = str(tmp_path)
+    env["TMP"] = str(tmp_path)
+    env["LONGGRAPH_DOCS_DRY_RUN_WORK"] = str(tmp_path)
     runner = str(_REPO / "runner")
     env["PYTHONPATH"] = runner + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     proc = subprocess.run(
-        ["bash", str(script), "--no-venv"],
+        [sys.executable, str(script_py)],
         cwd=_REPO,
         env=env,
         capture_output=True,

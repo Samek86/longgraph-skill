@@ -3,9 +3,25 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Sequence
+
+# Unix ``true`` / ``false`` are not cmd.exe builtins. Keep the documented
+# fixture tokens portable without going through ``/bin/sh``.
+_PORTABLE_TRUE = (sys.executable, "-c", "raise SystemExit(0)")
+_PORTABLE_FALSE = (sys.executable, "-c", "raise SystemExit(1)")
+
+
+def portable_gate_argv(command: str) -> tuple[str, ...] | None:
+    """Exact ``true`` / ``false`` tokens → argv that does not need a POSIX shell."""
+    token = (command or "").strip()
+    if token == "true":
+        return _PORTABLE_TRUE
+    if token == "false":
+        return _PORTABLE_FALSE
+    return None
 
 
 @dataclass
@@ -70,14 +86,23 @@ class GateRunner:
 
     def _run_subprocess(self, command: str, cwd: Path) -> GateResult:
         """Exec `command` with cwd = workspace (or the caller-supplied root)."""
+        argv = portable_gate_argv(command)
         try:
-            completed = subprocess.run(
-                command,
-                shell=True,
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-            )
+            if argv is not None:
+                completed = subprocess.run(
+                    argv,
+                    cwd=cwd,
+                    capture_output=True,
+                    text=True,
+                )
+            else:
+                completed = subprocess.run(
+                    command,
+                    shell=True,
+                    cwd=cwd,
+                    capture_output=True,
+                    text=True,
+                )
         except OSError as exc:
             return GateResult(passed=False, command=command, output=str(exc))
         output = "".join(part for part in (completed.stdout, completed.stderr) if part)

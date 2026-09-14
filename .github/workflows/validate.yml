@@ -279,11 +279,12 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   runner:
-    name: Runner Phase 0–1c tests (py${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    name: Runner Phase 0–1c tests (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: ["ubuntu-latest", "windows-latest"]
         python-version: ["3.11", "3.12"]
     steps:
       - name: Checkout repository

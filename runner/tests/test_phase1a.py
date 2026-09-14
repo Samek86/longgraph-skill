@@ -139,7 +139,10 @@ def test_smoke_before_new_item(tmp_path: Path) -> None:
 def test_max_rounds_budget(tmp_path: Path) -> None:
     run_dir = copy_fixture("add-tests-to-cli", tmp_path)
     ops = run_dir / "ops.md"
-    ops.write_text(ops.read_text(encoding="utf-8").replace("max_rounds: 20", "max_rounds: 2"))
+    ops.write_text(
+        ops.read_text(encoding="utf-8").replace("max_rounds: 20", "max_rounds: 2"),
+        encoding="utf-8",
+    )
     workspace = tmp_path / "ws"
     runner = Runner(run_dir, workspace=workspace)
     out = runner.run(steps=3)
