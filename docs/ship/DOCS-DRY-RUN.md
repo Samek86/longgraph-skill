@@ -46,12 +46,27 @@ as an engine. Do not `git push` from the runner.
    python -m pip install -e ".[dev]"
    ```
 
+   PowerShell (Windows native):
+
+   ```powershell
+   cd runner
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   python -m pip install -e ".[dev]"
+   ```
+
 3. **Copy** the fixture. `--host mock` writes `status.json` and creates
    `workspace/` under the run dir. Pointing it at
    `tests/fixtures/add-tests-to-cli` dirties the committed tree.
 
    ```bash
    cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
+   ```
+
+   PowerShell (Windows native):
+
+   ```powershell
+   Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
    ```
 
 4. Safe default — emit-only:

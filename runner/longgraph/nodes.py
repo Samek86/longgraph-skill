@@ -27,11 +27,14 @@ from .rotate import (
 )
 from .state import (
     RunState,
+    contained_in,
     current_slice_owner_blocked,
     derive_item_id,
     findings_status_complete,
     parse_run,
     paths_from_write_set,
+    resolved_or_none,
+    same_file,
 )
 
 TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
@@ -88,33 +91,54 @@ def _audit_surface_paths(ledger_text: str) -> set[str]:
     return set()
 
 
-def _same_file(left: Path | str, right: Path | str) -> bool:
-    """True when both paths exist and share a device+inode (hardlink/alias)."""
+def _is_reparse_or_symlink(path: Path) -> bool:
+    """True for a symlink or Windows junction/reparse along ``path``."""
     try:
-        return os.path.samefile(left, right)
+        if path.is_symlink():
+            return True
     except OSError:
-        return False
+        pass
+    is_junction = getattr(path, "is_junction", None)
+    if callable(is_junction):
+        try:
+            if is_junction():
+                return True
+        except OSError:
+            pass
+    try:
+        for parent in path.parents:
+            parent_junction = getattr(parent, "is_junction", None)
+            if callable(parent_junction) and parent_junction():
+                return True
+            if parent.is_symlink():
+                return True
+    except OSError:
+        pass
+    return False
 
 
 def _workspace_declared_alias(write_rel: str, audit_rel: str, workspace: Path) -> bool:
     """True when a write-set dest is the same file as an audit-surface dest.
 
     String overlap is handled by the caller. This catches a workspace
-    hardlink (same inode, different path) or symlink (resolve equality)
+    hardlink (same inode, different path), symlink, or Windows junction
     that would let a lane write-set clobber the surface under audit.
+    Fail-closed: if resolve() maps two different declared rels onto one
+    location (case-fold, junction parent, symlink), treat as alias.
     """
     write_path = Path(workspace) / write_rel
     audit_path = Path(workspace) / audit_rel
-    if _same_file(write_path, audit_path):
+    if same_file(write_path, audit_path):
         return True
-    try:
-        write_res = write_path.resolve()
-        audit_res = audit_path.resolve()
-    except OSError:
+    write_res = resolved_or_none(write_path)
+    audit_res = resolved_or_none(audit_path)
+    if write_res is None or audit_res is None or write_res != audit_res:
         return False
-    if write_res != audit_res:
-        return False
-    return write_path.is_symlink() or audit_path.is_symlink()
+    if _is_reparse_or_symlink(write_path) or _is_reparse_or_symlink(audit_path):
+        return True
+    write_key = os.path.normcase(write_rel.replace("\\", "/"))
+    audit_key = os.path.normcase(audit_rel.replace("\\", "/"))
+    return write_key != audit_key
 
 
 def current_slice_is_next_milestone_surface(
@@ -440,15 +464,14 @@ class Runner:
         rel = state.findings_path
         if not rel:
             return False
-        path = (self.run_dir / rel).resolve()
-        root = (self.run_dir / "findings").resolve()
-        try:
-            path.relative_to(root)
-        except ValueError:
+        path = self.run_dir / rel
+        root = self.run_dir / "findings"
+        if not contained_in(path, root):
             return False
-        if not path.is_file():
+        resolved = resolved_or_none(path)
+        if resolved is None or not resolved.is_file():
             return False
-        return findings_status_complete(self._read(path))
+        return findings_status_complete(self._read(resolved))
 
     def _item_already_closed(self, status: dict, item_id: str) -> bool:
         if item_id in self.closed_items:

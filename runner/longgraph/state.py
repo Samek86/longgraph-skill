@@ -146,20 +146,74 @@ def derive_item_id(state: RunState) -> str:
     return slug or "item"
 
 
+def same_file(left: Path | str, right: Path | str) -> bool:
+    """True when both paths exist and share a device+inode (hardlink/alias).
+
+    Uses ``os.path.samefile`` (volume serial + file index on Windows).
+    Missing paths or unreadable handles are not aliases.
+    """
+    try:
+        return os.path.samefile(left, right)
+    except OSError:
+        return False
+
+
+def resolved_or_none(path: Path | str) -> Path | None:
+    """``Path.resolve`` or ``None`` when the platform cannot resolve."""
+    try:
+        return Path(path).resolve()
+    except OSError:
+        return None
+
+
+def contained_in(path: Path | str, root: Path | str) -> bool:
+    """Fail-closed containment: dest must resolve ``relative_to`` root.
+
+    Other-drive destinations, broken resolves, and ``..`` escapes are
+    outside. Do not weaken this on Windows.
+    """
+    resolved = resolved_or_none(path)
+    root_res = resolved_or_none(root)
+    if resolved is None or root_res is None:
+        return False
+    try:
+        resolved.relative_to(root_res)
+    except ValueError:
+        return False
+    return True
+
+
+def _declared_anchor() -> Path:
+    """Dummy root for collapsing `.` / `..`. Drive-aware on Windows."""
+    return Path(os.path.abspath(os.sep)) / "_lg_declared"
+
+
 def normalize_declared_path(rel: str) -> str:
     """Collapse `.` / `..` in a declared write-set or audit-surface path.
 
     Resolves against a dummy root so ``a/../b`` and ``b`` compare equal
-    via ``relative_to``. Paths that escape the dummy root fall back to
-    ``os.path.normpath`` (they still cannot dodge overlap by spelling).
+    via ``relative_to``. The dummy root is ``{drive}/_lg_declared`` on
+    Windows so a leading ``/`` is not a POSIX-only assumption. Paths
+    that escape the dummy root — including other-drive / UNC / absolute
+    spellings — fall back to ``os.path.normpath`` (they still cannot
+    dodge overlap by spelling).
     """
     cleaned = (rel or "").strip().replace("\\", "/")
     while cleaned.startswith("./"):
         cleaned = cleaned[2:]
     if not cleaned:
         return ""
-    root = Path("/_lg_declared")
-    resolved = (root / cleaned).resolve()
+    root = _declared_anchor()
+    joined = root / cleaned
+    # ``Path / abs`` replaces the dummy root (drive letter, UNC, `/x`).
+    # Treat that as an escape so a Windows abs path cannot look relative.
+    try:
+        joined.relative_to(root)
+    except ValueError:
+        return os.path.normpath(cleaned).replace("\\", "/")
+    resolved = resolved_or_none(joined)
+    if resolved is None:
+        return os.path.normpath(cleaned).replace("\\", "/")
     try:
         return resolved.relative_to(root.resolve()).as_posix()
     except ValueError:

@@ -16,7 +16,7 @@ from .rotate import (
     parse_rotation_caps,
     rotate_directives,
 )
-from .state import parse_run, paths_from_write_set, safe_findings_ident
+from .state import parse_run, paths_from_write_set, safe_findings_ident, same_file
 
 NOOP_MESSAGE = "no-op"
 _TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
@@ -35,6 +35,17 @@ def _as_resolved(path: Path | str) -> Path:
     return Path(path).resolve()
 
 
+def _canonical_protected_name(name: str) -> str | None:
+    """Match a run_dir scoreboard basename, case-folded on Windows."""
+    if name in _PROTECTED_RUN_FILES:
+        return name
+    folded = os.path.normcase(name)
+    for canon in _PROTECTED_RUN_FILES:
+        if os.path.normcase(canon) == folded:
+            return canon
+    return None
+
+
 @dataclass
 class NodeResult:
     """Node self-report. `ok` is informational and must never close an item.
@@ -48,14 +59,6 @@ class NodeResult:
     message: str = ""
     writes: list[str] = field(default_factory=list)
     applied: bool = False
-
-
-def _same_file(left: Path | str, right: Path | str) -> bool:
-    """True when both paths exist and share a device+inode (hardlink/alias)."""
-    try:
-        return os.path.samefile(left, right)
-    except OSError:
-        return False
 
 
 class EdgeWriter:
@@ -77,7 +80,7 @@ class EdgeWriter:
     def _relative_to(self, resolved: Path, root: Path) -> Path:
         try:
             return resolved.relative_to(root.resolve())
-        except ValueError as exc:
+        except (ValueError, OSError) as exc:
             raise WriteDenied(f"write destination escapes {root}") from exc
 
     def _run_rel(self, resolved: Path) -> Path | None:
@@ -89,23 +92,35 @@ class EdgeWriter:
     def _protected_run_file(self, resolved: Path) -> str | None:
         rel = self._run_rel(resolved)
         if rel is not None and len(rel.parts) == 1:
-            name = rel.parts[0]
-            if name in _PROTECTED_RUN_FILES:
-                return name
+            canon = _canonical_protected_name(rel.parts[0])
+            if canon is not None:
+                return canon
         return self._aliased_protected_run_file(resolved)
 
     def _aliased_protected_run_file(self, dest: Path) -> str | None:
         """Catch hardlink / symlink / same-inode aliases to scoreboard files.
 
-        ``Path.resolve`` follows a symlink, so a workspace link to
-        ``run_dir/ledger.md`` already fails ``relative_to`` or the
-        resolved-name check. A hardlink keeps a workspace path and
-        shares the inode — deny that too.
+        ``Path.resolve`` follows a symlink or Windows junction, so a
+        workspace link to ``run_dir/ledger.md`` already fails
+        ``relative_to`` or the resolved-name check. A hardlink keeps a
+        workspace path and shares the inode — deny that too. On Windows,
+        ``LEDGER.md`` and ``ledger.md`` are the same file.
         """
+        dest_res = None
+        try:
+            dest_res = Path(dest).resolve()
+        except OSError:
+            dest_res = None
         for name in _PROTECTED_RUN_FILES:
             target = self.run_dir / name
-            if _same_file(dest, target):
+            if same_file(dest, target):
                 return name
+            if dest_res is not None:
+                try:
+                    if dest_res == target.resolve():
+                        return name
+                except OSError:
+                    pass
         return None
 
     def _is_directives_edge(self, resolved: Path) -> bool:
@@ -123,7 +138,10 @@ class EdgeWriter:
         write_set: bool | None = None,
     ) -> None:
         raw = Path(path)
-        resolved = _as_resolved(path)
+        try:
+            resolved = _as_resolved(path)
+        except OSError as exc:
+            raise WriteDenied("write destination cannot be resolved") from exc
         if write_set is None:
             write_set = node == "executor"
 
@@ -317,7 +335,7 @@ def _ctx_value(ctx: dict[str, Any] | None, *keys: str) -> str | None:
     for key in keys:
         value = ctx.get(key)
         if value is not None and value != "":
-            return str(value).rstrip("/")
+            return str(value).rstrip("/\\")
     return None
 
 
@@ -332,7 +350,7 @@ class PromptOnlyHost(Host):
     ):
         self.exec_interval = exec_interval
         self.sup_interval = sup_interval
-        self.run_dir = str(run_dir).rstrip("/") if run_dir is not None else None
+        self.run_dir = str(run_dir).rstrip("/\\") if run_dir is not None else None
 
     def emit_dual_loop(
         self,
@@ -356,7 +374,7 @@ class PromptOnlyHost(Host):
             or _DEFAULT_SUP_INTERVAL
         )
         dest = (
-            (str(run_dir).rstrip("/") if run_dir is not None else None)
+            (str(run_dir).rstrip("/\\") if run_dir is not None else None)
             or _ctx_value(ctx, "RUN_DIR", "run_dir")
             or self.run_dir
             or _DEFAULT_RUN_DIR
@@ -481,7 +499,7 @@ class FakeScheduler:
 
 
 def _node_pointer(run_dir: Path | str, node: str) -> str:
-    return f"{str(run_dir).rstrip('/')}/{node}.md"
+    return f"{str(run_dir).rstrip('/\\')}/{node}.md"
 
 
 def _node_prompt(run_dir: Path | str, node: str, *, tick: int | None = None) -> str:

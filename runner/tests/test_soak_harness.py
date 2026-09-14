@@ -5,10 +5,12 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "ship-soak.sh"
+SCRIPT_PY = REPO / "scripts" / "ship_soak.py"
 
 
 def test_soak_harness_smoke_three_fixtures(tmp_path: Path) -> None:
@@ -16,8 +18,20 @@ def test_soak_harness_smoke_three_fixtures(tmp_path: Path) -> None:
     env = os.environ.copy()
     runner = str(REPO / "runner")
     env["PYTHONPATH"] = runner + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    assert SCRIPT.is_file()
+    assert SCRIPT_PY.is_file()
+    # Drive the Python entry (Windows-native). The bash wrapper is a thin exec.
     proc = subprocess.run(
-        ["bash", str(SCRIPT), "--rounds", "2", "--host", "mock", "--out", str(out)],
+        [
+            sys.executable,
+            str(SCRIPT_PY),
+            "--rounds",
+            "2",
+            "--host",
+            "mock",
+            "--out",
+            str(out),
+        ],
         cwd=REPO,
         env=env,
         capture_output=True,

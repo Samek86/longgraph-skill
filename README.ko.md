@@ -170,6 +170,15 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
 ```
 
+PowerShell (Windows 네이티브):
+
+```powershell
+cd runner
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+```
+
 ### 3. 실행 설계 (컴파일만)
 
 `/longgraph`를 호출하세요; 정리를 `/loop-converge`로, 요구 사항을 `/loop-deliver`로, 증거 주도 옵션 선택을 `/loop-research`로 라우팅합니다. 현재 호스트를 감지하고, 워크스페이스를 검사하며, 실행을 컴파일하기 전에 해결되지 않은 소유자 결정만 묻습니다. 진정으로 커스텀 실행 형태의 경우에만 `loop-graph`를 직접 사용하세요.
@@ -188,6 +197,14 @@ longgraph run --host mock /tmp/add-tests-to-cli          # 로컬 apply/verify �
 longgraph run --host prompt-only /tmp/add-tests-to-cli   # DualTimer /loop 블록 방출; close 없음
 ```
 
+PowerShell (Windows 네이티브) — 에이전트는 여전히 **`longgraph run …`을 명시적으로 실행**해야 합니다:
+
+```powershell
+Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
+longgraph run --host mock $env:TEMP\add-tests-to-cli
+longgraph run --host prompt-only $env:TEMP\add-tests-to-cli
+```
+
 **Grok Build:** 여전히 웨이크 엣지 없음. 기본 =
 `longgraph run --host prompt-only <run_dir>`(또는 방출된 `/loop` 줄 붙여넣기를
 문서화). Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
@@ -195,6 +212,10 @@ longgraph run --host prompt-only /tmp/add-tests-to-cli   # DualTimer /loop 블�
 
 CLI를 쓸 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니다—
 [호스트 호환성](#호스트-호환성)을 참조하세요.
+
+지원 Host / Python / OS: [Support surface](docs/ship/SUPPORT.md)
+(Python 3.11–3.12, `ubuntu-latest`와 `windows-latest` 네이티브; macOS는
+주장하지 않음). DualTimer 라이브 soak는 주장하지 않습니다.
 
 ## 그래프 작동 방식
 
@@ -239,6 +260,7 @@ CLI를 쓸 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니�
 | [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 팩: 코딩 증거 READY; live `0.4.0-rc.1` on `main`; stable publish ack와 DualTimer soak는 owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 후보. 새 태그는 owner 전용 |
 | [알려진 문제](KNOWN_ISSUES.md) | `0.4.0-rc.1` / mock N=50 on `main`; DualTimer soak와 stable publish ack는 owner |
+| [Support surface](docs/ship/SUPPORT.md) | S5: CLI host + Python 3.11/3.12 + ubuntu-latest / windows-latest; CI 행렬 바인딩 |
 | [SECURITY.md](SECURITY.md) | 워크스페이스 탈출 거부, 픽스처에 비밀 없음, runner는 `git push` 하지 않음 |
 
 ## 거버넌스
