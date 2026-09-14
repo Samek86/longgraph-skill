@@ -33,6 +33,9 @@ soak (M-R2-3) remains owner-only.
 - Declared-path normalization uses a drive-aware dummy root.
 - Docs dry-run / soak tests drive the Python entries so Windows CI
   does not require a bash wrapper.
+- Python 3.11 parse: `_node_pointer` no longer puts a backslash inside
+  an f-string expression. Windows console: dry-run time line is ASCII;
+  fixture rewrites keep `encoding="utf-8"`.
 
 ## [0.4.0-rc.1] — 2026-09-12 (prerelease; tag exists at `a4cce0f`)
 

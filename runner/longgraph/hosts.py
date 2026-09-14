@@ -499,7 +499,10 @@ class FakeScheduler:
 
 
 def _node_pointer(run_dir: Path | str, node: str) -> str:
-    return f"{str(run_dir).rstrip('/\\')}/{node}.md"
+    # Strip outside the f-string: 3.11 rejects backslashes in f-string exprs.
+    trailing = "/\\"
+    base = str(run_dir).rstrip(trailing)
+    return f"{base}/{node}.md"
 
 
 def _node_prompt(run_dir: Path | str, node: str, *, tick: int | None = None) -> str:

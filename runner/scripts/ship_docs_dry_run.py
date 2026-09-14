@@ -148,7 +148,10 @@ def main() -> int:
     print(f"- `longgraph run --host mock`: {'pass' if mock_ok else 'FAIL'} (rc={rc_mock}, fail-closed, no close)")
     print(f"- committed fixtures unchanged: {'pass' if committed_ok else 'FAIL'}")
     print(f"- pass/fail: {'pass' if passed else 'FAIL'}")
-    print(f"- time: {elapsed:.1f}s (UTC {started.strftime('%Y-%m-%dT%H:%M:%SZ')} → {ended.strftime('%Y-%m-%dT%H:%M:%SZ')})")
+    print(
+        f"- time: {elapsed:.1f}s (UTC {started.strftime('%Y-%m-%dT%H:%M:%SZ')} -> "
+        f"{ended.strftime('%Y-%m-%dT%H:%M:%SZ')})"
+    )
     print(f"- SHA: `{_git_sha()}`")
     return 0 if passed else 1
 
