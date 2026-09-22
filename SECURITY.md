@@ -33,5 +33,7 @@ Push remains an owner step outside this engine.
 - **Default-FAIL.** Close is a gate re-pass after an applied write-set.
   `NodeResult.ok` and model "DONE" are not close signals.
 - Product Verify/smoke is a fail-closed subprocess (`cwd` = workspace).
-- Safe CLI default is `--host prompt-only` (emit-only). `mock` is the
-  coupled test loop, not the product path.
+- Product CLI default is `--host grok-bot` (DualTimer continuous until
+  terminal). `--host prompt-only` is an explicit emit-and-exit fallback
+  when timers/shell are unavailable. `mock` is the coupled test loop,
+  not the product path.

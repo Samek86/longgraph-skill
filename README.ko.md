@@ -105,9 +105,13 @@
 **이 포크의 기본 엔진 경로는 runner CLI입니다:** 컴파일 후 호스트 AI가
 `longgraph run …`을 **명시적으로 실행**해야 합니다. 스킬만의 `/loop` 붙여넣기는
 게이트를 강화하지 않습니다. runner를 “선택 사항”이라고 부르는 것은 이 포크의
-기본값에 맞지 않습니다. Grok Build는 여전히 **웨이크 엣지 없음** — 기본은
-`longgraph run --host prompt-only <run_dir>`(셸을 쓸 수 없을 때는 방출된
-`/loop` 줄 붙여넣기). Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
+기본값에 맞지 않습니다. 제품 기본은 DualTimer 연속 실행
+(`longgraph run <run_dir>` / `--host grok-bot`)이며 원장이 종료 상태가 될 때까지
+계속됩니다 — 목표 중간에 사람 붙여넣기가 필요하면 안 됩니다. 원장이 비종료인
+동안 사람 재지시를 기다리는 것은 **버그**입니다. Grok Build는 여전히
+**웨이크 엣지 없음**: AI가 CLI를 실행해야 하며, `--host prompt-only`(또는
+방출된 `/loop` 줄 붙여넣기)는 타이머/셸을 쓸 수 없을 때의 저하된 폴백입니다.
+Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
 
 ## 멀티태스크 루프 및 호스트 전환
 
@@ -189,28 +193,33 @@ python -m pip install -e ".[dev]"
 
 컴파일 후(또는 픽스처 복사본을 사용한 후) **에이전트는 `longgraph run …`을
 명시적으로 실행해야 합니다.** 스킬이 엔진을 자동 시작한다고 가정하지 마세요.
-호스트가 셸을 쓸 수 있으면 **수동 `/loop` 붙여넣기보다 CLI를 우선**하세요.
+호스트가 셸을 쓸 수 있으면 **수동 `/loop` 붙여넣기보다 DualTimer CLI를
+우선**하세요. DualTimer가 시작되면 원장이 비종료인 동안 사람 재지시를
+기다리며 쉬지 마세요.
 
 ```sh
 cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
-longgraph run --host mock /tmp/add-tests-to-cli          # 로컬 apply/verify 루프; 먼저 복사
-longgraph run --host prompt-only /tmp/add-tests-to-cli   # DualTimer /loop 블록 방출; close 없음
+longgraph run /tmp/add-tests-to-cli                          # 제품 기본: DualTimer 연속
+longgraph run --host mock /tmp/add-tests-to-cli              # 로컬 apply/verify 루프; 먼저 복사
+longgraph run --host prompt-only /tmp/add-tests-to-cli       # 저하된 폴백: /loop 블록 방출
 ```
 
 PowerShell (Windows 네이티브) — 에이전트는 여전히 **`longgraph run …`을 명시적으로 실행**해야 합니다:
 
 ```powershell
 Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
+longgraph run $env:TEMP\add-tests-to-cli
 longgraph run --host mock $env:TEMP\add-tests-to-cli
 longgraph run --host prompt-only $env:TEMP\add-tests-to-cli
 ```
 
-**Grok Build:** 여전히 웨이크 엣지 없음. 기본 =
-`longgraph run --host prompt-only <run_dir>`(또는 방출된 `/loop` 줄 붙여넣기를
-문서화). Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
+**Grok Build:** 여전히 웨이크 엣지 없음. 제품 기본 =
+`longgraph run <run_dir>`(DualTimer 연속). `--host prompt-only`(또는 방출된
+`/loop` 줄 붙여넣기 문서화)는 타이머/셸을 쓸 수 없을 때의 저하된 폴백입니다.
+Grok이 셸 단계 없이 자동 기동한다고 주장하지 마세요.
 [Grok Build](skills/loop-graph/references/grok.md)를 참조하세요.
 
-CLI를 쓸 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니다—
+CLI가 타이머를 스케줄할 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니다—
 [호스트 호환성](#호스트-호환성)을 참조하세요.
 
 지원 Host / Python / OS: [Support surface](docs/ship/SUPPORT.md)
@@ -235,9 +244,9 @@ CLI를 쓸 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니�
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ 호스트를 감지하고 두 런타임 노드를 직접 생성 |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ 호스트를 감지하고 기능 검사가 통과되면 두 백그라운드 런타임 세션을 직접 생성 |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | 기본: AI가 `longgraph run --host prompt-only <run_dir>` 실행(웨이크 엣지 없음; 자동 기동 없음). 수동 `/loop` 붙여넣기는 폴백 |
-| [**Cursor**](skills/loop-graph/references/cursor.md) | 기본: AI가 `longgraph run --host …` 실행. CLI를 쓸 수 없을 때 `/loop` 붙여넣기가 폴백 |
-| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 기본: `longgraph run --host …` |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | 기본: AI가 `longgraph run <run_dir>` 실행(DualTimer 연속; 웨이크 엣지 없음; 자동 기동 없음). `--host prompt-only` / 수동 `/loop` 붙여넣기는 저하된 폴백 |
+| [**Cursor**](skills/loop-graph/references/cursor.md) | 기본: AI가 `longgraph run …` 실행(DualTimer). CLI를 쓸 수 없을 때 `/loop` 붙여넣기가 폴백 |
+| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 기본: `longgraph run …` |
 
 권위 있는 구문, 페이싱, 컨텍스트 캐리 및 후크는 별도의 [호스트별 참조](skills/loop-graph/references/)에 있으므로, 저작은 선택된 호스트만 로드합니다. 실행 중 호스트 전환은 동일한 지속적인 실행 디렉토리를 재사용합니다; 각 틱을 시작하는 방법만 변경됩니다.
 
@@ -255,7 +264,7 @@ CLI를 쓸 수 없을 때의 폴백은 방출된 `/loop` 줄 붙여넣기입니�
 | [호스트 참조](skills/loop-graph/references) | 각 호스트의 런타임 사실을 위한 하나의 독립적으로 로드된 소유자 |
 | [실제 예제](skills/loop-graph/examples) | 공개 Git 자체 반복+작동 중인 게이트를 보여주는 가상 원장 |
 | [공개/개인 경계](docs/public-private-boundary.md) | 공개 트리에 들어갈 수 있는 것과 프로젝트 로컬로 남아 있는 것 |
-| [Runner CLI](runner/README.md) | 컴파일된 run 디렉터리의 **기본 엔진** — AI가 `longgraph run --host …`를 실행해야 함. `--host prompt-only`(안전 emit), `grok-bot` DualTimer, `mock`은 테스트 전용. 버전 `0.4.0-rc.1` on `main` |
+| [Runner CLI](runner/README.md) | 컴파일된 run 디렉터리의 **기본 엔진** — AI가 `longgraph run …`를 실행해야 함. 기본 `--host grok-bot`(DualTimer 연속, 종료 원장까지); `prompt-only`는 저하된 폴백; `mock`은 테스트 전용. 버전 `0.4.0-rc.1` on `main` |
 | [공개 주장](docs/ship/PUBLIC_CLAIMS.md) | P1–P10을 기존 pytest 이름에 묶음(마케팅 문구 아님) |
 | [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 팩: 코딩 증거 READY; live `0.4.0-rc.1` on `main`; stable publish ack와 DualTimer soak는 owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 후보. 새 태그는 owner 전용 |

@@ -275,7 +275,7 @@ ApiHost or Phase 2 prompt compiler.
 30. `test_cli_default_gate_is_fail_closed` (H0b — CLI fail-closed)
 31. `test_dual_timer_stays_deleted_after_terminal` (H0c M4 — terminal-before-seed; no recreate)
 32. `test_dual_timer_scout_noop_when_blocked_on` (H0c M5 — DualTimer scout is a no-op)
-33. `test_cli_accepts_grok_bot_host` (H1 — CLI `--host grok-bot`; default `prompt-only`)
+33. `test_cli_default_host_is_continuous_dual_timer` (H1 — CLI default `grok-bot` DualTimer continuous; `prompt-only` fallback)
 34. `test_grok_bot_host_does_not_serial_tick_peers` (H1 — DualTimer ≠ MockHost serial loop)
 35. `test_pending_audit_allows_lane_work` (H2 M1 — lane continue)
 36. `test_acceptance_directive_releases_pending_audit` (H2 M1 — ACCEPT-GATE)

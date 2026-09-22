@@ -69,7 +69,7 @@ as an engine. Do not `git push` from the runner.
    Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
    ```
 
-4. Safe default — emit-only:
+4. Degraded fallback — emit-only (explicit `--host prompt-only`):
 
    ```bash
    longgraph run --host prompt-only /tmp/add-tests-to-cli
@@ -77,7 +77,7 @@ as an engine. Do not `git push` from the runner.
 
    Expect two `/loop` lines (executor + supervisor). `ledger.md` and
    `status.json` stay byte-identical to the copy. Omitting `--host` is
-   the same (`prompt-only`).
+   **not** the same — product default is DualTimer (`grok-bot`).
 
 5. Coupled test loop:
 

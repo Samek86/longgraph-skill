@@ -11,12 +11,15 @@ executor, supervisor, ledger, directives, and ops artifacts. Do not execute the
 generated runtime nodes from this authoring skill.
 
 **DEFAULT next step (this fork):** after compile — or after copying a fixture —
-the host AI **must explicitly run** `longgraph run --host …` on that run
-directory. Skill compile does not start the engine and does not harden gates.
-Use `--host mock` for local apply/verify loops; use `--host prompt-only` to
-emit DualTimer `/loop` paste blocks. Manual `/loop` paste is the fallback
-only when the host cannot run a shell. Never assume the skill auto-starts
-the runner.
+the host AI **must explicitly run** `longgraph run <run_dir>` (DualTimer
+continuous default; same as `--host grok-bot`) on that run directory. Skill
+compile does not start the engine and does not harden gates. Once DualTimer is
+started, continuation must **not** require human paste or re-instruction while
+the ledger is non-terminal — resting mid-goal until a human re-instructs is a
+**bug**. Use `--host mock` for local apply/verify loops; use `--host prompt-only`
+only as a degraded fallback when the host cannot schedule timers or cannot
+shell (emit DualTimer `/loop` paste blocks and exit). Manual `/loop` paste is
+that same fallback. Never assume the skill auto-starts the runner.
 
 ## Fit and route
 

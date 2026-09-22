@@ -205,31 +205,37 @@ Decide from context what you reasonably can and state the assumption; anything g
 **Step 3 — Deliver without making the owner discover the workflow.**
 
 **DEFAULT next step (this fork):** if the host can run a shell, the AI **must
-explicitly execute** `longgraph run --host …` on the compiled run directory
-(copy a fixture first when using `runner/tests/fixtures/`). Skill compile is
-policy only — it does not start the runner and does not harden gates.
-`--host mock` is the local apply/verify loop; `--host prompt-only` emits
-DualTimer `/loop` paste blocks (Grok Build default; still no wake edge).
-Manual paste of those emitted `/loop` lines is the fallback when the CLI is
-unavailable. Never assume the skill auto-starts the engine, and do not claim
-Grok auto-invokes without a shell step.
+explicitly execute** `longgraph run <run_dir>` (DualTimer continuous default;
+same as `--host grok-bot`) on the compiled run directory (copy a fixture first
+when using `runner/tests/fixtures/`). Skill compile is policy only — it does
+not start the runner and does not harden gates. Once DualTimer is started,
+do **not** stop to wait for the user while the ledger is non-terminal;
+continuation must not require human paste. Resting mid-goal until a human
+re-instructs is a **bug** on the product path. `--host mock` is the local
+apply/verify loop; `--host prompt-only` is a degraded emit-and-exit fallback
+when the host cannot schedule timers or cannot shell. Manual paste of those
+emitted `/loop` lines is that same fallback. Never assume the skill
+auto-starts the engine, and do not claim Grok auto-invokes without a shell
+step.
 
 Offer only when the user has not already chosen:
 
 - **A (Recommended) — run the engine** when the host can execute
-  `longgraph run --host …` (prefer CLI over paste).
+  `longgraph run …` (prefer DualTimer CLI over paste).
 - **B — create both nodes here** when the detected host is Codex or Claude Code
   and the owner explicitly wants host-native sessions instead of the CLI.
 - **C — prompts only** when the owner will launch elsewhere and the CLI is
   unavailable.
 
 Never end at "files generated." End with the exact next action (`longgraph run
---host …` on the run dir, or copy-ready prompt(s) as fallback).
+…` on the run dir, or copy-ready prompt(s) as fallback).
 
 - **Run the engine:** treat the user's A choice as authorization to execute
-  `longgraph run --host …` on the compiled run dir (copy fixtures first). Prefer
-  `--host mock` for local apply/verify; `--host prompt-only` when only emitting
-  DualTimer paste blocks. Do not assume compile already started the runner.
+  `longgraph run <run_dir>` on the compiled run dir (copy fixtures first). Prefer
+  the DualTimer default for real runs; `--host mock` for local apply/verify;
+  `--host prompt-only` only when emitting DualTimer paste blocks as a degraded
+  fallback. Do not assume compile already started the runner. Do not rest until
+  a human re-instructs while the ledger is non-terminal.
 - **Create both nodes here:** treat the user's B choice as authorization to create the two in-scope runtime sessions. Follow the selected reference's ordered capability check and creation protocol. Use the current project/checkout; do not create a cross-host prompt or silently switch to worktrees. Verify both nodes started, and report their IDs, both cadences, and how to stop them. Do not ask for a second confirmation.
 - **Prompts only:** render the completed [`templates/handoff.md`](templates/handoff.md) in chat without persisting it. It must say how many sessions/tasks/processes to open, where each prompt goes, what continues automatically, how it stops, and how to steer. Never ask the owner to write host IDs or create a timer the compiled node already owns.
 - Never leave `{{PLACEHOLDER}}` text or tell the owner merely to "start the loop." Keep executor and supervisor in separate contexts; use a cheap/fast executor and a strong supervisor when available.

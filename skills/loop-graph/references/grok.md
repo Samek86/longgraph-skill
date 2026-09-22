@@ -6,16 +6,23 @@ Read only for nodes hosted in **Grok Build** (xAI’s agent TUI / CLI host).
 
 Still **no wake edge**. Grok does **not** auto-invoke the engine.
 
-If the host can run a shell, **prefer the CLI** over manual paste:
+If the host can run a shell, **prefer the CLI DualTimer path** over manual paste:
 
 ```sh
-longgraph run --host prompt-only {{RUN_DIR}}
+longgraph run {{RUN_DIR}}
+# same as: longgraph run --host grok-bot {{RUN_DIR}}
 ```
 
-That emits the two DualTimer `/loop` lines below. Document paste of those
-emitted lines when the owner must start them by hand. Manual `/loop` paste
-without `longgraph run` is the fallback only when the CLI is unavailable.
-Do not treat skill compile as starting the runner.
+That schedules two independent timers and continues until a **terminal**
+ledger. After every non-terminal tick both timers must be reseeded
+(independent; no peer wake). Schedule/reseed failure is fail-closed — never
+silent idle. Resting mid-goal until a human re-instructs is a **bug** on this
+path. Do not treat skill compile as starting the runner.
+
+`--host prompt-only` (emit two DualTimer `/loop` lines and exit) is a
+**degraded fallback** only when the host cannot schedule timers or cannot
+shell. Document paste of those emitted lines when the owner must start them
+by hand. Manual `/loop` paste without `longgraph run` is that same fallback.
 
 ## Runtime shape
 
@@ -53,6 +60,12 @@ Two `/loop` tasks, two timers, no wake edge between them.
   > `ops.md` Timers table — never the supervisor row. If that row already names a
   > reachable ID, keep it. Do not create another `/loop` or scheduler task.
   >
+  > **Every non-terminal tick.** Before you end, ensure both executor and supervisor
+  > timers still exist in the scheduler (reseed/create if missing). Do not wake the
+  > peer. If schedule/reseed fails, fail closed — hard stop / blocked — never rest
+  > waiting for a human. If the ledger is terminal, `scheduler_delete` your own ID
+  > instead and do not reseed.
+  >
   > **Stop.** At a terminal ledger status, `scheduler_delete` the ID in your Timers
   > row. If the cell is still `pending` or the ID is gone, resolve again from
   > `scheduler_list` by the same pointer and delete that.
@@ -67,21 +80,26 @@ Two `/loop` tasks, two timers, no wake edge between them.
   > **Every tick, before you end.** If the ledger is not terminal, update this same
   > task in place (`scheduler_create` with that `task_id`) so the next fire's prompt
   > text changes: keep `Execute the existing runtime node at {{RUN_DIR}}/supervisor.md.
-  > Do not load any skill.` and bump a `tick=N` suffix. Do not wrap it in a second
-  > `/loop`. If the ledger is terminal, `scheduler_delete` that ID instead.
+  > Do not load any skill.` and bump a `tick=N` suffix. Also ensure the executor timer
+  > still exists (reseed if missing; do not wake it). If schedule/reseed fails, fail
+  > closed — never idle waiting for a human. Do not wrap it in a second `/loop`. If
+  > the ledger is terminal, `scheduler_delete` that ID instead.
 
 ## Fill the generic handoff
 
-- `SESSION_INSTRUCTION`: Paste each prompt below as its own `/loop` against this
-  workspace. Do not edit `ops.md` or type any task ID.
+- `SESSION_INSTRUCTION`: Prefer `longgraph run {{RUN_DIR}}` (DualTimer). Paste each
+  prompt below as its own `/loop` only when the CLI cannot schedule timers.
+  Do not edit `ops.md` or type any task ID.
 - `EXECUTOR_DESTINATION`: executor `/loop`.
 - `EXECUTOR_LAUNCH`: `/loop {{EXEC_INTERVAL}} Execute the existing runtime node at
   {{RUN_DIR}}/executor.md. Do not load any skill.`
-- `EXECUTOR_READY`: the first fire starts on its own. Paste the supervisor prompt next.
+- `EXECUTOR_READY`: the first fire starts on its own. Paste the supervisor prompt next
+  only on the prompt-only fallback path.
 - `SUPERVISOR_LAUNCH`: `/loop {{SUP_INTERVAL}} Execute the existing runtime node at
   {{RUN_DIR}}/supervisor.md. Do not load any skill.`
 - `SUPERVISOR_DESTINATION`: supervisor `/loop`.
-- `RUNNING_STATE`: both loops keep firing; state lives in the run directory.
+- `RUNNING_STATE`: both loops keep firing until a terminal ledger; state lives in the
+  run directory. Do not wait for human re-instruction mid-goal.
 - `RESET_INSTRUCTION`: none. The supervisor refreshes its own next-fire prompt; the
   executor stays warm.
 - `STOP_INSTRUCTION`: each node deletes its own scheduler task at terminal state.

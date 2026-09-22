@@ -6,12 +6,14 @@ import LangGraph on the public surface.
 
 from .gates import GateResult, GateRunner
 from .hosts import (
+    TERMINAL_LEDGER,
     FakeScheduler,
     GrokBotDualTimerHost,
     Host,
     MockHost,
     NodeResult,
     PromptOnlyHost,
+    ScheduleError,
     WriteDenied,
 )
 from .nodes import CrashBeforeClose, Runner, StatusContractError
@@ -31,7 +33,9 @@ __all__ = [
     "RetryKey",
     "RunState",
     "Runner",
+    "ScheduleError",
     "StatusContractError",
+    "TERMINAL_LEDGER",
     "WriteDenied",
     "parse_run",
 ]

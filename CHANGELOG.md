@@ -19,6 +19,17 @@ Further work after the `0.4.0-rc.1` candidate lands here. Tag
 Owner D2 *stable* / non-rc publish ack is **not** done. Live DualTimer
 soak (M-R2-3) remains owner-only.
 
+### Changed
+
+- Product CLI default is DualTimer continuous (`DEFAULT_HOST = "grok-bot"`).
+  `longgraph run <run_dir>` no longer emit-and-exits. `--host prompt-only`
+  remains an explicit degraded fallback when the host cannot schedule
+  timers or cannot shell. Resting mid-goal until a human re-instructs is
+  documented as a bug on the product path.
+- `GrokBotDualTimerHost` reseeds **both** independent timers after every
+  non-terminal tick; schedule/reseed failure raises `ScheduleError`
+  (fail-closed). Terminal ledger still stops reseeding.
+
 ### Added
 
 - Windows native runner support (PowerShell / cmd, not WSL-only).
@@ -36,7 +47,9 @@ soak (M-R2-3) remains owner-only.
 - Python 3.11 parse: `_node_pointer` no longer puts a backslash inside
   an f-string expression. Windows console: dry-run time line is ASCII;
   fixture rewrites keep `encoding="utf-8"`.
-
+- Owner complaint: prompt-only default left DualTimer as opt-in and
+  created a human wake-edge (paste blocks then idle). Default + docs/
+  skill now match the continuous product path.
 ## [0.4.0-rc.1] — 2026-09-12 (prerelease; tag exists at `a4cce0f`)
 
 Version in `runner/pyproject.toml`. **Coding D2 evidence pack READY.**
