@@ -131,9 +131,13 @@ scout）が、永続的で検査可能なファイルを通じて接続されて
 フレームワークではありません。**このフォークのデフォルトエンジン経路は runner CLI
 です:** コンパイル後、ホスト AI は `longgraph run …` を明示的に実行しなければなりません。
 スキルのみの `/loop` ペーストはゲートを強化しません。runner を「オプション」と呼ぶのは
-このフォークのデフォルトとして誤りです。Grok Build は依然として **ウェイクエッジなし** —
-デフォルトは `longgraph run --host prompt-only <run_dir>`（シェル不可時は放出された
-`/loop` 行のペースト）。Grok がシェル手順なしで自動起動するとは主張しないでください。
+このフォークのデフォルトとして誤りです。製品デフォルトは DualTimer 連続実行
+（`longgraph run <run_dir>` / `--host grok-bot`）で、台帳が終端になるまで続きます —
+目標の途中で人間のペーストを要してはいけません。台帳が非終端なのに人間の再指示を
+待つのは **バグ** です。Grok Build は依然として **ウェイクエッジなし**: AI が CLI を
+実行する必要があり、`--host prompt-only`（または放出された `/loop` 行のペースト）は
+タイマー/シェル不可時の劣化フォールバックです。Grok がシェル手順なしで自動起動するとは
+主張しないでください。
 
 ## マルチタスクループとホストの切り替え
 
@@ -219,21 +223,24 @@ python -m pip install -e ".[dev]"
 コンパイル後（またはフィクスチャのコピーを使った後）、**エージェントは
 `longgraph run …` を明示的に実行しなければなりません。** スキルがエンジンを
 自動起動すると仮定しないでください。ホストがシェルを使えるなら、**手動
-`/loop` ペーストより CLI を優先**してください。
+`/loop` ペーストより DualTimer CLI を優先**してください。DualTimer 開始後、
+台帳が非終端なのに人間の再指示を待って休んではいけません。
 
 ```sh
 cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
-longgraph run --host mock /tmp/add-tests-to-cli          # ローカル apply/verify ループ；先にコピー
-longgraph run --host prompt-only /tmp/add-tests-to-cli   # DualTimer /loop ブロックを放出；close しない
+longgraph run /tmp/add-tests-to-cli                          # 製品デフォルト: DualTimer 連続
+longgraph run --host mock /tmp/add-tests-to-cli              # ローカル apply/verify ループ；先にコピー
+longgraph run --host prompt-only /tmp/add-tests-to-cli       # 劣化フォールバック: /loop ブロック放出
 ```
 
-**Grok Build:** 依然としてウェイクエッジなし。デフォルト =
-`longgraph run --host prompt-only <run_dir>`（または放出された `/loop` 行の
-ペーストを文書化）。Grok がシェル手順なしで自動起動するとは主張しないでください。
+**Grok Build:** 依然としてウェイクエッジなし。製品デフォルト =
+`longgraph run <run_dir>`（DualTimer 連続）。`--host prompt-only`（または放出された
+`/loop` 行のペーストを文書化）はタイマー/シェル不可時の劣化フォールバックです。
+Grok がシェル手順なしで自動起動するとは主張しないでください。
 [Grok Build](skills/loop-graph/references/grok.md) を参照してください。
 
-CLI が使えないときのフォールバックは放出された `/loop` 行のペーストです—
-[ホスト互換性](#ホスト互換性)を参照してください。
+CLI がタイマーをスケジュールできないときのフォールバックは放出された `/loop` 行の
+ペーストです—[ホスト互換性](#ホスト互換性)を参照してください。
 
 ## グラフの仕組み
 
@@ -258,7 +265,7 @@ CLI が使えないときのフォールバックは放出された `/loop` 行�
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ ホストを検出し、両方のランタイムノードを直接作成 |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ ホストを検出し、能力チェックが通過すると2つのバックグラウンドランタイムセッションを直接作成 |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | デフォルト: AI が `longgraph run --host prompt-only <run_dir>` を実行（ウェイクエッジなし；自動起動なし）。手動 `/loop` ペーストはフォールバック |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | デフォルト: AI が `longgraph run <run_dir>` を実行（DualTimer 連続；ウェイクエッジなし；自動起動なし）。`--host prompt-only` / 手動 `/loop` ペーストは劣化フォールバック |
 | [**Cursor**](skills/loop-graph/references/cursor.md) | デフォルト: AI が `longgraph run --host …` を実行。CLI 不可時は `/loop` ペーストがフォールバック |
 | [**shell / cron**](skills/loop-graph/references/shell-cron.md) | デフォルト: `longgraph run --host …` |
 
@@ -280,7 +287,7 @@ CLI が使えないときのフォールバックは放出された `/loop` 行�
 | [ホストリファレンス](skills/loop-graph/references) | 各ホストのランタイム事実のための一つの独立して読み込まれる所有者 |
 | [実例](skills/loop-graph/examples) | 公開Git自己反復+動作中のゲートを示す架空の台帳 |
 | [公開/プライベート境界](docs/public-private-boundary.md) | 公開ツリーに入る可能性があるものとプロジェクトローカルのままであるもの |
-| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリの**デフォルトエンジン** — AI は `longgraph run --host …` を実行する。`--host prompt-only`（安全な emit）、`grok-bot` DualTimer、`mock` はテスト専用。バージョン `0.4.0-rc.1` on `main` |
+| [Runner CLI](runner/README.md) | コンパイル済み run ディレクトリの**デフォルトエンジン** — AI は `longgraph run …` を実行する。デフォルト `--host grok-bot`（DualTimer 連続、終端台帳まで）；`prompt-only` は劣化フォールバック；`mock` はテスト専用。バージョン `0.4.0-rc.1` on `main` |
 | [公開クレーム](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 を既存 pytest 名に束縛（宣伝文ではない） |
 | [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R パック：コーディング証拠 READY；live `0.4.0-rc.1` on `main`；stable publish ack と DualTimer soak は owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候補。新しい tag は owner のみ |

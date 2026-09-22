@@ -4,16 +4,20 @@ Read only for nodes hosted in Cursor.
 
 ## DEFAULT next step
 
-If Cursor can run a shell, **prefer the CLI** over in-session `/loop` paste:
+If Cursor can run a shell, **prefer the CLI DualTimer path** over in-session
+`/loop` paste:
 
 ```sh
+longgraph run {{RUN_DIR}}                      # product default: DualTimer continuous
 longgraph run --host mock {{RUN_DIR}}          # local apply/verify loops
-longgraph run --host prompt-only {{RUN_DIR}}   # emit DualTimer /loop blocks
+longgraph run --host prompt-only {{RUN_DIR}}   # degraded fallback: emit /loop blocks
 ```
 
 Copy a fixture first when pointing at `runner/tests/fixtures/`. Skill compile
-does not start the runner. Manual `/loop` paste is the fallback only when the
-CLI is unavailable.
+does not start the runner. Once DualTimer is started, do not rest mid-goal
+waiting for human re-instruction while the ledger is non-terminal. Manual
+`/loop` paste is the fallback only when the CLI cannot schedule timers or
+cannot shell.
 
 ## Runtime shape
 

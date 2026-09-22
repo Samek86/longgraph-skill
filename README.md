@@ -130,10 +130,13 @@ The skill is Markdown policy (compile / interview), not an orchestration
 framework. **On this fork the default engine path is the runner CLI:** after
 compile, the host AI must explicitly run `longgraph run …`. Skill-only `/loop`
 paste does **not** harden gates. Calling the runner “optional” is wrong for
-this fork’s default. Grok Build still has **no wake edge** — default is
-`longgraph run --host prompt-only <run_dir>` (or paste of the emitted `/loop`
-lines when the host cannot shell). Grok does not auto-invoke without a shell
-step.
+this fork’s default. Product default is DualTimer continuous
+(`longgraph run <run_dir>` / `--host grok-bot`) until a terminal ledger —
+continuation must not require human paste mid-goal. Resting until a human
+re-instructs while the ledger is non-terminal is a **bug**. Grok Build still
+has **no wake edge**: AI must run the CLI; `--host prompt-only` (or paste of
+emitted `/loop` lines) is a degraded fallback when the host cannot schedule
+timers or cannot shell. Grok does not auto-invoke without a shell step.
 
 ## Multi-task loops & switching hosts
 
@@ -227,29 +230,34 @@ executes it. Generated nodes follow their frozen run contract under
 
 After compile (or using a fixture copy), the **agent MUST explicitly execute**
 `longgraph run …`. Never assume the skill auto-starts the engine. If the host
-can run a shell, **prefer the CLI over manual `/loop` paste**.
+can run a shell, **prefer the DualTimer CLI over manual `/loop` paste**. Once
+started on DualTimer, do not rest mid-goal waiting for human re-instruction
+while the ledger is non-terminal.
 
 ```sh
 cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
-longgraph run --host mock /tmp/add-tests-to-cli          # local apply/verify loops; copy first
-longgraph run --host prompt-only /tmp/add-tests-to-cli   # emit DualTimer /loop blocks; does not close
+longgraph run /tmp/add-tests-to-cli                          # product default: DualTimer continuous
+longgraph run --host mock /tmp/add-tests-to-cli              # local apply/verify loops; copy first
+longgraph run --host prompt-only /tmp/add-tests-to-cli       # degraded fallback: emit /loop blocks
 ```
 
 PowerShell (Windows native) — the agent **MUST** still execute `longgraph run …`:
 
 ```powershell
 Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
+longgraph run $env:TEMP\add-tests-to-cli
 longgraph run --host mock $env:TEMP\add-tests-to-cli
 longgraph run --host prompt-only $env:TEMP\add-tests-to-cli
 ```
 
-**Grok Build:** still no wake edge. Default =
-`longgraph run --host prompt-only <run_dir>` (or document paste of the emitted
-`/loop` lines). Do not claim Grok auto-invokes without a shell step. See
-[Grok Build](skills/loop-graph/references/grok.md).
+**Grok Build:** still no wake edge. Product default =
+`longgraph run <run_dir>` (DualTimer continuous). `--host prompt-only` (or
+document paste of the emitted `/loop` lines) is the degraded fallback when
+timers/shell are unavailable. Do not claim Grok auto-invokes without a shell
+step. See [Grok Build](skills/loop-graph/references/grok.md).
 
-Prompt-only paste of emitted `/loop` lines is the fallback when the CLI is
-unavailable — see [host compatibility](#host-compatibility).
+Prompt-only paste of emitted `/loop` lines is the fallback when the CLI cannot
+schedule timers — see [host compatibility](#host-compatibility).
 
 Record a stranger walk-through with the [docs dry-run](docs/ship/DOCS-DRY-RUN.md).
 Supported Host / Python / OS: [Support surface](docs/ship/SUPPORT.md)
@@ -279,9 +287,9 @@ For the rationale behind every constraint, read
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ detects the host and directly creates both runtime nodes |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ detects the host and directly creates two background runtime sessions when capability checks pass |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | Default: AI runs `longgraph run --host prompt-only <run_dir>` (no wake edge; no auto-invoke). Manual `/loop` paste is fallback |
-| [**Cursor**](skills/loop-graph/references/cursor.md) | Default: AI runs `longgraph run --host …`. `/loop` paste is fallback when CLI unavailable |
-| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | Default: `longgraph run --host …` |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | Default: AI runs `longgraph run <run_dir>` (DualTimer continuous; no wake edge; no auto-invoke). `--host prompt-only` / manual `/loop` paste is degraded fallback |
+| [**Cursor**](skills/loop-graph/references/cursor.md) | Default: AI runs `longgraph run …` (DualTimer). `/loop` paste is fallback when CLI unavailable |
+| [**shell / cron**](skills/loop-graph/references/shell-cron.md) | Default: `longgraph run …` |
 
 Authoritative syntax, pacing, context carry, and hooks live in separate
 [per-host references](skills/loop-graph/references/), so authoring loads only the selected host. Mid-run host switches reuse the same
@@ -301,7 +309,7 @@ durable run directory; only how you start each tick changes.
 | [Host references](skills/loop-graph/references) | One independently loaded owner for each host's runtime facts |
 | [Worked examples](skills/loop-graph/examples) | Public-Git self-iteration plus fictional ledgers showing gates in action |
 | [Public / private boundary](docs/public-private-boundary.md) | What may enter the public tree vs stay project-local |
-| [Runner CLI](runner/README.md) | **Default engine** for compiled run dirs — AI must run `longgraph run --host …`. `--host prompt-only` (safe emit), `grok-bot` DualTimer, `mock` tests only. Version `0.4.0-rc.1` on `main` |
+| [Runner CLI](runner/README.md) | **Default engine** for compiled run dirs — AI must run `longgraph run …`. Default `--host grok-bot` (DualTimer continuous until terminal); `prompt-only` degraded fallback; `mock` tests only. Version `0.4.0-rc.1` on `main` |
 | [Public claims](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 bound to named pytest (not marketing copy) |
 | [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R pack: coding evidence READY; live `0.4.0-rc.1` on `main`; stable publish ack + DualTimer soak stay owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 candidate; new tags are owner-only |

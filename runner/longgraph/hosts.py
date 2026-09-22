@@ -19,13 +19,18 @@ from .rotate import (
 from .state import parse_run, paths_from_write_set, safe_findings_ident, same_file
 
 NOOP_MESSAGE = "no-op"
-_TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
+TERMINAL_LEDGER = frozenset({"exit-ready", "stalled", "closed"})
+_TERMINAL_LEDGER = TERMINAL_LEDGER  # alias for existing call sites
 _INTERVAL_RE = re.compile(r"^(\d+)\s*([smhd])$", re.I)
 _INTERVAL_UNIT_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
 
 
 class WriteDenied(PermissionError):
     """Single-writer edge violation."""
+
+
+class ScheduleError(RuntimeError):
+    """Fail-closed: DualTimer could not schedule or reseed a required timer."""
 
 
 _PROTECTED_RUN_FILES = frozenset({"ledger.md", "directives.md", "ops.md", "status.json"})
@@ -451,8 +456,13 @@ class FakeScheduler:
         self.tasks: dict[str, ScheduledTask] = {}
         self.log: list[tuple[str, str]] = []
         self._n = 0
+        # Test hook: next create() raises ScheduleError (fail-closed path).
+        self.fail_next_create: bool = False
 
     def create(self, prompt: str, interval: str, task_id: str | None = None) -> str:
+        if self.fail_next_create:
+            self.fail_next_create = False
+            raise ScheduleError("scheduler.create refused (fail-closed test hook)")
         seconds = interval_seconds(interval)
         if seconds < self.MIN_INTERVAL_SECONDS:
             raise ValueError(
@@ -522,6 +532,11 @@ class GrokBotDualTimerHost(Host):
     Does not call a model. Does not write ledger.md (supervisor) or
     directives.md (executor). Supervisor refreshes its own next-fire prompt
     in place; the executor stays warm.
+
+    Continuous until terminal: every non-terminal tick reseeds *both*
+    scheduler timers (independent; no peer wake). Schedule/reseed failure is
+    fail-closed (raises ScheduleError) — never silent idle waiting for a human.
+    Stop reseeding only on a true terminal ledger.
     """
 
     owns_timers = True
@@ -550,6 +565,8 @@ class GrokBotDualTimerHost(Host):
 
         CONTRACT §1.5 / A17: a terminal ledger must not seed or create.
         Delete any leftover own-timer and return without scheduler.create.
+        On a non-terminal ledger, both timers must be created; failure raises
+        ScheduleError (fail-closed — never emit-and-idle).
         """
         run_dir = self._resolve_run_dir(ctx)
         workspace = self._resolve_workspace(ctx, run_dir)
@@ -559,21 +576,12 @@ class GrokBotDualTimerHost(Host):
             for node in ("executor", "supervisor"):
                 self._delete_own_timer(node, run_dir)
             return self.exec_timer_id or "", self.sup_timer_id or ""
-        if self.exec_timer_id and self.scheduler.get(self.exec_timer_id) is None:
-            self.exec_timer_id = None
-        if self.sup_timer_id and self.scheduler.get(self.sup_timer_id) is None:
-            self.sup_timer_id = None
-        if self.exec_timer_id is None:
-            self.exec_timer_id = self.scheduler.create(
-                _node_prompt(run_dir, "executor"),
-                self.exec_interval,
-            )
-        if self.sup_timer_id is None:
-            self.sup_timer_id = self.scheduler.create(
-                _node_prompt(run_dir, "supervisor"),
-                self.sup_interval,
-            )
-        return self.exec_timer_id, self.sup_timer_id
+        try:
+            return self._ensure_both_timers(run_dir)
+        except ScheduleError:
+            raise
+        except Exception as exc:
+            raise ScheduleError(f"could not schedule DualTimer: {exc}") from exc
 
     def invoke(self, node: str, prompt: str, ctx: dict[str, Any]) -> NodeResult:
         _ = prompt
@@ -600,6 +608,9 @@ class GrokBotDualTimerHost(Host):
             if self._ledger_terminal(run_dir):
                 self._delete_own_timer(node, run_dir)
                 return NodeResult(ok=True, message="terminal", writes=writes, applied=False)
+            # Non-terminal: reseed both timers (independent; no peer wake).
+            # Schedule failure is fail-closed — do not return a quiet ok tick.
+            self._ensure_both_timers(run_dir)
             if self._seed_own_timer_cell(node, run_dir):
                 writes.append("ops.md")
             if node == "supervisor":
@@ -609,6 +620,25 @@ class GrokBotDualTimerHost(Host):
             self.busy_nodes.discard(node)
             if task is not None:
                 task.busy = False
+
+    def _ensure_both_timers(self, run_dir: Path) -> tuple[str, str]:
+        """Ensure executor + supervisor scheduler tasks exist. Fail-closed."""
+        if self.exec_timer_id and self.scheduler.get(self.exec_timer_id) is None:
+            self.exec_timer_id = None
+        if self.sup_timer_id and self.scheduler.get(self.sup_timer_id) is None:
+            self.sup_timer_id = None
+        try:
+            exec_id = self._ensure_own_timer("executor", run_dir)
+            sup_id = self._ensure_own_timer("supervisor", run_dir)
+        except ScheduleError:
+            raise
+        except Exception as exc:
+            raise ScheduleError(f"could not reseed DualTimer: {exc}") from exc
+        if not exec_id or not sup_id:
+            raise ScheduleError(
+                "fail-closed: DualTimer requires both executor and supervisor timers"
+            )
+        return exec_id, sup_id
 
     def _resolve_run_dir(self, ctx: dict[str, Any] | None) -> Path:
         raw = _ctx_value(ctx, "run_dir", "RUN_DIR")

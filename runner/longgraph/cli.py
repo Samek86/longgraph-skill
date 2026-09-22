@@ -7,21 +7,30 @@ import json
 import sys
 from pathlib import Path
 
-from .hosts import GrokBotDualTimerHost, Host, MockHost, PromptOnlyHost
+from .hosts import (
+    TERMINAL_LEDGER,
+    GrokBotDualTimerHost,
+    Host,
+    MockHost,
+    PromptOnlyHost,
+    ScheduleError,
+)
 from .nodes import Runner
 from .state import parse_run
 
 HOST_CHOICES = ("mock", "prompt-only", "grok-bot")
-DEFAULT_HOST = "prompt-only"
+# Product default: continuous DualTimer. prompt-only is an explicit degraded fallback.
+DEFAULT_HOST = "grok-bot"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="longgraph",
         description=(
-            "Compiled-run runner. Safe default --host is prompt-only (emit-only). "
-            "mock is the coupled test loop, not the product path. "
-            "grok-bot is GrokBotDualTimerHost (independent timers, no peer wake)."
+            "Compiled-run runner. Default --host is grok-bot (DualTimer continuous path). "
+            "prompt-only is an explicit emit-and-exit fallback when the host cannot "
+            "schedule timers or cannot shell. mock is the coupled test loop, not the "
+            "product path."
         ),
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -34,8 +43,9 @@ def build_parser() -> argparse.ArgumentParser:
                 choices=HOST_CHOICES,
                 default=DEFAULT_HOST,
                 help=(
-                    "prompt-only (safe default): print dual /loop paste blocks and exit. "
-                    "grok-bot: product DualTimer host — independent timers, no serial peer tick. "
+                    "grok-bot (product default): DualTimer continuous host — independent "
+                    "timers, no serial peer tick, reseed until terminal. "
+                    "prompt-only (fallback): print dual /loop paste blocks and exit. "
                     "mock: coupled executor→supervisor→scout test loop only."
                 ),
             )
@@ -67,7 +77,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.cmd == "run" and args.host == "grok-bot":
         host = GrokBotDualTimerHost(run_dir=run_dir)
-        exec_id, sup_id = host.schedule()
+        try:
+            exec_id, sup_id = host.schedule()
+        except ScheduleError as exc:
+            sys.stderr.write(f"schedule failed (fail-closed): {exc}\n")
+            return 1
+        state = parse_run(run_dir)
+        if state.run_status not in TERMINAL_LEDGER and (not exec_id or not sup_id):
+            sys.stderr.write(
+                "schedule failed (fail-closed): empty timer ids on non-terminal ledger\n"
+            )
+            return 1
         runner = Runner(run_dir, host=host)
         runner.run(steps=1)
         state = parse_run(run_dir)

@@ -256,9 +256,10 @@ Rules:
 
 | Value | Host | Role |
 |---|---|---|
-| `prompt-only` | `PromptOnlyHost` | **Safe default.** Emit two `/loop` paste blocks and exit. |
-| `grok-bot` | `GrokBotDualTimerHost` | Product DualTimer. Independent timers; Runner does not serial-tick peers. |
+| `grok-bot` | `GrokBotDualTimerHost` | **Product default.** Continuous DualTimer until terminal; independent timers; reseeds both after every non-terminal tick; schedule failure is fail-closed. Runner does not serial-tick peers. |
+| `prompt-only` | `PromptOnlyHost` | **Degraded fallback** when timers/shell are unavailable. Emit two `/loop` paste blocks and exit (human wake-edge). |
 | `mock` | `MockHost` | Coupled test loop only. Not the product path. |
 
-Omitting `--host` is emit-only (`prompt-only`). The CLI must not silently
+Omitting `--host` is DualTimer continuous (`grok-bot`). `prompt-only` is
+an explicit emit-and-exit fallback. The CLI must not silently
 treat MockHost as the product default.

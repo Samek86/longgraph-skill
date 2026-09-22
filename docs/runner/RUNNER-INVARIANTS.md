@@ -98,8 +98,10 @@ id; a later fire must not recreate. Nodes this host does not schedule
 appear in product Host paths.
 
 **A18 — CLI Host is explicit; DualTimer is not MockHost.** `--host` is
-`mock` \| `prompt-only` \| `grok-bot`. The **safe default** is
-`prompt-only` (emit-only). `mock` is the coupled test loop
+`mock` \| `prompt-only` \| `grok-bot`. The **product default** is
+`grok-bot` (DualTimer continuous until terminal). `prompt-only` is an
+explicit emit-and-exit fallback when timers/shell are unavailable.
+`mock` is the coupled test loop
 (executor→supervisor→scout in one process) and is **not** the product
 path. `grok-bot` wires `GrokBotDualTimerHost`. When `Host.owns_timers` is
 true, the Runner must not drive supervisor/scout from the executor
@@ -146,7 +148,7 @@ Exact test names. Do not add the banned aliases
 | 30 | `test_cli_default_gate_is_fail_closed` | A6 — CLI / `GateRunner()` is fail-closed, not a forged pass |
 | 31 | `test_dual_timer_stays_deleted_after_terminal` | A17 — terminal-before-seed; second fire creates zero new scheduler tasks |
 | 32 | `test_dual_timer_scout_noop_when_blocked_on` | A3, A4, A17 — DualTimer scout / unscheduled node is a no-op |
-| 33 | `test_cli_accepts_grok_bot_host` | A18 — CLI `--host grok-bot`; safe default is `prompt-only` |
+| 33 | `test_cli_default_host_is_continuous_dual_timer` | A18 — CLI default is `grok-bot` DualTimer continuous; `prompt-only` is explicit fallback |
 | 34 | `test_grok_bot_host_does_not_serial_tick_peers` | A4, A17, A18 — DualTimer does not serial-tick peers; MockHost still does |
 | 35 | `test_pending_audit_allows_lane_work` | A8 — disjoint lane work continues under `pending-audit` |
 | 36 | `test_acceptance_directive_releases_pending_audit` | A8 — `ACCEPT-GATE` flips `pending-audit` to `passed` |

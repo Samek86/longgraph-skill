@@ -31,13 +31,13 @@ each axis on **one** row. Values that CI binds stay in backticks.
 
 | CLI `--host` | Class | Status |
 | --- | --- | --- |
-| `prompt-only` | `PromptOnlyHost` | **Supported.** Safe default. Emit-only (dual `/loop` paste blocks). No write-set, no close. |
-| `grok-bot` | `GrokBotDualTimerHost` | **Supported.** DualTimer product path. Timer-only: owns two independent timers, does **not** apply write-sets, no peer wake. |
+| `grok-bot` | `GrokBotDualTimerHost` | **Supported. Product default.** Continuous DualTimer until a terminal ledger. Owns two independent timers; reseeds both after every non-terminal tick; schedule/reseed failure is **fail-closed**. Does **not** apply write-sets; no peer wake. Resting until a human re-instructs mid-goal is a **bug** on this path. |
+| `prompt-only` | `PromptOnlyHost` | **Supported as degraded fallback** when the host cannot schedule timers or cannot shell. Emit-only (dual `/loop` paste blocks) and exit — a human wake-edge. No write-set, no close. Not the product default. |
 | `mock` | `MockHost` | **Supported for tests only.** Coupled executor→supervisor→scout loop. Not the product path. |
 
-Omitting `--host` is emit-only (`prompt-only`). The CLI must not silently
-treat MockHost as the product path. This list must stay identical to
-`HOST_CHOICES`.
+Omitting `--host` is DualTimer continuous (`grok-bot`). The CLI must not
+silently treat MockHost or emit-and-exit as the product path. This list
+must stay identical to `HOST_CHOICES`.
 
 ## Python
 

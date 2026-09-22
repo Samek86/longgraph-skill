@@ -102,9 +102,11 @@ Git 复算命令见[自迭代案例](skills/loop-graph/examples/self-iteration-l
 技能是 Markdown 政策（编译 / 访谈），不是编排框架。**本 fork 的默认引擎路径是
 runner CLI：** 编译后，宿主 AI 必须显式执行 `longgraph run …`。仅靠技能的
 `/loop` 粘贴**不会**硬化闸门。把 runner 写成「可选」不符合本 fork 的默认。
-Grok Build 仍然**没有 wake 边** — 默认是
-`longgraph run --host prompt-only <run_dir>`（宿主不能跑 shell 时再粘贴发出的
-`/loop` 行）。不要声称 Grok 会在没有 shell 步骤的情况下自动拉起。
+产品默认是 DualTimer 连续运行（`longgraph run <run_dir>` / `--host grok-bot`），
+直到 ledger 进入终止状态 — 目标中途不应再依赖人工粘贴。ledger 非终止时停下来
+等人重新指示是**缺陷**。Grok Build 仍然**没有 wake 边**：AI 必须跑 CLI；
+`--host prompt-only`（或粘贴发出的 `/loop` 行）仅在宿主不能调度定时器或不能
+跑 shell 时作为降级回退。不要声称 Grok 会在没有 shell 步骤的情况下自动拉起。
 
 ## 多任务 loop 与中途换宿主
 
@@ -184,21 +186,23 @@ run 形态时才直接调用 `loop-graph`。
 ### 4. 默认：运行引擎
 
 编译后（或使用夹具副本后），**智能体必须显式执行** `longgraph run …`。
-不要假设技能会自动启动引擎。宿主能跑 shell 时，**优先 CLI，而不是手工
-`/loop` 粘贴**。
+不要假设技能会自动启动引擎。宿主能跑 shell 时，**优先 DualTimer CLI，而不是手工
+`/loop` 粘贴**。DualTimer 启动后，ledger 非终止时不要停下来等人重新指示。
 
 ```sh
 cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
-longgraph run --host mock /tmp/add-tests-to-cli          # 本地 apply/verify 环；先复制
-longgraph run --host prompt-only /tmp/add-tests-to-cli   # 发出 DualTimer /loop 块；不会 close
+longgraph run /tmp/add-tests-to-cli                          # 产品默认：DualTimer 连续
+longgraph run --host mock /tmp/add-tests-to-cli              # 本地 apply/verify 环；先复制
+longgraph run --host prompt-only /tmp/add-tests-to-cli       # 降级回退：发出 /loop 块
 ```
 
-**Grok Build：** 仍然没有 wake 边。默认 =
-`longgraph run --host prompt-only <run_dir>`（或记录发出的 `/loop` 行以便粘贴）。
+**Grok Build：** 仍然没有 wake 边。产品默认 =
+`longgraph run <run_dir>`（DualTimer 连续）。`--host prompt-only`（或记录发出的
+`/loop` 行以便粘贴）仅在不能调度定时器 / 不能跑 shell 时作为降级回退。
 不要声称 Grok 会在没有 shell 步骤的情况下自动拉起。见
 [Grok Build](skills/loop-graph/references/grok.md)。
 
-CLI 不可用时的回退才是粘贴发出的 `/loop` 行——见[宿主兼容性](#宿主兼容性)。
+CLI 不能调度定时器时的回退才是粘贴发出的 `/loop` 行——见[宿主兼容性](#宿主兼容性)。
 
 把陌生人走通记录到 [docs dry-run](docs/ship/DOCS-DRY-RUN.md)。
 支持的 Host / Python / OS 见 [Support surface](docs/ship/SUPPORT.md)
@@ -225,7 +229,7 @@ DualTimer 实机 soak 不在此宣称。
 | --- | --- |
 | [**Codex**](skills/loop-graph/references/codex.md) | ✅ 自动识别宿主并直接创建两个运行节点 |
 | [**Claude Code**](skills/loop-graph/references/claude-code.md) | ✅ 自动识别宿主；能力检查通过后直接创建两个后台运行会话 |
-| [**Grok Build**](skills/loop-graph/references/grok.md) | 默认：AI 执行 `longgraph run --host prompt-only <run_dir>`（无 wake 边；不自动拉起）。手工 `/loop` 粘贴是回退 |
+| [**Grok Build**](skills/loop-graph/references/grok.md) | 默认：AI 执行 `longgraph run <run_dir>`（DualTimer 连续；无 wake 边；不自动拉起）。`--host prompt-only` / 手工 `/loop` 粘贴是降级回退 |
 | [**Cursor**](skills/loop-graph/references/cursor.md) | 默认：AI 执行 `longgraph run --host …`。CLI 不可用时 `/loop` 粘贴才是回退 |
 | [**shell / cron**](skills/loop-graph/references/shell-cron.md) | 默认：`longgraph run --host …` |
 
@@ -247,7 +251,7 @@ DualTimer 实机 soak 不在此宣称。
 | [宿主 references](skills/loop-graph/references) | 每个宿主一份、按需加载的运行事实 owner |
 | [完整示例](skills/loop-graph/examples) | 公开 Git 自迭代 + 虚构 ledger，展示闸门运作 |
 | [公开 / 私有边界](docs/public-private-boundary.md) | 什么可以进公开树，什么必须留在项目本地 |
-| [Runner CLI](runner/README.md) | 已编译 run 目录的**默认引擎** — AI 必须执行 `longgraph run --host …`。`--host prompt-only`（安全 emit）、`grok-bot` DualTimer、`mock` 仅测试。版本 `0.4.0-rc.1` on `main` |
+| [Runner CLI](runner/README.md) | 已编译 run 目录的**默认引擎** — AI 必须执行 `longgraph run …`。默认 `--host grok-bot`（DualTimer 连续至终止）；`prompt-only` 为降级回退；`mock` 仅测试。版本 `0.4.0-rc.1` on `main` |
 | [公开主张](docs/ship/PUBLIC_CLAIMS.md) | P1–P10 绑定到具名 pytest（不是营销文案） |
 | [D2 Go/No-Go](docs/ship/D2-GO-NOGO.md) | R 包：编码证据 READY；live `0.4.0-rc.1` on `main`；stable publish ack 与 DualTimer soak 仍属 owner |
 | [CHANGELOG](CHANGELOG.md) | Phase 0–1c + H0–H2 + D2 候选；新 tag 仅限 owner |

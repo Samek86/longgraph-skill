@@ -4,9 +4,18 @@ Engine for compiled run directories. The skill library under `skills/` is
 policy only — this package never loads it.
 
 **AI / agent instruction:** always invoke the CLI explicitly
-(`longgraph run --host …`). Do **not** treat skill compile, `/longgraph`,
-or a `/loop` paste as starting the runner. Skill-only is not the default
-engine path on this fork and does not harden gates.
+(`longgraph run …` or `longgraph run --host …`). Do **not** treat skill
+compile, `/longgraph`, or a `/loop` paste as starting the runner.
+Skill-only is not the default engine path on this fork and does not
+harden gates.
+
+**Product path:** `longgraph run <run_dir>` defaults to DualTimer
+(`--host grok-bot`) and continues until a **terminal** ledger. After every
+non-terminal tick both timers are reseeded (independent; no peer wake).
+Schedule/reseed failure is **fail-closed** (hard error), never silent idle.
+Resting mid-goal until a human re-instructs is a **bug** on this path.
+`--host prompt-only` is a degraded emit-and-exit fallback only when the
+host cannot schedule timers or cannot shell.
 
 Authority: [`docs/runner/AUTHORITY.md`](../docs/runner/AUTHORITY.md).
 Security: [`SECURITY.md`](../SECURITY.md).
@@ -29,18 +38,18 @@ Live DualTimer / ≥24h wall-clock soak stays owner-only.
 
 | CLI `--host` | Class | Emit | Apply write-set | Owns timers | Serial peer ticks |
 |---|---|---|---|---|---|
-| `prompt-only` (**safe default**) | `PromptOnlyHost` | dual `/loop` paste blocks | no | no | n/a (emit and exit) |
-| `grok-bot` (product DualTimer) | `GrokBotDualTimerHost` | no | no (timer-only) | yes | **no** — independent timers, no peer wake |
+| `grok-bot` (**product default**) | `GrokBotDualTimerHost` | no | no (timer-only) | yes | **no** — independent timers, reseed until terminal, no peer wake |
+| `prompt-only` (degraded fallback) | `PromptOnlyHost` | dual `/loop` paste blocks | no | no | n/a (emit and exit — human wake-edge) |
 | `mock` (tests only) | `MockHost` | no | yes | no | yes — coupled executor→supervisor→scout |
 
-`longgraph run` without `--host` is **emit-only** (`prompt-only`). It does
-**not** silently default to MockHost as the product path.
+`longgraph run` without `--host` is **DualTimer continuous** (`grok-bot`).
+It does **not** silently default to MockHost or emit-and-exit.
 
 ## Support surface
 
 | Axis | Supported (CI-bound) |
 |---|---|
-| CLI `--host` | `prompt-only` (safe default), `grok-bot` (DualTimer, timer-only), `mock` (tests only) |
+| CLI `--host` | `grok-bot` (product default, DualTimer continuous), `prompt-only` (fallback emit), `mock` (tests only) |
 | Python | 3.11, 3.12 |
 | OS | ubuntu-latest (Linux), windows-latest (Windows native) |
 
@@ -81,12 +90,12 @@ point it at `tests/fixtures/`.
 ```bash
 cp -R tests/fixtures/add-tests-to-cli /tmp/add-tests-to-cli
 
-# 1. Safe default — emit two /loop paste blocks; no writes, no coupled loop
-longgraph run --host prompt-only /tmp/add-tests-to-cli
-#    omitting --host is the same (defaults to prompt-only)
+# 1. Product default — DualTimer continuous until terminal ledger
+longgraph run /tmp/add-tests-to-cli
+#    same as: longgraph run --host grok-bot /tmp/add-tests-to-cli
 
-# 2. Product DualTimer — two independent timers, no peer wake
-longgraph run --host grok-bot /tmp/add-tests-to-cli
+# 2. Degraded fallback — emit two /loop paste blocks; no writes (host cannot timer/shell)
+longgraph run --host prompt-only /tmp/add-tests-to-cli
 
 # 3. MockHost coupled test loop — not the product path; copy first
 longgraph run --host mock /tmp/add-tests-to-cli
@@ -99,8 +108,8 @@ PowerShell (Windows native) — AI must still run `longgraph run` explicitly:
 
 ```powershell
 Copy-Item -Recurse tests\fixtures\add-tests-to-cli $env:TEMP\add-tests-to-cli
+longgraph run $env:TEMP\add-tests-to-cli
 longgraph run --host prompt-only $env:TEMP\add-tests-to-cli
-longgraph run --host grok-bot $env:TEMP\add-tests-to-cli
 longgraph run --host mock $env:TEMP\add-tests-to-cli
 longgraph status $env:TEMP\add-tests-to-cli
 longgraph stop $env:TEMP\add-tests-to-cli
@@ -113,7 +122,8 @@ Executor write-set paths resolve inside the workspace and cannot clobber
 `status.json`) via relative escape, symlink, or hardlink/alias; runner
 close remains the only ledger writer.
 `GrokBotDualTimerHost` schedules two independent timers (executor +
-supervisor) with no wake edge between them. A terminal ledger stops each
+supervisor) with no wake edge between them. A non-terminal tick reseeds
+both timers; schedule failure is fail-closed. A terminal ledger stops each
 node's timer without reseeding; scout ticks are a no-op. Close is gate
 re-pass only after an applied write-set; emit-only and timer-only ticks
 never close.
